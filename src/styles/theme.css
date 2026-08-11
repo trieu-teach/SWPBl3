@@ -1,0 +1,87 @@
+/* =========================================================================
+   DocuMind — Global Color Mode Fallbacks
+   Auth screens (Login / Register) and Homepage now carry their own
+   per-theme rules. This file only contains fallbacks for elements that
+   don't have className-specific overrides (MUI typography defaults,
+   AntD components, raw inputs, drawers...).
+   ========================================================================= */
+
+body[data-theme="dark"] {
+  background: #0a0e1a;
+  color: #f1f5f9;
+  transition: background 200ms ease, color 200ms ease;
+}
+
+body[data-theme="light"] {
+  background: #fafaf7;
+  color: #0b1020;
+  transition: background 200ms ease, color 200ms ease;
+}
+
+/* ---- MUI Typography defaults ------------------------------------------------ */
+
+body[data-theme="dark"] .MuiTypography-root {
+  color: inherit;
+}
+
+body[data-theme="dark"] .MuiTypography-h1,
+body[data-theme="dark"] .MuiTypography-h2,
+body[data-theme="dark"] .MuiTypography-h3,
+body[data-theme="dark"] .MuiTypography-h4,
+body[data-theme="dark"] .MuiTypography-h5,
+body[data-theme="dark"] .MuiTypography-h6 {
+  color: #f1f5f9;
+}
+
+body[data-theme="dark"] .MuiTypography-body2,
+body[data-theme="dark"] .MuiTypography-caption {
+  color: #94a3b8;
+}
+
+body[data-theme="dark"] .MuiPaper-root {
+  background-color: #131a2b;
+  background-image: none;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ---- MUI Drawer (mobile menu) ---------------------------------------------- */
+
+body[data-theme="dark"] .MuiDrawer-paper {
+  background-color: #131a2b !important;
+  background-image: none !important;
+  color: #f1f5f9 !important;
+}
+
+body[data-theme="dark"] .MuiListItemButton-root:hover {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ---- MUI Checkbox / Radio -------------------------------------------------- */
+
+body[data-theme="dark"] .MuiCheckbox-root,
+body[data-theme="dark"] .MuiRadio-root {
+  color: #94a3b8 !important;
+}
+
+body[data-theme="dark"] .MuiCheckbox-root.Mui-checked,
+body[data-theme="dark"] .MuiRadio-root.Mui-checked {
+  color: #818cf8 !important;
+}
+
+/* ---- MUI Divider ----------------------------------------------------------- */
+
+body[data-theme="dark"] .MuiDivider-root {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ---- MUI AppBar ------------------------------------------------------------ */
+
+body[data-theme="dark"] .MuiAppBar-root {
+  background-image: none !important;
+}
+
+/* ---- Global theme toggle — auth screens use .bx-theme-toggle -------------- */
+
+body[data-theme="dark"] .theme-toggle-btn {
+  color: #f1f5f9;
+}

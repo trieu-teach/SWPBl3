@@ -1,0 +1,159 @@
+/* =============================================================================
+   DocuMind — Register-specific bits
+   Companion to Login.css. Adds strength meter, success card & checkbox
+   tweaks needed only by the registration form.
+   ============================================================================= */
+
+.bx-form-stack .MuiFormHelperText-root {
+  margin-left: 0;
+}
+
+.bx-strength-label {
+  font-size: 0.78rem !important;
+  color: #94a3b8 !important;
+  font-weight: 500;
+}
+
+.bx-strength-label strong {
+  color: #818cf8 !important;
+}
+
+.bx-strength-count {
+  font-size: 0.74rem !important;
+  color: #64748b !important;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.bx-strength-bar {
+  height: 5px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.bx-strength-bar .MuiLinearProgress-bar {
+  border-radius: 999px !important;
+  transition: background 0.25s ease;
+}
+
+.bx-strength-1 .MuiLinearProgress-bar {
+  background: #f87171 !important;
+}
+.bx-strength-2 .MuiLinearProgress-bar {
+  background: #fbbf24 !important;
+}
+.bx-strength-3 .MuiLinearProgress-bar {
+  background: #818cf8 !important;
+}
+.bx-strength-4 .MuiLinearProgress-bar {
+  background: #34d399 !important;
+}
+
+.bx-strength-row {
+  font-size: 0.76rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s ease;
+}
+
+.bx-strength-row.is-pass {
+  color: #34d399;
+}
+
+.bx-strength-row .MuiSvgIcon-root {
+  font-size: 13px;
+}
+
+.bx-strength-row:not(.is-pass) .MuiSvgIcon-root {
+  color: #475569;
+}
+
+.bx-check.MuiCheckbox-root {
+  color: #64748b !important;
+  padding: 6px !important;
+}
+
+.bx-check.Mui-checked {
+  color: #818cf8 !important;
+}
+
+.bx-terms-text {
+  color: #94a3b8 !important;
+  font-size: 0.8rem !important;
+  line-height: 1.45 !important;
+}
+
+.bx-success-mark {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.18);
+  border: 1px solid rgba(129, 140, 248, 0.45);
+  color: #818cf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 22px;
+  box-shadow: 0 14px 32px rgba(99, 102, 241, 0.25);
+}
+
+.bx-success-desc {
+  color: #94a3b8 !important;
+  font-size: 0.92rem !important;
+  line-height: 1.6 !important;
+  margin: 16px 0 28px !important;
+}
+
+.bx-success-desc strong {
+  color: #f1f5f9 !important;
+  font-weight: 700 !important;
+}
+
+/* Light mode adjustments */
+body[data-theme="light"] .bx-strength-label {
+  color: #64748b !important;
+}
+
+body[data-theme="light"] .bx-strength-label strong {
+  color: #4338ca !important;
+}
+
+body[data-theme="light"] .bx-strength-bar {
+  background: #e2e8f0 !important;
+}
+
+body[data-theme="light"] .bx-strength-3 .MuiLinearProgress-bar {
+  background: #4338ca !important;
+}
+
+body[data-theme="light"] .bx-strength-row {
+  color: #64748b;
+}
+
+body[data-theme="light"] .bx-strength-row:not(.is-pass) .MuiSvgIcon-root {
+  color: #cbd5e1;
+}
+
+body[data-theme="light"] .bx-terms-text {
+  color: #64748b !important;
+}
+
+body[data-theme="light"] .bx-check.Mui-checked {
+  color: #4338ca !important;
+}
+
+body[data-theme="light"] .bx-success-mark {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.35);
+  color: #4338ca;
+}
+
+body[data-theme="light"] .bx-success-desc {
+  color: #64748b !important;
+}
+
+body[data-theme="light"] .bx-success-desc strong {
+  color: #0b1020 !important;
+}
