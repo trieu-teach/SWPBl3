@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { Box, Typography, TextField, Button, Avatar, Alert, CircularProgress } from "@mui/material";
+import { Box, Typography, TextField, Button, Avatar, Alert, CircularProgress, Tabs, Tab } from "@mui/material";
 import { Person, Save, CheckCircle } from "@mui/icons-material";
 import UserLayout from "../User/Layout/UserLayout.jsx";
-import { useAuth } from "../../../features/auth/AuthProvider";
-import { getProfile, updateProfile } from "../../../api/auth.api";
+import { useAuth } from "../../features/auth/AuthProvider.jsx";
+import { getProfile, updateProfile } from "../../api/auth.api";
 
 export default function Profile() {
   const { user, refreshUser } = useAuth();
@@ -14,6 +14,7 @@ export default function Profile() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState("");
   const [profileSuccess, setProfileSuccess] = useState(false);
+  const [tab, setTab] = useState(0);
 
   useEffect(() => {
     if (user) {

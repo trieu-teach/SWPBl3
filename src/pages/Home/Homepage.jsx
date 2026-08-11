@@ -45,7 +45,7 @@ import {
   RocketLaunch,
 } from "@mui/icons-material";
 import { Link, useNavigate } from "react-router-dom";
-import ColorModeToggle from "../../../components/ColorModeToggle/ColorModeToggle.jsx";
+import ColorModeToggle from "../../components/ColorModeToggle/ColorModeToggle.jsx";
 import "./Homepage.css";
 
 /* ------------------------------------------------------------------ */

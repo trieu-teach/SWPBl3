@@ -28,7 +28,7 @@ import {
   Shield,
   RocketLaunch,
 } from "@mui/icons-material";
-import { useAuth } from "../../../features/auth/AuthProvider.jsx";
+import { useAuth } from "../../features/auth/AuthProvider.jsx";
 import "./Login.css";
 import "./Register.css";
 

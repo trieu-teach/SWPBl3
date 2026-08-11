@@ -26,9 +26,9 @@ import {
   Speed,
   Person,
 } from "@mui/icons-material";
-import { useAuth } from "../../../features/auth/AuthProvider.jsx";
-import { getAuthenticatedHomeRoute } from "../../../lib/routes";
-import { useColorMode } from "../../../App.jsx";
+import { useAuth } from "../../features/auth/AuthProvider.jsx";
+import { getAuthenticatedHomeRoute } from "../../lib/routes";
+import { useColorMode } from "../../App.jsx";
 import "./Login.css";
 
 const BRAND_FEATURES = [

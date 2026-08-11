@@ -19,7 +19,7 @@ import {
   Lock,
   CheckCircle,
 } from "@mui/icons-material";
-import { useColorMode } from "../../../App.jsx";
+import { useColorMode } from "../../App.jsx";
 import "./Login.css";
 
 export default function ResetPassword() {
@@ -116,7 +116,7 @@ export default function ResetPassword() {
     if (password !== confirmPassword) { setError("Mật khẩu xác nhận không khớp."); return; }
     setLoading(true);
     try {
-      const { resetPassword } = await import("../../../api/auth.api");
+      const { resetPassword } = await import("../../api/auth.api");
       await resetPassword(token, password, confirmPassword);
       setSuccess(true);
     } catch (err) {
