@@ -53,7 +53,7 @@ import "./Homepage.css";
 /* ------------------------------------------------------------------ */
 const navItems = [
   { id: "workflow", label: "Cách hoạt động" },
-  { id: "usecases", label: "Use case" },
+  { id: "usecases", label: "Tình huống" },
   { id: "features", label: "Tính năng" },
   { id: "pricing", label: "Gói" },
   { id: "faq", label: "Hỏi đáp" },
@@ -557,11 +557,11 @@ export default function Homepage() {
         </Container>
       </Box>
 
-      {/* ============================ USE CASES ============================ */}
+      {/* ============================ TÌNH HUỐNG ============================ */}
       <Box component="section" className="usecases section-pad" id="usecases">
         <Container maxWidth="lg">
           <Box className="section-head">
-            <Chip label="USE CASE" size="small" className="eyebrow-chip" />
+            <Chip label="TÌNH HUỐNG" size="small" className="eyebrow-chip" />
             <Typography variant="h2" className="section-title">
               Một trợ lý — bốn cách dùng khác nhau
             </Typography>

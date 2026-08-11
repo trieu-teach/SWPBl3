@@ -11,20 +11,20 @@ import { GuestGuard, RequireAuth } from "./features/auth/ProtectedRoute.jsx";
 import { ROUTES } from "./lib/routes";
 
 // Guest routes (login / register / forgot-password)
-import Login from "./pages/User/Login/Login.jsx";
-import Register from "./pages/User/Register/Register.jsx";
-import ForgotPassword from "./pages/User/ForgotPassword/ForgotPassword.jsx";
-import ResetPassword from "./pages/User/ResetPassword/ResetPassword.jsx";
+import Login from "./pages/Auth/Login.jsx";
+import Register from "./pages/Auth/Register.jsx";
+import ForgotPassword from "./pages/Auth/ForgotPassword.jsx";
+import ResetPassword from "./pages/Auth/ResetPassword.jsx";
 
 // Authenticated routes
 import Dashboard from "./pages/User/Dashboard/Dashboard.jsx";
-import Profile from "./pages/User/Profile/Profile.jsx";
+import Profile from "./pages/Profile/Profile.jsx";
 
 // Admin routes
 import AdminDashboard from "./pages/Admin/Dashboard/AdminDashboard.jsx";
 
 // Public
-import Homepage from "./pages/User/Home/Homepage.jsx";
+import Homepage from "./pages/Home/Homepage.jsx";
 
 // ---------------------------------------------------------------------------
 // Color mode context (light / dark)

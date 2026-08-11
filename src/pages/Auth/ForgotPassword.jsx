@@ -5,24 +5,18 @@ import {
   Typography,
   TextField,
   Button,
-  IconButton,
   InputAdornment,
   Alert,
   CircularProgress,
-  Tooltip,
 } from "@mui/material";
 import {
   ArrowBack,
-  Brightness4,
-  Brightness7,
   Email,
   VerifiedUser,
 } from "@mui/icons-material";
-import { useColorMode } from "../../../App.jsx";
-import "../Login/Login.css";
+import "./Login.css";
 
 export default function ForgotPassword() {
-  const { mode, toggle } = useColorMode();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);

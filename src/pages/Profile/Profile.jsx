@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Box, Typography, TextField, Button, Avatar, Alert, CircularProgress } from "@mui/material";
 import { Person, Save, CheckCircle } from "@mui/icons-material";
-import UserLayout from "../Layout/UserLayout.jsx";
+import UserLayout from "../User/Layout/UserLayout.jsx";
 import { useAuth } from "../../../features/auth/AuthProvider";
 import { getProfile, updateProfile } from "../../../api/auth.api";
 

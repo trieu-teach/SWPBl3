@@ -13,14 +13,11 @@ import {
   Checkbox,
   FormControlLabel,
   LinearProgress,
-  Tooltip,
 } from "@mui/material";
 import {
   Visibility,
   VisibilityOff,
   ArrowForward,
-  Brightness4,
-  Brightness7,
   Person,
   Email,
   Lock,
@@ -32,8 +29,7 @@ import {
   RocketLaunch,
 } from "@mui/icons-material";
 import { useAuth } from "../../../features/auth/AuthProvider.jsx";
-import { useColorMode } from "../../../App.jsx";
-import "../Login/Login.css";
+import "./Login.css";
 import "./Register.css";
 
 const BRAND_FEATURES = [
@@ -69,7 +65,6 @@ function getPasswordChecks(pwd) {
 export default function Register() {
   const navigate = useNavigate();
   const { register } = useAuth();
-  const { mode, toggle } = useColorMode();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -220,11 +215,6 @@ export default function Register() {
         </Box>
 
         <Box className="bx-header-actions">
-          <Tooltip title={mode === "dark" ? "Chuyển nền sáng" : "Chuyển nền tối"}>
-            <IconButton onClick={toggle} className="bx-theme-toggle">
-              {mode === "dark" ? <Brightness7 /> : <Brightness4 />}
-            </IconButton>
-          </Tooltip>
           <Button component={Link} to="/login" className="bx-header-login-btn">
             Đăng nhập
           </Button>

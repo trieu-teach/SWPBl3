@@ -20,7 +20,7 @@ import {
   CheckCircle,
 } from "@mui/icons-material";
 import { useColorMode } from "../../../App.jsx";
-import "../Login/Login.css";
+import "./Login.css";
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();

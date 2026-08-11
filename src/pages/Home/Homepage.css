@@ -115,7 +115,7 @@
 
 .brand-tag {
   font-size: 11px !important;
-  color: var(--muted);
+  color: var(--muted) !important;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   line-height: 1.2;
@@ -131,7 +131,7 @@
   border-radius: 999px;
   font-size: 14px;
   font-weight: 500;
-  color: var(--ink-mute);
+  color: var(--ink-mute) !important;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
@@ -141,8 +141,8 @@
 }
 
 .nav-link.active {
-  background: var(--ink);
-  color: #fff;
+  background: var(--ink) !important;
+  color: #fff !important;
 }
 
 .header-actions {
@@ -1838,6 +1838,42 @@ body[data-theme="dark"] .plan-name,
 body[data-theme="dark"] .plan-price,
 body[data-theme="dark"] .stat-value {
   color: var(--ink) !important;
+}
+
+/* Light mode: force dark text on headings (override MUI Typography color) */
+body[data-theme="light"] .brand-name,
+body[data-theme="light"] .hero-title,
+body[data-theme="light"] .section-title,
+body[data-theme="light"] .workflow-title,
+body[data-theme="light"] .usecase-title,
+body[data-theme="light"] .proof-title,
+body[data-theme="light"] .bento-feature-title,
+body[data-theme="light"] .testimonial-name,
+body[data-theme="light"] .faq-question,
+body[data-theme="light"] .plan-name,
+body[data-theme="light"] .plan-price,
+body[data-theme="light"] .stat-value,
+body[data-theme="light"] .footer-brand__name,
+body[data-theme="light"] .footer-title {
+  color: var(--ink) !important;
+}
+
+body[data-theme="light"] .brand-tag,
+body[data-theme="light"] .hero-meta-text,
+body[data-theme="light"] .hero-lede,
+body[data-theme="light"] .section-sub,
+body[data-theme="light"] .workflow-desc,
+body[data-theme="light"] .usecase-desc,
+body[data-theme="light"] .bento-feature-desc,
+body[data-theme="light"] .proof-desc,
+body[data-theme="light"] .stat-label,
+body[data-theme="light"] .security-line-text,
+body[data-theme="light"] .testimonial-role,
+body[data-theme="light"] .plan-period,
+body[data-theme="light"] .plan-feat,
+body[data-theme="light"] .footer-text,
+body[data-theme="light"] .footer-link {
+  color: var(--ink-mute) !important;
 }
 
 body[data-theme="dark"] .brand-tag,
