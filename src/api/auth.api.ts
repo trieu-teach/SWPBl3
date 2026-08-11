@@ -1,5 +1,6 @@
-﻿import { apiRequest } from "../../lib/http";
+import { apiRequest } from "../lib/http";
 
+// Auth endpoints
 export async function register(payload) {
   return apiRequest("/auth/register", {
     method: "POST",
@@ -34,30 +35,14 @@ export async function getCurrentUser() {
   return apiRequest("/auth/me").then((response) => response.user || response);
 }
 
-export async function forgotPassword(email) {
-  return apiRequest("/auth/forgot-password", {
-    method: "POST",
-    body: { email },
-  });
-}
-
-export async function resetPassword(token, password, confirmPassword) {
-  return apiRequest("/auth/reset-password", {
-    method: "POST",
-    body: { token, password, confirmPassword },
-  });
+// Profile endpoints
+export async function getProfile() {
+  return apiRequest("/users/profile");
 }
 
 export async function updateProfile(payload) {
-  return apiRequest("/auth/profile", {
-    method: "PUT",
-    body: payload,
-  }).then((response) => response.user || response);
-}
-
-export async function changePassword(payload) {
-  return apiRequest("/auth/change-password", {
-    method: "POST",
+  return apiRequest("/users/profile", {
+    method: "PATCH",
     body: payload,
   });
 }

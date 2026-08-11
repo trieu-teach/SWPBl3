@@ -37,7 +37,7 @@ export default function ForgotPassword() {
     }
     setLoading(true);
     try {
-      const { forgotPassword } = await import("../../../features/auth/auth.api");
+      const { forgotPassword } = await import("../../../api/auth.api");
       await forgotPassword(email);
       setSuccess(true);
     } catch (err) {

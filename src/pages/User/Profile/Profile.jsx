@@ -1,35 +1,12 @@
 import { useState, useEffect } from "react";
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Avatar,
-  Alert,
-  CircularProgress,
-  Tabs,
-  Tab,
-  Divider,
-  InputAdornment,
-  IconButton,
-} from "@mui/material";
-import {
-  Person,
-  Lock,
-  Visibility,
-  VisibilityOff,
-  Save,
-  CheckCircle,
-} from "@mui/icons-material";
+import { Box, Typography, TextField, Button, Avatar, Alert, CircularProgress } from "@mui/material";
+import { Person, Save, CheckCircle } from "@mui/icons-material";
 import UserLayout from "../Layout/UserLayout.jsx";
 import { useAuth } from "../../../features/auth/AuthProvider";
-import { updateProfile, changePassword } from "../../../features/auth/auth.api";
+import { getProfile, updateProfile } from "../../../api/auth.api";
 
 export default function Profile() {
   const { user, refreshUser } = useAuth();
-
-  // Tab state
-  const [tab, setTab] = useState(0);
 
   // Profile fields
   const [fullName, setFullName] = useState("");
@@ -37,16 +14,6 @@ export default function Profile() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState("");
   const [profileSuccess, setProfileSuccess] = useState(false);
-
-  // Password fields
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showCurrent, setShowCurrent] = useState(false);
-  const [showNew, setShowNew] = useState(false);
-  const [passwordError, setPasswordError] = useState("");
-  const [passwordLoading, setPasswordLoading] = useState(false);
-  const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -73,43 +40,6 @@ export default function Profile() {
       setProfileError(err?.message || "Không thể cập nhật thông tin.");
     } finally {
       setProfileLoading(false);
-    }
-  };
-
-  const handlePasswordSubmit = async (e) => {
-    e.preventDefault();
-    setPasswordError("");
-    setPasswordSuccess(false);
-    if (!currentPassword) {
-      setPasswordError("Vui lòng nhập mật khẩu hiện tại.");
-      return;
-    }
-    if (newPassword.length < 8) {
-      setPasswordError("Mật khẩu mới phải có ít nhất 8 ký tự.");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setPasswordError("Mật khẩu xác nhận không khớp.");
-      return;
-    }
-    setPasswordLoading(true);
-    try {
-      await changePassword({
-        currentPassword,
-        newPassword,
-        confirmPassword,
-      });
-      setPasswordSuccess(true);
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setTimeout(() => setPasswordSuccess(false), 4000);
-    } catch (err) {
-      setPasswordError(
-        err?.message || "Không thể đổi mật khẩu. Vui lòng kiểm tra lại."
-      );
-    } finally {
-      setPasswordLoading(false);
     }
   };
 
@@ -218,7 +148,6 @@ export default function Profile() {
           }}
         >
           <Tab icon={<Person sx={{ fontSize: 18 }} />} iconPosition="start" label="Thông tin cá nhân" />
-          <Tab icon={<Lock sx={{ fontSize: 18 }} />} iconPosition="start" label="Đổi mật khẩu" />
         </Tabs>
       </Box>
 
@@ -279,110 +208,6 @@ export default function Profile() {
             sx={{ alignSelf: "flex-start", mt: 1 }}
           >
             Lưu thay đổi
-          </Button>
-        </Box>
-      )}
-
-      {/* Tab 1: Change password */}
-      {tab === 1 && (
-        <Box
-          component="form"
-          onSubmit={handlePasswordSubmit}
-          sx={{
-            maxWidth: 480,
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
-          }}
-        >
-          {passwordError && (
-            <Alert severity="error" className="bx-form-alert">
-              {passwordError}
-            </Alert>
-          )}
-          {passwordSuccess && (
-            <Alert severity="success" className="bx-form-alert">
-              Đổi mật khẩu thành công!
-            </Alert>
-          )}
-
-          <TextField
-            label="Mật khẩu hiện tại"
-            type={showCurrent ? "text" : "password"}
-            fullWidth
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            required
-            disabled={passwordLoading}
-            slotProps={{
-              input: {
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowCurrent((s) => !s)}
-                      edge="end"
-                      size="small"
-                    >
-                      {showCurrent ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-
-          <TextField
-            label="Mật khẩu mới"
-            type={showNew ? "text" : "password"}
-            fullWidth
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            required
-            disabled={passwordLoading}
-            helperText="Ít nhất 8 ký tự."
-            slotProps={{
-              input: {
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowNew((s) => !s)}
-                      edge="end"
-                      size="small"
-                    >
-                      {showNew ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-
-          <TextField
-            label="Xác nhận mật khẩu mới"
-            type="password"
-            fullWidth
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            disabled={passwordLoading}
-          />
-
-          <Button
-            type="submit"
-            variant="contained"
-            disableElevation
-            startIcon={
-              passwordLoading ? (
-                <CircularProgress size={16} sx={{ color: "#fff" }} />
-              ) : (
-                <Lock />
-              )
-            }
-            disabled={passwordLoading}
-            className="bx-submit-btn"
-            sx={{ alignSelf: "flex-start", mt: 1 }}
-          >
-            Đổi mật khẩu
           </Button>
         </Box>
       )}

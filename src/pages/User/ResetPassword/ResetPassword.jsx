@@ -116,7 +116,7 @@ export default function ResetPassword() {
     if (password !== confirmPassword) { setError("Mật khẩu xác nhận không khớp."); return; }
     setLoading(true);
     try {
-      const { resetPassword } = await import("../../../features/auth/auth.api");
+      const { resetPassword } = await import("../../../api/auth.api");
       await resetPassword(token, password, confirmPassword);
       setSuccess(true);
     } catch (err) {
