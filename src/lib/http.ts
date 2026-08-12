@@ -1,4 +1,5 @@
 ﻿import axios from "axios";
+import { getAuth } from "firebase/auth";
 
 const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api"
@@ -48,7 +49,27 @@ export const apiClient = axios.create({
   withCredentials: false,
 });
 
-apiClient.interceptors.request.use((config) => {
+apiClient.interceptors.request.use(async (config) => {
+  const explicitAuth = config.headers?.Authorization;
+  if (explicitAuth) {
+    // Caller supplied their own Authorization (e.g. firebase-login passes idToken per-request).
+    return config;
+  }
+  // Prefer Firebase idToken if a user is signed in (BE verifies it on every request).
+  // Falls back to whatever is in localStorage for backwards-compat with stored BE JWTs.
+  try {
+    const firebaseAuth = getAuth();
+    const user = firebaseAuth.currentUser;
+    if (user) {
+      const idToken = await user.getIdToken(false);
+      if (idToken) {
+        config.headers.Authorization = `Bearer ${idToken}`;
+        return config;
+      }
+    }
+  } catch {
+    // ignore — fall through to stored token
+  }
   const token = getStoredAuthToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
