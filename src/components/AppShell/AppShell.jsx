@@ -15,8 +15,6 @@ import {
 } from "@mui/material";
 import {
   AdminPanelSettingsOutlined,
-  Brightness4Outlined,
-  Brightness7Outlined,
   BookmarkOutlined,
   DashboardOutlined,
   DescriptionOutlined,
@@ -29,6 +27,7 @@ import {
   UploadFileOutlined,
 } from "@mui/icons-material";
 import { useColorMode } from "../../App.jsx";
+import ColorModeToggle from "../ColorModeToggle/ColorModeToggle.jsx";
 import { useAuth } from "../../features/auth/AuthProvider.jsx";
 
 const DRAWER_WIDTH = 264;
@@ -70,7 +69,7 @@ function isActivePath(currentPath, itemPath) {
 export default function AppShell({ children, role = "USER" }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, logout } = useAuth();
-  const { mode, toggle } = useColorMode();
+  const { mode } = useColorMode();
   const location = useLocation();
   const navigate = useNavigate();
   const isAdmin = role === "ADMIN";
@@ -252,19 +251,7 @@ export default function AppShell({ children, role = "USER" }) {
             </Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <Tooltip
-              title={
-                mode === "dark" ? "Chuyển sang nền sáng" : "Chuyển sang nền tối"
-              }
-            >
-              <IconButton onClick={toggle} aria-label="Đổi giao diện sáng tối">
-                {mode === "dark" ? (
-                  <Brightness7Outlined />
-                ) : (
-                  <Brightness4Outlined />
-                )}
-              </IconButton>
-            </Tooltip>
+            <ColorModeToggle />
             <Box
               component={Link}
               to="/profile"

@@ -10,8 +10,10 @@ import {
   updateDocument,
   updateDocumentVisibility,
 } from "../../../../api/documents.api.js";
+import { useToast } from "../../../../components/Toast/ToastProvider.jsx";
 
 export default function useDocumentDetails() {
+  const toast = useToast();
   const { id } = useParams();
   const navigate = useNavigate();
   const [document, setDocument] = useState(null);
@@ -75,7 +77,10 @@ export default function useDocumentDetails() {
   async function save(event) {
     event.preventDefault();
     if (!form.title.trim() || !form.subjectId || !form.categoryId) {
-      return setError("Vui lòng nhập đủ tiêu đề, môn học và danh mục.");
+      const message = "Vui lòng nhập đủ tiêu đề, môn học và danh mục.";
+      setError(message);
+      toast.warning(message);
+      return;
     }
     setSaving(true);
     setError("");
@@ -88,8 +93,11 @@ export default function useDocumentDetails() {
       });
       setDocument(updated);
       setSuccess("Đã cập nhật thông tin tài liệu.");
+      toast.success("Đã cập nhật thông tin tài liệu.");
     } catch (saveError) {
-      setError(saveError.message || "Không thể cập nhật tài liệu.");
+      const message = saveError.message || "Không thể cập nhật tài liệu.";
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -107,8 +115,15 @@ export default function useDocumentDetails() {
           ? "Tài liệu đã được gửi duyệt công khai."
           : "Tài liệu đã chuyển sang riêng tư.",
       );
+      toast.success(
+        value === "PUBLIC"
+          ? "Đã gửi tài liệu để duyệt công khai."
+          : "Đã chuyển tài liệu sang riêng tư.",
+      );
     } catch (requestError) {
-      setError(requestError.message || "Không thể đổi quyền riêng tư.");
+      const message = requestError.message || "Không thể đổi quyền riêng tư.";
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -130,7 +145,9 @@ export default function useDocumentDetails() {
         });
       } else window.open(response.url, "_blank", "noopener,noreferrer");
     } catch (requestError) {
-      setError(requestError.message || "Không thể mở tệp.");
+      const message = requestError.message || "Không thể mở tệp.";
+      setError(message);
+      toast.error(message);
     }
   }
 
@@ -139,9 +156,12 @@ export default function useDocumentDetails() {
     setError("");
     try {
       await deleteDocument(id);
+      toast.success("Đã xóa tài liệu khỏi thư viện.");
       navigate("/documents", { replace: true });
     } catch (requestError) {
-      setError(requestError.message || "Không thể xóa tài liệu.");
+      const message = requestError.message || "Không thể xóa tài liệu.";
+      setError(message);
+      toast.error(message);
       setDeleting(false);
     }
   }

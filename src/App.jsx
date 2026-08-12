@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ConfigProvider, App as AntApp, theme as antdThemeAlgo } from "antd";
 import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
 import { AuthProvider } from "./features/auth/AuthProvider.jsx";
+import { ToastProvider } from "./components/Toast/ToastProvider.jsx";
 import { GuestGuard, RequireAuth } from "./features/auth/ProtectedRoute.jsx";
 
 // Guest routes (login / register / forgot-password)
@@ -125,8 +126,9 @@ export default function App() {
         <CssBaseline />
         <ConfigProvider theme={antdThemeConfig}>
           <AntApp>
-            <BrowserRouter>
-              <AuthProvider>
+            <ToastProvider>
+              <BrowserRouter>
+                <AuthProvider>
                 <Routes>
                   {/* ── Public ── */}
                   <Route path="/" element={<Homepage />} />
@@ -260,8 +262,9 @@ export default function App() {
                   {/* ── Catch-all ── */}
                   <Route path="*" element={<Homepage />} />
                 </Routes>
-              </AuthProvider>
-            </BrowserRouter>
+                </AuthProvider>
+              </BrowserRouter>
+            </ToastProvider>
           </AntApp>
         </ConfigProvider>
       </ThemeProvider>
