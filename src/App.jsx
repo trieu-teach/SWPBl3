@@ -1,14 +1,9 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ConfigProvider, App as AntApp, theme as antdThemeAlgo } from "antd";
-import {
-  ThemeProvider,
-  createTheme,
-  CssBaseline,
-} from "@mui/material";
+import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
 import { AuthProvider } from "./features/auth/AuthProvider.jsx";
 import { GuestGuard, RequireAuth } from "./features/auth/ProtectedRoute.jsx";
-import { ROUTES } from "./lib/routes";
 
 // Guest routes (login / register / forgot-password)
 import Login from "./pages/Auth/Login.jsx";
@@ -22,6 +17,7 @@ import Profile from "./pages/Profile/Profile.jsx";
 
 // Admin routes
 import AdminDashboard from "./pages/Admin/Dashboard/AdminDashboard.jsx";
+import ComingSoon from "./pages/Shared/ComingSoon.jsx";
 
 // Public
 import Homepage from "./pages/Home/Homepage.jsx";
@@ -83,7 +79,9 @@ function buildMuiTheme(mode) {
 function buildAntdTheme(mode) {
   return {
     algorithm:
-      mode === "dark" ? antdThemeAlgo.darkAlgorithm : antdThemeAlgo.defaultAlgorithm,
+      mode === "dark"
+        ? antdThemeAlgo.darkAlgorithm
+        : antdThemeAlgo.defaultAlgorithm,
     token: {
       colorPrimary: mode === "dark" ? "#6366f1" : "#1f2a44",
       fontFamily:
@@ -131,29 +129,85 @@ export default function App() {
                   {/* ── Guest-only (đã đăng nhập → redirect) ── */}
                   <Route
                     path="/login"
-                    element={<GuestGuard><Login /></GuestGuard>}
+                    element={
+                      <GuestGuard>
+                        <Login />
+                      </GuestGuard>
+                    }
                   />
                   <Route
                     path="/register"
-                    element={<GuestGuard><Register /></GuestGuard>}
+                    element={
+                      <GuestGuard>
+                        <Register />
+                      </GuestGuard>
+                    }
                   />
                   <Route
                     path="/forgot-password"
-                    element={<GuestGuard><ForgotPassword /></GuestGuard>}
+                    element={
+                      <GuestGuard>
+                        <ForgotPassword />
+                      </GuestGuard>
+                    }
                   />
                   <Route
                     path="/reset-password"
-                    element={<GuestGuard><ResetPassword /></GuestGuard>}
+                    element={
+                      <GuestGuard>
+                        <ResetPassword />
+                      </GuestGuard>
+                    }
                   />
 
                   {/* ── Authenticated (User) ── */}
                   <Route
                     path="/dashboard"
-                    element={<RequireAuth><Dashboard /></RequireAuth>}
+                    element={
+                      <RequireAuth>
+                        <Dashboard />
+                      </RequireAuth>
+                    }
                   />
                   <Route
                     path="/profile"
-                    element={<RequireAuth><Profile /></RequireAuth>}
+                    element={
+                      <RequireAuth>
+                        <Profile />
+                      </RequireAuth>
+                    }
+                  />
+                  <Route
+                    path="/documents"
+                    element={
+                      <RequireAuth>
+                        <ComingSoon title="Thư viện tài liệu" />
+                      </RequireAuth>
+                    }
+                  />
+                  <Route
+                    path="/documents/upload"
+                    element={
+                      <RequireAuth>
+                        <ComingSoon title="Tải tài liệu" />
+                      </RequireAuth>
+                    }
+                  />
+                  <Route
+                    path="/ai-chat"
+                    element={
+                      <RequireAuth>
+                        <ComingSoon title="Hỏi đáp với AI" />
+                      </RequireAuth>
+                    }
+                  />
+                  <Route
+                    path="/community"
+                    element={
+                      <RequireAuth>
+                        <ComingSoon title="Thư viện cộng đồng" />
+                      </RequireAuth>
+                    }
                   />
 
                   {/* ── Admin ── */}
@@ -162,6 +216,22 @@ export default function App() {
                     element={
                       <RequireAuth allowedRoles={["ADMIN"]}>
                         <AdminDashboard />
+                      </RequireAuth>
+                    }
+                  />
+                  <Route
+                    path="/admin/users"
+                    element={
+                      <RequireAuth allowedRoles={["ADMIN"]}>
+                        <ComingSoon title="Quản lý người dùng" />
+                      </RequireAuth>
+                    }
+                  />
+                  <Route
+                    path="/admin/documents"
+                    element={
+                      <RequireAuth allowedRoles={["ADMIN"]}>
+                        <ComingSoon title="Quản lý tài liệu" />
                       </RequireAuth>
                     }
                   />
