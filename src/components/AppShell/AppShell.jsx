@@ -152,7 +152,7 @@ export default function AppShell({ children, role = "USER" }) {
               </ListItemIcon>
               <ListItemText
                 primary={item.label}
-                slotProps={{ primary: { fontWeight: active ? 700 : 600 } }}
+                primaryTypographyProps={{ fontWeight: active ? 700 : 600 }}
               />
             </ListItemButton>
           );
@@ -172,7 +172,7 @@ export default function AppShell({ children, role = "USER" }) {
           </ListItemIcon>
           <ListItemText
             primary="Hồ sơ cá nhân"
-            slotProps={{ primary: { fontWeight: 600 } }}
+            primaryTypographyProps={{ fontWeight: 600 }}
           />
         </ListItemButton>
       </Box>

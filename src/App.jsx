@@ -14,6 +14,7 @@ import ResetPassword from "./pages/Auth/ResetPassword.jsx";
 // Authenticated routes
 import Dashboard from "./pages/User/Dashboard/Dashboard.jsx";
 import Profile from "./pages/Profile/Profile.jsx";
+import UploadDocument from "./pages/User/Documents/UploadDocument.jsx";
 
 // Admin routes
 import AdminDashboard from "./pages/Admin/Dashboard/AdminDashboard.jsx";
@@ -189,7 +190,7 @@ export default function App() {
                     path="/documents/upload"
                     element={
                       <RequireAuth>
-                        <ComingSoon title="Tải tài liệu" />
+                        <UploadDocument />
                       </RequireAuth>
                     }
                   />
