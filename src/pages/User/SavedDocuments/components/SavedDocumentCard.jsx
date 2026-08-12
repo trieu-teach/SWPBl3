@@ -7,28 +7,32 @@ import {
   CardContent,
   Chip,
   CircularProgress,
+  IconButton,
   Stack,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import {
-  BookmarkBorderOutlined,
-  BookmarkOutlined,
+  BookmarkRemoveOutlined,
+  CloudDownloadOutlined,
   DescriptionOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
 import {
+  AI_STATUS,
   displayFileType,
   formatBytes,
   formatDate,
   normalizeTags,
 } from "../../DocumentLibrary/utils/document-formatters.js";
 
-export default function CommunityCard({
+export default function SavedDocumentCard({
   document,
   actionId,
-  onPreview,
-  onSave,
+  onOpen,
+  onRemove,
 }) {
+  const status = AI_STATUS[document.aiStatus] || AI_STATUS.PENDING;
   const tags = normalizeTags(document.tags);
   return (
     <Card
@@ -36,13 +40,7 @@ export default function CommunityCard({
       sx={{ borderRadius: 3, display: "flex", flexDirection: "column" }}
     >
       <CardContent sx={{ flex: 1 }}>
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="flex-start"
-          spacing={3}
-          sx={{ width: "100%" }}
-        >
+        <Stack direction="row" justifyContent="space-between" spacing={3}>
           <Box
             sx={{
               width: 48,
@@ -59,7 +57,7 @@ export default function CommunityCard({
           <Chip
             size="small"
             label={displayFileType(document)}
-            sx={{ flexShrink: 0, ml: "auto" }}
+            sx={{ ml: "auto" }}
           />
         </Stack>
         <Typography
@@ -93,14 +91,22 @@ export default function CommunityCard({
             {document.owner?.fullName || "Người chia sẻ"}
           </Typography>
         </Stack>
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ display: "block", mt: 1.5 }}
-        >
-          {formatBytes(document.fileSize)} · {formatDate(document.createdAt)} ·{" "}
-          {document.viewCount || 0} lượt xem
-        </Typography>
+        <Stack direction="row" gap={1} sx={{ mt: 1.5 }}>
+          <Chip
+            size="small"
+            label={status.label}
+            color={status.color}
+            variant="outlined"
+          />
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ alignSelf: "center" }}
+          >
+            {formatBytes(document.fileSize)} · Lưu{" "}
+            {formatDate(document.savedAt)}
+          </Typography>
+        </Stack>
         {tags.length > 0 && (
           <Stack direction="row" gap={0.75} flexWrap="wrap" sx={{ mt: 1.5 }}>
             {tags.slice(0, 3).map((tag) => (
@@ -126,22 +132,34 @@ export default function CommunityCard({
               <VisibilityOutlined />
             )
           }
-          onClick={() => onPreview(document)}
+          onClick={() => onOpen(document, "preview")}
         >
           Xem
         </Button>
-        {!document.owned && (
-          <Button
-            size="small"
-            disabled={actionId === `save-${document.id}`}
-            startIcon={
-              document.saved ? <BookmarkOutlined /> : <BookmarkBorderOutlined />
-            }
-            onClick={() => onSave(document)}
-          >
-            {document.saved ? "Bỏ lưu" : "Lưu"}
-          </Button>
-        )}
+        <Tooltip title="Tải xuống">
+          <span>
+            <IconButton
+              size="small"
+              disabled={Boolean(actionId)}
+              onClick={() => onOpen(document, "download")}
+            >
+              {actionId === `download-${document.id}` ? (
+                <CircularProgress size={18} />
+              ) : (
+                <CloudDownloadOutlined />
+              )}
+            </IconButton>
+          </span>
+        </Tooltip>
+        <Button
+          color="error"
+          size="small"
+          disabled={actionId === `remove-${document.id}`}
+          startIcon={<BookmarkRemoveOutlined />}
+          onClick={() => onRemove(document)}
+        >
+          Bỏ lưu
+        </Button>
       </CardActions>
     </Card>
   );

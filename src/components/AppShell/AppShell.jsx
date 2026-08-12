@@ -17,6 +17,7 @@ import {
   AdminPanelSettingsOutlined,
   Brightness4Outlined,
   Brightness7Outlined,
+  BookmarkOutlined,
   DashboardOutlined,
   DescriptionOutlined,
   FolderOpenOutlined,
@@ -39,6 +40,7 @@ const USER_NAVIGATION = [
     path: "/documents/upload",
     icon: UploadFileOutlined,
   },
+  { label: "Đã lưu", path: "/saved-documents", icon: BookmarkOutlined },
   { label: "Hỏi AI", path: "/ai-chat", icon: SmartToyOutlined },
   { label: "Cộng đồng", path: "/community", icon: PeopleAltOutlined },
 ];
