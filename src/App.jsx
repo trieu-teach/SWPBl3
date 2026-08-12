@@ -15,6 +15,7 @@ import ResetPassword from "./pages/Auth/ResetPassword.jsx";
 import Dashboard from "./pages/User/Dashboard/Dashboard.jsx";
 import Profile from "./pages/Profile/Profile.jsx";
 import UploadDocument from "./pages/User/Documents/UploadDocument.jsx";
+import DocumentLibrary from "./pages/User/Documents/DocumentLibrary.jsx";
 
 // Admin routes
 import AdminDashboard from "./pages/Admin/Dashboard/AdminDashboard.jsx";
@@ -182,7 +183,7 @@ export default function App() {
                     path="/documents"
                     element={
                       <RequireAuth>
-                        <ComingSoon title="Thư viện tài liệu" />
+                        <DocumentLibrary />
                       </RequireAuth>
                     }
                   />
