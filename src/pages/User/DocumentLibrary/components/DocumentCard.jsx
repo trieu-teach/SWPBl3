@@ -18,6 +18,7 @@ import {
   PublicOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
+import { Link } from "react-router-dom";
 import {
   AI_STATUS,
   displayFileType,
@@ -112,6 +113,9 @@ export default function DocumentCard({ document, actionId, onOpen }) {
       <CardActions
         sx={{ px: 2, pb: 2, borderTop: "1px solid", borderColor: "divider" }}
       >
+        <Button component={Link} to={`/documents/${document.id}`} size="small">
+          Chi tiết
+        </Button>
         <Button
           size="small"
           startIcon={
