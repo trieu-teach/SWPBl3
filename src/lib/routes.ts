@@ -6,7 +6,13 @@
   resetPassword: "/reset-password",
   dashboard: "/dashboard",
   profile: "/profile",
+  documents: "/documents",
+  uploadDocument: "/documents/upload",
+  aiChat: "/ai-chat",
+  community: "/community",
   adminDashboard: "/admin/dashboard",
+  adminUsers: "/admin/users",
+  adminDocuments: "/admin/documents",
 };
 
 export function getAuthenticatedHomeRoute(role) {
