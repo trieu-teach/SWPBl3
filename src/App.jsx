@@ -17,6 +17,7 @@ import Profile from "./pages/Profile/Profile.jsx";
 import UploadDocument from "./pages/User/UploadDocument/UploadDocument.jsx";
 import DocumentLibrary from "./pages/User/DocumentLibrary/DocumentLibrary.jsx";
 import DocumentDetails from "./pages/User/DocumentDetails/DocumentDetails.jsx";
+import CommunityLibrary from "./pages/User/CommunityLibrary/CommunityLibrary.jsx";
 
 // Admin routes
 import AdminDashboard from "./pages/Admin/Dashboard/AdminDashboard.jsx";
@@ -216,7 +217,7 @@ export default function App() {
                     path="/community"
                     element={
                       <RequireAuth>
-                        <ComingSoon title="Thư viện cộng đồng" />
+                        <CommunityLibrary />
                       </RequireAuth>
                     }
                   />
