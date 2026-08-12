@@ -1,41 +1,34 @@
 import { apiRequest } from "../lib/http";
 
-// Auth endpoints
 export async function register(payload) {
   return apiRequest("/auth/register", {
     method: "POST",
     body: {
       fullName: payload.fullName,
-      email: payload.email,
-      password: payload.password,
-      confirmPassword: payload.confirmPassword,
       acceptedTerms: payload.acceptedTerms,
     },
   });
 }
 
-export async function login(payload) {
-  return apiRequest("/auth/login", {
+export async function registerWithFirebase({ idToken, fullName, acceptedTerms }) {
+  return apiRequest("/auth/register", {
     method: "POST",
-    body: {
-      email: payload.email,
-      password: payload.password,
-    },
-  }).then((response) => response.user || response);
+    headers: { Authorization: `Bearer ${idToken}` },
+    body: { fullName, acceptedTerms: Boolean(acceptedTerms) },
+  });
 }
 
 export async function loginWithFirebaseToken(payload) {
   return apiRequest("/auth/firebase-login", {
     method: "POST",
     headers: { Authorization: `Bearer ${payload.idToken}` },
-  }).then((response) => response.user || response);
+  });
 }
 
 export async function getCurrentUser() {
-  return apiRequest("/auth/me").then((response) => response.user || response);
+  return apiRequest("/auth/me");
 }
 
-// Profile endpoints
 export async function getProfile() {
   return apiRequest("/users/profile");
 }

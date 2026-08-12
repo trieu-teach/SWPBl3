@@ -8,27 +8,25 @@ import {
   Button,
   IconButton,
   InputAdornment,
-  Alert,
   CircularProgress,
-  Tooltip,
+  Alert,
 } from "@mui/material";
 import {
   Visibility,
   VisibilityOff,
   ArrowForward,
-  Brightness4,
-  Brightness7,
-  Email,
-  Lock,
   Google,
   VerifiedUser,
   AutoAwesome,
   Speed,
+  Email,
+  Lock,
   Person,
 } from "@mui/icons-material";
 import { useAuth } from "../../features/auth/AuthProvider.jsx";
 import { getAuthenticatedHomeRoute } from "../../lib/routes";
 import { useColorMode } from "../../App.jsx";
+import { firebaseErrorMessage } from "../../lib/authService";
 import "./Login.css";
 
 const BRAND_FEATURES = [
@@ -55,7 +53,7 @@ const BRAND_FEATURES = [
 export default function Login() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { login } = useAuth();
+  const { signIn, signInGoogle, refreshUser } = useAuth();
   const { mode, toggle } = useColorMode();
 
   const [email, setEmail] = useState("");
@@ -73,28 +71,40 @@ export default function Login() {
     }
     setLoading(true);
     try {
-      const user = await login({ email, password });
+      const data = await signIn({ email, password });
+      const refreshed = await refreshUser();
       const from = searchParams.get("from");
-      navigate(from || getAuthenticatedHomeRoute(user?.role || "USER"), {
-        replace: true,
-      });
-    } catch (err) {
-      setError(
-        err?.message ||
-          "Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu."
+      navigate(
+        from || getAuthenticatedHomeRoute(refreshed?.role || data?.role || "USER"),
+        { replace: true }
       );
+    } catch (err) {
+      setError(firebaseErrorMessage(err, "Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu."));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogle = () => {
-    setError("Đăng nhập bằng Google sẽ sớm được hỗ trợ.");
+  const handleGoogle = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const data = await signInGoogle({});
+      const refreshed = await refreshUser();
+      const from = searchParams.get("from");
+      navigate(
+        from || getAuthenticatedHomeRoute(refreshed?.role || data?.role || "USER"),
+        { replace: true }
+      );
+    } catch (err) {
+      setError(firebaseErrorMessage(err, "Đăng nhập Google thất bại."));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <Box className="bx-auth">
-      {/* ── HEADER ── */}
       <Box component="header" className="bx-header">
         <Link to="/" className="bx-header-logo">
           <Box className="bx-header-logo-icon">D</Box>
@@ -118,9 +128,7 @@ export default function Login() {
         </Box>
       </Box>
 
-      {/* ── MAIN LAYOUT ── */}
       <Box className="bx-layout">
-        {/* LEFT — Branding */}
         <Box className="bx-panel-left">
           <Box className="bx-panel-dots" aria-hidden />
           <Box className="bx-panel-content">
@@ -155,7 +163,6 @@ export default function Login() {
           </Box>
         </Box>
 
-        {/* RIGHT — Form */}
         <Box className="bx-panel-right">
           <Box className="bx-form-card">
             <Box className="bx-form-head">
@@ -254,6 +261,23 @@ export default function Login() {
                 {loading ? "Đang xử lý…" : "Đăng nhập"}
               </Button>
 
+              <Box className="bx-divider">
+                <span>hoặc</span>
+              </Box>
+
+              <Button
+                fullWidth
+                size="large"
+                variant="outlined"
+                disableElevation
+                onClick={handleGoogle}
+                disabled={loading}
+                startIcon={<Google sx={{ fontSize: 19 }} />}
+                className="bx-google-btn"
+              >
+                Tiếp tục với Google
+              </Button>
+
               <Typography className="bx-form-sub" sx={{ textAlign: "center" }}>
                 Chưa có tài khoản?{" "}
                 <Link to="/register" className="bx-form-link">
@@ -261,22 +285,6 @@ export default function Login() {
                 </Link>
               </Typography>
             </form>
-
-            <Box className="bx-divider">
-              <span>hoặc</span>
-            </Box>
-
-            <Button
-              fullWidth
-              size="large"
-              variant="outlined"
-              disableElevation
-              onClick={handleGoogle}
-              startIcon={<Google sx={{ fontSize: 19 }} />}
-              className="bx-google-btn"
-            >
-              Tiếp tục với Google
-            </Button>
           </Box>
         </Box>
       </Box>
