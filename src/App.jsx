@@ -14,8 +14,8 @@ import ResetPassword from "./pages/Auth/ResetPassword.jsx";
 // Authenticated routes
 import Dashboard from "./pages/User/Dashboard/Dashboard.jsx";
 import Profile from "./pages/Profile/Profile.jsx";
-import UploadDocument from "./pages/User/Documents/UploadDocument.jsx";
-import DocumentLibrary from "./pages/User/Documents/DocumentLibrary.jsx";
+import UploadDocument from "./pages/User/UploadDocument/UploadDocument.jsx";
+import DocumentLibrary from "./pages/User/DocumentLibrary/DocumentLibrary.jsx";
 
 // Admin routes
 import AdminDashboard from "./pages/Admin/Dashboard/AdminDashboard.jsx";
