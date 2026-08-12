@@ -52,3 +52,25 @@ export function getDocumentPreview(id) {
 export function getDocumentDownload(id) {
   return apiRequest(`/documents/${id}/download`);
 }
+
+export function getDocument(id) {
+  return apiRequest(`/documents/${id}`);
+}
+
+export function updateDocument(id, payload) {
+  return apiRequest(`/documents/${id}`, {
+    method: "PUT",
+    body: payload,
+  });
+}
+
+export function updateDocumentVisibility(id, visibility) {
+  return apiRequest(`/documents/${id}/visibility`, {
+    method: "PUT",
+    body: { visibility },
+  });
+}
+
+export function deleteDocument(id) {
+  return apiRequest(`/documents/${id}`, { method: "DELETE" });
+}
