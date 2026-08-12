@@ -24,6 +24,7 @@ import {
   Person,
 } from "@mui/icons-material";
 import { useAuth } from "../../features/auth/AuthProvider.jsx";
+import { useToast } from "../../components/Toast/ToastProvider.jsx";
 import { getAuthenticatedHomeRoute } from "../../lib/routes";
 import { useColorMode } from "../../App.jsx";
 import { firebaseErrorMessage } from "../../lib/authService";
@@ -52,6 +53,7 @@ const BRAND_FEATURES = [
 
 export default function Login() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [searchParams] = useSearchParams();
   const { signIn, signInGoogle, refreshUser } = useAuth();
   const { mode, toggle } = useColorMode();
@@ -66,7 +68,9 @@ export default function Login() {
     e.preventDefault();
     setError("");
     if (!email || !password) {
-      setError("Vui lòng nhập email và mật khẩu.");
+      const message = "Vui lòng nhập email và mật khẩu.";
+      setError(message);
+      toast.warning(message);
       return;
     }
     setLoading(true);
@@ -74,12 +78,18 @@ export default function Login() {
       const data = await signIn({ email, password });
       const refreshed = await refreshUser();
       const from = searchParams.get("from");
+      toast.success("Đăng nhập thành công.");
       navigate(
         from || getAuthenticatedHomeRoute(refreshed?.role || data?.role || "USER"),
         { replace: true }
       );
     } catch (err) {
-      setError(firebaseErrorMessage(err, "Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu."));
+      const message = firebaseErrorMessage(
+        err,
+        "Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.",
+      );
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -92,12 +102,15 @@ export default function Login() {
       const data = await signInGoogle({});
       const refreshed = await refreshUser();
       const from = searchParams.get("from");
+      toast.success("Đăng nhập bằng Google thành công.");
       navigate(
         from || getAuthenticatedHomeRoute(refreshed?.role || data?.role || "USER"),
         { replace: true }
       );
     } catch (err) {
-      setError(firebaseErrorMessage(err, "Đăng nhập Google thất bại."));
+      const message = firebaseErrorMessage(err, "Đăng nhập Google thất bại.");
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }

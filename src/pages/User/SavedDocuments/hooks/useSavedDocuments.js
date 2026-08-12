@@ -5,8 +5,10 @@ import {
   getCommunityPreview,
 } from "../../../../api/community.api.js";
 import { getDocumentDownload } from "../../../../api/documents.api.js";
+import { useToast } from "../../../../components/Toast/ToastProvider.jsx";
 
 export default function useSavedDocuments() {
+  const toast = useToast();
   const [documents, setDocuments] = useState([]);
   const [searchInput, setSearchInput] = useState("");
   const [filters, setFilters] = useState({
@@ -89,8 +91,11 @@ export default function useSavedDocuments() {
         ...current,
         totalItems: Math.max(0, current.totalItems - 1),
       }));
+      toast.success("Đã bỏ tài liệu khỏi danh sách đã lưu.");
     } catch (requestError) {
-      setError(requestError.message || "Không thể bỏ lưu tài liệu.");
+      const message = requestError.message || "Không thể bỏ lưu tài liệu.";
+      setError(message);
+      toast.error(message);
     } finally {
       setActionId("");
     }

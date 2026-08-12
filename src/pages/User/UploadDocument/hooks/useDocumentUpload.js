@@ -8,6 +8,7 @@ import {
   getTitleFromFileName,
   validateFile,
 } from "../utils/upload-validation.js";
+import { useToast } from "../../../../components/Toast/ToastProvider.jsx";
 
 const INITIAL_FORM = {
   title: "",
@@ -18,6 +19,7 @@ const INITIAL_FORM = {
 };
 
 export default function useDocumentUpload() {
+  const toast = useToast();
   const [subjects, setSubjects] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
@@ -115,8 +117,11 @@ export default function useDocumentUpload() {
       );
       setProgress(100);
       setResult(document);
+      toast.success("Tải tài liệu thành công. Hệ thống đang xử lý nội dung.");
     } catch (uploadError) {
-      setSubmitError(uploadError.message || "Không thể tải tài liệu lên.");
+      const message = uploadError.message || "Không thể tải tài liệu lên.";
+      setSubmitError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
