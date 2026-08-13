@@ -22,6 +22,7 @@ import LocalOfferOutlined from "@mui/icons-material/LocalOfferOutlined";
 import MenuRounded from "@mui/icons-material/MenuRounded";
 import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
 import SmartToyOutlined from "@mui/icons-material/SmartToyOutlined";
+import ShoppingCartOutlined from "@mui/icons-material/ShoppingCartOutlined";
 import UploadFileOutlined from "@mui/icons-material/UploadFileOutlined";
 import NotificationsOutlined from "@mui/icons-material/NotificationsOutlined";
 import { useColorMode } from "../../App.jsx";
@@ -52,6 +53,11 @@ const ADMIN_NAVIGATION = [
     label: "Gói dịch vụ",
     path: "/admin/subscription-plans",
     icon: LocalOfferOutlined,
+  },
+  {
+    label: "Đăng ký gói",
+    path: "/admin/subscriptions",
+    icon: ShoppingCartOutlined,
   },
   {
     label: "Nhật ký kiểm tra",
