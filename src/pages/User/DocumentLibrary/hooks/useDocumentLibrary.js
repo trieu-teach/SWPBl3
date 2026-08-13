@@ -111,17 +111,23 @@ export default function useDocumentLibrary() {
         mode === "preview"
           ? await getDocumentPreview(document.id)
           : await getDocumentDownload(document.id);
-      if (!response?.url) {
+      const fileUrl =
+        mode === "preview"
+          ? response?.previewUrl || response?.url
+          : response?.url;
+      if (!fileUrl) {
         throw new Error("Backend không trả về đường dẫn tệp.");
       }
       if (mode === "preview") {
         setPreview({
           title: document.title,
           fileName: document.fileName,
-          url: response.url,
+          url: fileUrl,
+          contentType: response.contentType,
+          fallbackToOfficeViewer: response.fallbackToOfficeViewer,
         });
       } else {
-        window.open(response.url, "_blank", "noopener,noreferrer");
+        window.open(fileUrl, "_blank", "noopener,noreferrer");
       }
     } catch (actionError) {
       setError(actionError.message || "Không thể mở tài liệu.");

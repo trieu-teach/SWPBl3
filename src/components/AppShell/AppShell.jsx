@@ -366,7 +366,7 @@ export default function AppShell({ children, role = "USER" }) {
           display: "flex",
           flexDirection: "column",
           minHeight: "100vh",
-          backgroundColor: "#ffffff",
+          backgroundColor: "background.default",
         }}
       >
         {/* Top Header */}
@@ -381,7 +381,11 @@ export default function AppShell({ children, role = "USER" }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            backgroundColor: "#ffffff",
+            bgcolor:
+              mode === "dark"
+                ? "rgba(11,15,26,.88)"
+                : "rgba(255,255,255,.88)",
+            backdropFilter: "blur(16px)",
             borderBottom: "1px solid",
             borderColor: "divider",
           }}
