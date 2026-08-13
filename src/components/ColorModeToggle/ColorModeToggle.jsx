@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { Tooltip } from "@mui/material";
 import { LightMode, DarkMode } from "@mui/icons-material";
 import { useColorMode } from "../../App.jsx";
+import "./ColorModeToggle.css";
 
 export default function ColorModeToggle() {
   const { mode, toggle } = useColorMode();

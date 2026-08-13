@@ -1,0 +1,129 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  getCommunityDocuments,
+  getCommunityPreview,
+  saveCommunityDocument,
+  unsaveCommunityDocument,
+} from "../../../../api/community.api.js";
+import { useToast } from "../../../../components/Toast/ToastProvider.jsx";
+
+export default function useCommunityLibrary() {
+  const toast = useToast();
+  const [documents, setDocuments] = useState([]);
+  const [searchInput, setSearchInput] = useState("");
+  const [filters, setFilters] = useState({
+    q: "",
+    fileType: "",
+    sortBy: "createdAt",
+  });
+  const [page, setPage] = useState(1);
+  const [meta, setMeta] = useState({ totalItems: 0, totalPages: 0 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [actionId, setActionId] = useState("");
+  const [preview, setPreview] = useState(null);
+
+  const query = useMemo(
+    () => ({ ...filters, page, limit: 12, sortOrder: "desc" }),
+    [filters, page],
+  );
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await getCommunityDocuments(query);
+      setDocuments(response?.items || response?.data || []);
+      setMeta(response?.meta || { totalItems: 0, totalPages: 0 });
+    } catch (requestError) {
+      setError(requestError.message || "Không thể tải thư viện cộng đồng.");
+    } finally {
+      setLoading(false);
+    }
+  }, [query]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  function updateFilter(name, value) {
+    setPage(1);
+    setFilters((current) => ({ ...current, [name]: value }));
+  }
+
+  function search(event) {
+    event.preventDefault();
+    updateFilter("q", searchInput.trim());
+  }
+
+  async function openPreview(document) {
+    setActionId(`preview-${document.id}`);
+    setError("");
+    try {
+      const response = await getCommunityPreview(document.id);
+      setPreview({
+        title: document.title,
+        fileName: document.fileName,
+        url: response.url,
+      });
+    } catch (requestError) {
+      setError(requestError.message || "Không thể xem tài liệu.");
+    } finally {
+      setActionId("");
+    }
+  }
+
+  async function toggleSave(document) {
+    setActionId(`save-${document.id}`);
+    setError("");
+    try {
+      if (document.saved) await unsaveCommunityDocument(document.id);
+      else await saveCommunityDocument(document.id);
+      setDocuments((current) =>
+        current.map((item) =>
+          item.id === document.id
+            ? {
+                ...item,
+                saved: !item.saved,
+                saveCount: Math.max(
+                  0,
+                  (item.saveCount || 0) + (item.saved ? -1 : 1),
+                ),
+              }
+            : item,
+        ),
+      );
+      toast.success(
+        document.saved
+          ? "Đã bỏ tài liệu khỏi danh sách đã lưu."
+          : "Đã lưu tài liệu để xem lại sau.",
+      );
+    } catch (requestError) {
+      const message = requestError.message || "Không thể cập nhật tài liệu đã lưu.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setActionId("");
+    }
+  }
+
+  return {
+    documents,
+    searchInput,
+    filters,
+    page,
+    meta,
+    loading,
+    error,
+    actionId,
+    preview,
+    setSearchInput,
+    setPage,
+    updateFilter,
+    search,
+    load,
+    openPreview,
+    toggleSave,
+    closePreview: () => setPreview(null),
+  };
+}

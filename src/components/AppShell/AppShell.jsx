@@ -15,8 +15,7 @@ import {
 } from "@mui/material";
 import {
   AdminPanelSettingsOutlined,
-  Brightness4Outlined,
-  Brightness7Outlined,
+  BookmarkOutlined,
   DashboardOutlined,
   DescriptionOutlined,
   FolderOpenOutlined,
@@ -28,6 +27,7 @@ import {
   UploadFileOutlined,
 } from "@mui/icons-material";
 import { useColorMode } from "../../App.jsx";
+import ColorModeToggle from "../ColorModeToggle/ColorModeToggle.jsx";
 import { useAuth } from "../../features/auth/AuthProvider.jsx";
 
 const DRAWER_WIDTH = 264;
@@ -39,6 +39,7 @@ const USER_NAVIGATION = [
     path: "/documents/upload",
     icon: UploadFileOutlined,
   },
+  { label: "Đã lưu", path: "/saved-documents", icon: BookmarkOutlined },
   { label: "Hỏi AI", path: "/ai-chat", icon: SmartToyOutlined },
   { label: "Cộng đồng", path: "/community", icon: PeopleAltOutlined },
 ];
@@ -68,7 +69,7 @@ function isActivePath(currentPath, itemPath) {
 export default function AppShell({ children, role = "USER" }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, logout } = useAuth();
-  const { mode, toggle } = useColorMode();
+  const { mode } = useColorMode();
   const location = useLocation();
   const navigate = useNavigate();
   const isAdmin = role === "ADMIN";
@@ -152,7 +153,7 @@ export default function AppShell({ children, role = "USER" }) {
               </ListItemIcon>
               <ListItemText
                 primary={item.label}
-                slotProps={{ primary: { fontWeight: active ? 700 : 600 } }}
+                primaryTypographyProps={{ fontWeight: active ? 700 : 600 }}
               />
             </ListItemButton>
           );
@@ -172,7 +173,7 @@ export default function AppShell({ children, role = "USER" }) {
           </ListItemIcon>
           <ListItemText
             primary="Hồ sơ cá nhân"
-            slotProps={{ primary: { fontWeight: 600 } }}
+            primaryTypographyProps={{ fontWeight: 600 }}
           />
         </ListItemButton>
       </Box>
@@ -250,19 +251,7 @@ export default function AppShell({ children, role = "USER" }) {
             </Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <Tooltip
-              title={
-                mode === "dark" ? "Chuyển sang nền sáng" : "Chuyển sang nền tối"
-              }
-            >
-              <IconButton onClick={toggle} aria-label="Đổi giao diện sáng tối">
-                {mode === "dark" ? (
-                  <Brightness7Outlined />
-                ) : (
-                  <Brightness4Outlined />
-                )}
-              </IconButton>
-            </Tooltip>
+            <ColorModeToggle />
             <Box
               component={Link}
               to="/profile"

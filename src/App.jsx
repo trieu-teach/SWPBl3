@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ConfigProvider, App as AntApp, theme as antdThemeAlgo } from "antd";
 import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
 import { AuthProvider } from "./features/auth/AuthProvider.jsx";
+import { ToastProvider } from "./components/Toast/ToastProvider.jsx";
 import { GuestGuard, RequireAuth } from "./features/auth/ProtectedRoute.jsx";
 
 // Guest routes (login / register / forgot-password)
@@ -14,6 +15,11 @@ import ResetPassword from "./pages/Auth/ResetPassword.jsx";
 // Authenticated routes
 import Dashboard from "./pages/User/Dashboard/Dashboard.jsx";
 import Profile from "./pages/Profile/Profile.jsx";
+import UploadDocument from "./pages/User/UploadDocument/UploadDocument.jsx";
+import DocumentLibrary from "./pages/User/DocumentLibrary/DocumentLibrary.jsx";
+import DocumentDetails from "./pages/User/DocumentDetails/DocumentDetails.jsx";
+import CommunityLibrary from "./pages/User/CommunityLibrary/CommunityLibrary.jsx";
+import SavedDocuments from "./pages/User/SavedDocuments/SavedDocuments.jsx";
 
 // Admin routes
 import AdminDashboard from "./pages/Admin/Dashboard/AdminDashboard.jsx";
@@ -120,8 +126,9 @@ export default function App() {
         <CssBaseline />
         <ConfigProvider theme={antdThemeConfig}>
           <AntApp>
-            <BrowserRouter>
-              <AuthProvider>
+            <ToastProvider>
+              <BrowserRouter>
+                <AuthProvider>
                 <Routes>
                   {/* ── Public ── */}
                   <Route path="/" element={<Homepage />} />
@@ -181,7 +188,7 @@ export default function App() {
                     path="/documents"
                     element={
                       <RequireAuth>
-                        <ComingSoon title="Thư viện tài liệu" />
+                        <DocumentLibrary />
                       </RequireAuth>
                     }
                   />
@@ -189,7 +196,15 @@ export default function App() {
                     path="/documents/upload"
                     element={
                       <RequireAuth>
-                        <ComingSoon title="Tải tài liệu" />
+                        <UploadDocument />
+                      </RequireAuth>
+                    }
+                  />
+                  <Route
+                    path="/documents/:id"
+                    element={
+                      <RequireAuth>
+                        <DocumentDetails />
                       </RequireAuth>
                     }
                   />
@@ -205,12 +220,20 @@ export default function App() {
                     path="/community"
                     element={
                       <RequireAuth>
-                        <ComingSoon title="Thư viện cộng đồng" />
+                        <CommunityLibrary />
                       </RequireAuth>
                     }
                   />
 
                   {/* ── Admin ── */}
+                  <Route
+                    path="/saved-documents"
+                    element={
+                      <RequireAuth>
+                        <SavedDocuments />
+                      </RequireAuth>
+                    }
+                  />
                   <Route
                     path="/admin/dashboard"
                     element={
@@ -239,8 +262,9 @@ export default function App() {
                   {/* ── Catch-all ── */}
                   <Route path="*" element={<Homepage />} />
                 </Routes>
-              </AuthProvider>
-            </BrowserRouter>
+                </AuthProvider>
+              </BrowserRouter>
+            </ToastProvider>
           </AntApp>
         </ConfigProvider>
       </ThemeProvider>

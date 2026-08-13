@@ -10,6 +10,7 @@
   uploadDocument: "/documents/upload",
   aiChat: "/ai-chat",
   community: "/community",
+  savedDocuments: "/saved-documents",
   adminDashboard: "/admin/dashboard",
   adminUsers: "/admin/users",
   adminDocuments: "/admin/documents",
