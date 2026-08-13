@@ -2,7 +2,9 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
   CircularProgress,
+  FormControlLabel,
   LinearProgress,
   Paper,
   Stack,
@@ -47,12 +49,39 @@ export default function UploadSummary({ upload }) {
           {upload.submitError}
         </Alert>
       )}
+      <FormControlLabel
+        sx={{
+          mt: 2.5,
+          mx: 0,
+          alignItems: "flex-start",
+          "& .MuiCheckbox-root": { pt: 0.25, pl: 0 },
+        }}
+        control={
+          <Checkbox
+            checked={upload.acceptedUploadTerms}
+            onChange={(event) =>
+              upload.setAcceptedUploadTerms(event.target.checked)
+            }
+            disabled={upload.submitting}
+          />
+        }
+        label={
+          <Typography variant="body2" color="text.secondary">
+            Tôi xác nhận có quyền sử dụng và tải lên tài liệu này, đồng thời
+            chịu trách nhiệm về nội dung đã cung cấp.
+          </Typography>
+        }
+      />
       <Button
         fullWidth
         size="large"
         type="submit"
         variant="contained"
-        disabled={upload.submitting || upload.loadingOptions}
+        disabled={
+          upload.submitting ||
+          upload.loadingOptions ||
+          !upload.acceptedUploadTerms
+        }
         startIcon={
           upload.submitting ? (
             <CircularProgress size={18} color="inherit" />

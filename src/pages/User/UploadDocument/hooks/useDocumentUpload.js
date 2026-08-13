@@ -33,6 +33,7 @@ export default function useDocumentUpload() {
   const [progress, setProgress] = useState(0);
   const [submitError, setSubmitError] = useState("");
   const [result, setResult] = useState(null);
+  const [acceptedUploadTerms, setAcceptedUploadTerms] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -107,6 +108,12 @@ export default function useDocumentUpload() {
       setSubmitError("Vui lòng nhập tiêu đề, chọn môn học và danh mục.");
       return;
     }
+    if (!acceptedUploadTerms) {
+      const message = "Bạn cần xác nhận quyền tải lên tài liệu này.";
+      setSubmitError(message);
+      toast.warning(message);
+      return;
+    }
     setSubmitting(true);
     setSubmitError("");
     setProgress(0);
@@ -136,6 +143,7 @@ export default function useDocumentUpload() {
     setProgress(0);
     setSubmitError("");
     setResult(null);
+    setAcceptedUploadTerms(false);
   }
 
   return {
@@ -152,12 +160,14 @@ export default function useDocumentUpload() {
     progress,
     submitError,
     result,
+    acceptedUploadTerms,
     updateField,
     selectFile,
     removeFile,
     setTagInput,
     addTag,
     removeTag,
+    setAcceptedUploadTerms,
     submit,
     reset,
   };

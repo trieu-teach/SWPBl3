@@ -20,6 +20,7 @@ import {
   displayFileType,
   formatBytes,
   formatDate,
+  getFileTypeColors,
   normalizeTags,
 } from "../../DocumentLibrary/utils/document-formatters.js";
 
@@ -30,6 +31,7 @@ export default function CommunityCard({
   onSave,
 }) {
   const tags = normalizeTags(document.tags);
+  const fileColors = getFileTypeColors(document);
   return (
     <Card
       variant="outlined"
@@ -50,8 +52,8 @@ export default function CommunityCard({
               display: "grid",
               placeItems: "center",
               borderRadius: 2,
-              bgcolor: "action.hover",
-              color: "primary.main",
+              bgcolor: fileColors.soft,
+              color: fileColors.main,
             }}
           >
             <DescriptionOutlined />
@@ -59,7 +61,13 @@ export default function CommunityCard({
           <Chip
             size="small"
             label={displayFileType(document)}
-            sx={{ flexShrink: 0, ml: "auto" }}
+            sx={{
+              flexShrink: 0,
+              ml: "auto",
+              bgcolor: fileColors.soft,
+              color: fileColors.main,
+              fontWeight: 700,
+            }}
           />
         </Stack>
         <Typography
