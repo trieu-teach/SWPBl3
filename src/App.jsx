@@ -30,6 +30,7 @@ import AdminDashboard from "./pages/Admin/Dashboard/AdminDashboard.jsx";
 import AdminUsers from "./pages/Admin/Users/AdminUsers.jsx";
 import AdminDocuments from "./pages/Admin/Documents/AdminDocuments.jsx";
 import SubscriptionPlans from "./pages/Admin/SubscriptionPlans/SubscriptionPlans.jsx";
+import Subscriptions from "./pages/Admin/Subscriptions/Subscriptions.jsx";
 import AuditLogs from "./pages/Admin/AuditLogs/AuditLogs.jsx";
 import DownloadLogs from "./pages/Admin/DownloadLogs/DownloadLogs.jsx";
 import Reports from "./pages/Admin/Reports/Reports.jsx";
@@ -280,6 +281,14 @@ export default function App() {
                       element={
                         <RequireAuth allowedRoles={["ADMIN"]}>
                           <SubscriptionPlans />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/admin/subscriptions"
+                      element={
+                        <RequireAuth allowedRoles={["ADMIN"]}>
+                          <Subscriptions />
                         </RequireAuth>
                       }
                     />
