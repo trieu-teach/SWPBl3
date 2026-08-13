@@ -23,6 +23,7 @@ import {
   displayFileType,
   formatBytes,
   formatDate,
+  getFileTypeColors,
   normalizeTags,
 } from "../../DocumentLibrary/utils/document-formatters.js";
 
@@ -34,6 +35,7 @@ export default function SavedDocumentCard({
 }) {
   const status = AI_STATUS[document.aiStatus] || AI_STATUS.PENDING;
   const tags = normalizeTags(document.tags);
+  const fileColors = getFileTypeColors(document);
   return (
     <Card
       variant="outlined"
@@ -48,8 +50,8 @@ export default function SavedDocumentCard({
               display: "grid",
               placeItems: "center",
               borderRadius: 2,
-              bgcolor: "action.hover",
-              color: "primary.main",
+              bgcolor: fileColors.soft,
+              color: fileColors.main,
             }}
           >
             <DescriptionOutlined />
@@ -57,7 +59,12 @@ export default function SavedDocumentCard({
           <Chip
             size="small"
             label={displayFileType(document)}
-            sx={{ ml: "auto" }}
+            sx={{
+              ml: "auto",
+              bgcolor: fileColors.soft,
+              color: fileColors.main,
+              fontWeight: 700,
+            }}
           />
         </Stack>
         <Typography
