@@ -23,6 +23,7 @@ import SavedDocuments from "./pages/User/SavedDocuments/SavedDocuments.jsx";
 
 // Admin routes
 import AdminDashboard from "./pages/Admin/Dashboard/AdminDashboard.jsx";
+import AdminUsers from "./pages/Admin/Users/AdminUsers.jsx";
 import AuditLogs from "./pages/Admin/AuditLogs/AuditLogs.jsx";
 import DownloadLogs from "./pages/Admin/DownloadLogs/DownloadLogs.jsx";
 import Reports from "./pages/Admin/Reports/Reports.jsx";
@@ -256,7 +257,7 @@ export default function App() {
                     path="/admin/users"
                     element={
                       <RequireAuth allowedRoles={["ADMIN"]}>
-                        <ComingSoon title="Quản lý người dùng" />
+                        <AdminUsers />
                       </RequireAuth>
                     }
                   />
