@@ -18,6 +18,7 @@ import DownloadOutlined from "@mui/icons-material/DownloadOutlined";
 import FolderOpenOutlined from "@mui/icons-material/FolderOpenOutlined";
 import HistoryOutlined from "@mui/icons-material/HistoryOutlined";
 import LogoutOutlined from "@mui/icons-material/LogoutOutlined";
+import LocalOfferOutlined from "@mui/icons-material/LocalOfferOutlined";
 import MenuRounded from "@mui/icons-material/MenuRounded";
 import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
 import SmartToyOutlined from "@mui/icons-material/SmartToyOutlined";
@@ -33,7 +34,11 @@ const DRAWER_WIDTH = 280;
 const USER_NAVIGATION = [
   { label: "Tổng quan", path: "/dashboard", icon: DashboardOutlined },
   { label: "Thư viện", path: "/documents", icon: FolderOpenOutlined },
-  { label: "Tải tài liệu", path: "/documents/upload", icon: UploadFileOutlined },
+  {
+    label: "Tải tài liệu",
+    path: "/documents/upload",
+    icon: UploadFileOutlined,
+  },
   { label: "Đã lưu", path: "/saved-documents", icon: BookmarkOutlined },
   { label: "Hỏi AI", path: "/ai-chat", icon: SmartToyOutlined },
   { label: "Cộng đồng", path: "/community", icon: PeopleAltOutlined },
@@ -43,8 +48,21 @@ const ADMIN_NAVIGATION = [
   { label: "Tổng quan", path: "/admin/dashboard", icon: DashboardOutlined },
   { label: "Người dùng", path: "/admin/users", icon: PeopleAltOutlined },
   { label: "Tài liệu", path: "/admin/documents", icon: DescriptionOutlined },
-  { label: "Nhật ký kiểm tra", path: "/admin/audit-logs", icon: HistoryOutlined },
-  { label: "Nhật ký tải xuống", path: "/admin/download-logs", icon: DownloadOutlined },
+  {
+    label: "Gói dịch vụ",
+    path: "/admin/subscription-plans",
+    icon: LocalOfferOutlined,
+  },
+  {
+    label: "Nhật ký kiểm tra",
+    path: "/admin/audit-logs",
+    icon: HistoryOutlined,
+  },
+  {
+    label: "Nhật ký tải xuống",
+    path: "/admin/download-logs",
+    icon: DownloadOutlined,
+  },
   { label: "Báo cáo", path: "/admin/reports", icon: AssessmentOutlined },
 ];
 
@@ -104,7 +122,15 @@ function NavItem({ item, active, onClick, accent }) {
   );
 }
 
-function SidebarContent({ isAdmin, navigation, location, setMobileOpen, user, initials, handleLogout }) {
+function SidebarContent({
+  isAdmin,
+  navigation,
+  location,
+  setMobileOpen,
+  user,
+  initials,
+  handleLogout,
+}) {
   const accent = isAdmin ? "#f97316" : "#6366f1";
 
   return (
@@ -118,7 +144,7 @@ function SidebarContent({ isAdmin, navigation, location, setMobileOpen, user, in
         borderColor: "divider",
       }}
     >
-        {/* Logo Section */}
+      {/* Logo Section */}
       <Box
         component={Link}
         to={isAdmin ? "/admin/dashboard" : "/dashboard"}
@@ -193,7 +219,9 @@ function SidebarContent({ isAdmin, navigation, location, setMobileOpen, user, in
       </Box>
 
       {/* Footer Section */}
-      <Box sx={{ px: 1.5, py: 2, borderTop: "1px solid", borderColor: "divider" }}>
+      <Box
+        sx={{ px: 1.5, py: 2, borderTop: "1px solid", borderColor: "divider" }}
+      >
         {/* User Card */}
         <Box
           sx={{
@@ -382,9 +410,7 @@ export default function AppShell({ children, role = "USER" }) {
             alignItems: "center",
             justifyContent: "space-between",
             bgcolor:
-              mode === "dark"
-                ? "rgba(11,15,26,.88)"
-                : "rgba(255,255,255,.88)",
+              mode === "dark" ? "rgba(11,15,26,.88)" : "rgba(255,255,255,.88)",
             backdropFilter: "blur(16px)",
             borderBottom: "1px solid",
             borderColor: "divider",
@@ -405,7 +431,9 @@ export default function AppShell({ children, role = "USER" }) {
                   fontSize: "1rem",
                 }}
               >
-                {navigation.find((item) => isActivePath(location.pathname, item.path))?.label || "DocuMind"}
+                {navigation.find((item) =>
+                  isActivePath(location.pathname, item.path),
+                )?.label || "DocuMind"}
               </Typography>
               <Typography
                 sx={{
