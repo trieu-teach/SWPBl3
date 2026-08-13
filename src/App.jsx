@@ -4,7 +4,7 @@ import { ConfigProvider, App as AntApp, theme as antdThemeAlgo } from "antd";
 import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
 import { AuthProvider } from "./features/auth/AuthProvider.jsx";
 import { ToastProvider } from "./components/Toast/ToastProvider.jsx";
-import { GuestGuard, RequireAuth } from "./features/auth/ProtectedRoute.jsx";
+import { GuestGuard, GuestRoute, RequireAuth } from "./features/auth/ProtectedRoute.jsx";
 
 // Guest routes (login / register / forgot-password)
 import Login from "./pages/Auth/Login.jsx";
@@ -23,6 +23,9 @@ import SavedDocuments from "./pages/User/SavedDocuments/SavedDocuments.jsx";
 
 // Admin routes
 import AdminDashboard from "./pages/Admin/Dashboard/AdminDashboard.jsx";
+import AuditLogs from "./pages/Admin/AuditLogs/AuditLogs.jsx";
+import DownloadLogs from "./pages/Admin/DownloadLogs/DownloadLogs.jsx";
+import Reports from "./pages/Admin/Reports/Reports.jsx";
 import ComingSoon from "./pages/Shared/ComingSoon.jsx";
 
 // Public
@@ -130,8 +133,15 @@ export default function App() {
               <BrowserRouter>
                 <AuthProvider>
                 <Routes>
-                  {/* ── Public ── */}
-                  <Route path="/" element={<Homepage />} />
+                  {/* ── Public (chỉ Guest mới vào được) ── */}
+                  <Route
+                    path="/"
+                    element={
+                      <GuestRoute>
+                        <Homepage />
+                      </GuestRoute>
+                    }
+                  />
 
                   {/* ── Guest-only (đã đăng nhập → redirect) ── */}
                   <Route
@@ -258,9 +268,40 @@ export default function App() {
                       </RequireAuth>
                     }
                   />
+                  <Route
+                    path="/admin/audit-logs"
+                    element={
+                      <RequireAuth allowedRoles={["ADMIN"]}>
+                        <AuditLogs />
+                      </RequireAuth>
+                    }
+                  />
+                  <Route
+                    path="/admin/download-logs"
+                    element={
+                      <RequireAuth allowedRoles={["ADMIN"]}>
+                        <DownloadLogs />
+                      </RequireAuth>
+                    }
+                  />
+                  <Route
+                    path="/admin/reports"
+                    element={
+                      <RequireAuth allowedRoles={["ADMIN"]}>
+                        <Reports />
+                      </RequireAuth>
+                    }
+                  />
 
-                  {/* ── Catch-all ── */}
-                  <Route path="*" element={<Homepage />} />
+                  {/* ── Catch-all (Guest → homepage, User → dashboard) ── */}
+                  <Route
+                    path="*"
+                    element={
+                      <GuestRoute>
+                        <Homepage />
+                      </GuestRoute>
+                    }
+                  />
                 </Routes>
                 </AuthProvider>
               </BrowserRouter>
