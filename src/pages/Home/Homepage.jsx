@@ -46,6 +46,7 @@ import {
 } from "@mui/icons-material";
 import { Link, useNavigate } from "react-router-dom";
 import ColorModeToggle from "../../components/ColorModeToggle/ColorModeToggle.jsx";
+import Logo from "../../components/Logo/Logo.jsx";
 import "./Homepage.css";
 
 /* ------------------------------------------------------------------ */
@@ -308,13 +309,7 @@ export default function Homepage() {
         <Container maxWidth="lg">
           <Toolbar disableGutters className="header-toolbar">
             <Link to="/" className="brand">
-              <Box className="brand-mark">
-                <AutoAwesome sx={{ fontSize: 18, color: "#fff" }} />
-              </Box>
-              <Box>
-                <Typography className="brand-name">DocuMind</Typography>
-                <Typography className="brand-tag">AI study workspace</Typography>
-              </Box>
+              <Logo size={36} variant="header" />
             </Link>
 
             <Box className="desktop-nav" sx={{ display: "flex" }}>
@@ -888,10 +883,7 @@ export default function Homepage() {
           <Box className="footer-grid">
             <Box className="footer-brand">
               <Box className="footer-brand__row">
-                <Box className="brand-mark">
-                  <AutoAwesome sx={{ fontSize: 18, color: "#fff" }} />
-                </Box>
-                <Typography className="footer-brand__name">DocuMind</Typography>
+                <Logo size={32} variant="header" />
               </Box>
               <Typography className="footer-text" component="div">
                 Không gian học tập AI cho sinh viên, nghiên cứu sinh và giảng

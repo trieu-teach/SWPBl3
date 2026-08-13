@@ -27,6 +27,7 @@ import {
 import { useAuth } from "../../features/auth/AuthProvider.jsx";
 import { getAuthenticatedHomeRoute } from "../../lib/routes";
 import { firebaseErrorMessage } from "../../lib/authService";
+import Logo from "../../components/Logo/Logo.jsx";
 import "./Login.css";
 import "./Register.css";
 
@@ -124,7 +125,7 @@ export default function Register() {
       {/* ── HEADER ── */}
       <Box component="header" className="bx-header">
         <Link to="/" className="bx-header-logo">
-          <Box className="bx-header-logo-icon">D</Box>
+          <Logo size={32} variant="auth" showText={false} />
           <Typography className="bx-header-logo-text">DocuMind</Typography>
         </Link>
 
@@ -146,10 +147,7 @@ export default function Register() {
         <Box className="bx-panel-left">
           <Box className="bx-panel-dots" aria-hidden />
           <Box className="bx-panel-content">
-            <Box className="bx-panel-logo">
-              <Box className="bx-panel-logo-icon">D</Box>
-              <Typography className="bx-panel-logo-text">DocuMind</Typography>
-            </Box>
+            <Logo size={48} variant="authPanel" />
 
             <Typography variant="h3" className="bx-panel-heading">
               Bắt đầu miễn phí,{" "}

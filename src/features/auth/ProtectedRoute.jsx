@@ -21,6 +21,25 @@ export function GuestGuard({ children }) {
 }
 
 /**
+ * GuestRoute — redirect người đã đăng nhập ra khỏi trang public
+ * (homepage)
+ */
+export function GuestRoute({ children }) {
+  const { user, isLoading } = useAuth();
+  const location = useLocation();
+
+  if (isLoading) return null;
+
+  if (user) {
+    const destination =
+      user.role === "ADMIN" ? "/admin/dashboard" : "/dashboard";
+    return <Navigate to={destination} state={{ from: location }} replace />;
+  }
+
+  return children;
+}
+
+/**
  * RequireAuth — yêu cầu đăng nhập mới cho phép truy cập
  * allowedRoles: nếu truyền, chỉ cho phép các role được liệt kê
  */

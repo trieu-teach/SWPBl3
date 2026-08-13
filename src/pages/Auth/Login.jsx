@@ -28,6 +28,7 @@ import { useToast } from "../../components/Toast/ToastProvider.jsx";
 import { getAuthenticatedHomeRoute } from "../../lib/routes";
 import { useColorMode } from "../../App.jsx";
 import { firebaseErrorMessage } from "../../lib/authService";
+import Logo from "../../components/Logo/Logo.jsx";
 import "./Login.css";
 
 const BRAND_FEATURES = [
@@ -120,7 +121,7 @@ export default function Login() {
     <Box className="bx-auth">
       <Box component="header" className="bx-header">
         <Link to="/" className="bx-header-logo">
-          <Box className="bx-header-logo-icon">D</Box>
+          <Logo size={32} variant="auth" showText={false} />
           <Typography className="bx-header-logo-text">DocuMind</Typography>
         </Link>
 
@@ -145,6 +146,8 @@ export default function Login() {
         <Box className="bx-panel-left">
           <Box className="bx-panel-dots" aria-hidden />
           <Box className="bx-panel-content">
+            <Logo size={48} variant="authPanel" />
+
             <Typography variant="h3" className="bx-panel-heading">
               Tài liệu thông minh,{" "}
               <em>trả lời tức thì.</em>
