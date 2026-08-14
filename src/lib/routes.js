@@ -14,8 +14,16 @@
   adminDashboard: "/admin/dashboard",
   adminUsers: "/admin/users",
   adminDocuments: "/admin/documents",
+  moderatorDashboard: "/moderator/dashboard",
 };
 
 export function getAuthenticatedHomeRoute(role) {
-  return role === "ADMIN" ? ROUTES.adminDashboard : ROUTES.dashboard;
+  switch (role) {
+    case "ADMIN":
+      return ROUTES.adminDashboard;
+    case "MODERATOR":
+      return ROUTES.moderatorDashboard;
+    default:
+      return ROUTES.dashboard;
+  }
 }

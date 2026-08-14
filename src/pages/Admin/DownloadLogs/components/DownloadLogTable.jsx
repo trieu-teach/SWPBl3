@@ -5,16 +5,12 @@ import {
   Box,
   Button,
   Card,
-  Chip,
   CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   IconButton,
   Pagination,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -26,6 +22,7 @@ import {
   InfoOutlined,
   PersonOutlined,
   RefreshOutlined,
+  VisibilityOutlined,
 } from "@mui/icons-material";
 import { useState } from "react";
 import {
@@ -65,9 +62,126 @@ function EmptyState() {
   );
 }
 
+function UserCell({ userId, fullName, avatarUrl }) {
+  const displayName = fullName || userId?.slice(0, 8) + "..." || "Không xác định";
+
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <Avatar
+        src={avatarUrl || undefined}
+        sx={{ width: 28, height: 28, fontSize: "0.7rem", bgcolor: "#6366f1" }}
+      >
+        {displayName.charAt(0).toUpperCase()}
+      </Avatar>
+      <Tooltip title={fullName || userId || ""} placement="top">
+        <Typography variant="body2" sx={{ fontSize: "0.8rem", fontWeight: 500 }} noWrap>
+          {displayName}
+        </Typography>
+      </Tooltip>
+    </Box>
+  );
+}
+
+function DocumentCell({ documentId, title, fileType, fileSize }) {
+  if (!documentId) {
+    return (
+      <Typography variant="body2" color="text.disabled" sx={{ fontStyle: "italic", fontSize: "0.75rem" }}>
+        Tài liệu đã xóa
+      </Typography>
+    );
+  }
+
+  const fileColors = getFileTypeColors(fileType);
+  const displayTitle = title || documentId.slice(0, 12) + "...";
+
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <Box
+        sx={{
+          width: 30,
+          height: 30,
+          display: "grid",
+          placeItems: "center",
+          borderRadius: "8px",
+          bgcolor: fileColors.bg,
+          color: fileColors.main,
+          flexShrink: 0,
+        }}
+      >
+        <DescriptionOutlined sx={{ fontSize: 14 }} />
+      </Box>
+      <Box sx={{ minWidth: 0 }}>
+        <Tooltip title={title || documentId} placement="top">
+          <Typography variant="body2" noWrap sx={{ fontSize: "0.8rem", fontWeight: 500 }}>
+            {displayTitle}
+          </Typography>
+        </Tooltip>
+        <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
+          <Typography sx={{ fontSize: "0.62rem", fontWeight: 600, color: fileColors.main }}>
+            {displayFileType({ fileType })}
+          </Typography>
+          {fileSize && (
+            <Typography variant="caption" color="text.disabled">
+              {formatFileSize(fileSize)}
+            </Typography>
+          )}
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+function DetailDialog({ log, open, onClose }) {
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pb: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box
+            sx={{
+              width: 36,
+              height: 36,
+              borderRadius: "10px",
+              background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "white",
+            }}
+          >
+            <DownloadOutlined sx={{ fontSize: 18 }} />
+          </Box>
+          <Typography variant="body1" fontWeight={700}>Chi tiết tải xuống</Typography>
+        </Box>
+        <IconButton size="small" onClick={onClose}>
+          <CloseOutlined />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent dividers>
+        {[
+          { label: "ID bản ghi", value: log?.id, mono: true },
+          { label: "Người dùng", value: log?.userFullName || log?.userId },
+          { label: "Tài liệu", value: log?.documentTitle || log?.documentId },
+          { label: "Loại file", value: log?.fileType?.toUpperCase() },
+          { label: "Kích thước", value: log?.fileSize ? formatFileSize(log.fileSize) : null },
+          { label: "Thời gian", value: log?.downloadedAt ? formatDate(log.downloadedAt) : null },
+        ].map(({ label, value, mono }) => value && (
+          <Box key={label} sx={{ display: "flex", gap: 2, py: 1.5, "&:not(:last-child)": { borderBottom: "1px solid", borderColor: "divider" } }}>
+            <Typography variant="body2" color="text.secondary" sx={{ minWidth: 120, fontWeight: 600, fontSize: "0.82rem" }}>
+              {label}
+            </Typography>
+            <Typography variant="body2" sx={{ fontFamily: mono ? "monospace" : "inherit", fontSize: "0.82rem", wordBreak: "break-all", flex: 1 }}>
+              {value}
+            </Typography>
+          </Box>
+        ))}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function DownloadLogTable({ download }) {
   const { logs, loading, error, total, page, pageCount } = download;
-  const [detailLog, setDetailLog] = useState(null);
+  const [selectedLog, setSelectedLog] = useState(null);
 
   if (error) {
     return (
@@ -96,12 +210,21 @@ export default function DownloadLogTable({ download }) {
           ) : (
             <>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.85rem" }}>
-                Hiển thị
+                Tổng cộng
               </Typography>
-              <Chip label={logs.length} size="small" sx={{ fontWeight: 700, height: 22, fontSize: "0.75rem" }} />
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.85rem" }}>
-                / {total} bản ghi
-              </Typography>
+              <Box
+                sx={{
+                  bgcolor: "#f97316",
+                  color: "white",
+                  borderRadius: "6px",
+                  px: 1,
+                  py: 0.25,
+                  fontWeight: 700,
+                  fontSize: "0.75rem",
+                }}
+              >
+                {total}
+              </Box>
             </>
           )}
         </Box>
@@ -126,7 +249,7 @@ export default function DownloadLogTable({ download }) {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: "50px 120px 1fr 1fr 70px",
+            gridTemplateColumns: "50px 130px 1fr 1fr 60px",
             px: 2,
             py: 1.5,
             borderBottom: "1px solid",
@@ -138,7 +261,7 @@ export default function DownloadLogTable({ download }) {
           <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ letterSpacing: "0.05em", textTransform: "uppercase", fontSize: "0.65rem" }}>Thời gian</Typography>
           <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ letterSpacing: "0.05em", textTransform: "uppercase", fontSize: "0.65rem" }}>Người dùng</Typography>
           <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ letterSpacing: "0.05em", textTransform: "uppercase", fontSize: "0.65rem" }}>Tài liệu</Typography>
-          <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ letterSpacing: "0.05em", textTransform: "uppercase", fontSize: "0.65rem", textAlign: "center" }}>Chi tiết</Typography>
+          <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ letterSpacing: "0.05em", textTransform: "uppercase", fontSize: "0.65rem", textAlign: "center" }}></Typography>
         </Box>
 
         {/* Loading skeleton */}
@@ -148,7 +271,7 @@ export default function DownloadLogTable({ download }) {
               key={i}
               sx={{
                 display: "grid",
-                gridTemplateColumns: "50px 120px 1fr 1fr 70px",
+                gridTemplateColumns: "50px 130px 1fr 1fr 60px",
                 px: 2,
                 py: 1.5,
                 borderBottom: "1px solid",
@@ -177,16 +300,13 @@ export default function DownloadLogTable({ download }) {
         {!loading &&
           logs.map((log, index) => {
             const rowNum = (page - 1) * 20 + index + 1;
-            const doc = log.document;
-            const user = log.user;
-            const fileColors = getFileTypeColors(doc?.fileType);
 
             return (
               <Box
                 key={log.id}
                 sx={{
                   display: "grid",
-                  gridTemplateColumns: "50px 120px 1fr 1fr 70px",
+                  gridTemplateColumns: "50px 130px 1fr 1fr 60px",
                   px: 2,
                   py: 1.5,
                   borderBottom: "1px solid",
@@ -211,79 +331,36 @@ export default function DownloadLogTable({ download }) {
                   </Box>
                 </Tooltip>
 
-                {/* Người dùng */}
-                {user ? (
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Avatar
-                      src={user.avatarUrl || undefined}
-                      sx={{ width: 28, height: 28, fontSize: "0.7rem", bgcolor: "#6366f1" }}
-                    >
-                      <PersonOutlined sx={{ fontSize: 14 }} />
-                    </Avatar>
-                    <Typography variant="body2" sx={{ fontSize: "0.8rem", fontWeight: 500 }} noWrap>
-                      {user.fullName || user.email?.split("@")[0] || "—"}
-                    </Typography>
-                  </Box>
-                ) : (
-                  <Typography variant="body2" color="text.disabled" sx={{ fontStyle: "italic", fontSize: "0.75rem" }}>
-                    Không xác định
-                  </Typography>
-                )}
+                {/* Người dùng - flat fields from backend */}
+                <UserCell
+                  userId={log.userId}
+                  fullName={log.userFullName}
+                  avatarUrl={log.userAvatarUrl}
+                />
 
-                {/* Tài liệu */}
-                {doc ? (
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Box
-                      sx={{
-                        width: 30,
-                        height: 30,
-                        display: "grid",
-                        placeItems: "center",
-                        borderRadius: "8px",
-                        bgcolor: fileColors.bg,
-                        color: fileColors.main,
-                        flexShrink: 0,
-                      }}
-                    >
-                      <DescriptionOutlined sx={{ fontSize: 14 }} />
-                    </Box>
-                    <Box sx={{ minWidth: 0 }}>
-                      <Typography variant="body2" noWrap sx={{ fontSize: "0.8rem", fontWeight: 500 }} title={doc.title}>
-                        {doc.title}
-                      </Typography>
-                      <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
-                        <Typography sx={{ fontSize: "0.62rem", fontWeight: 600, color: fileColors.main }}>
-                          {displayFileType(doc)}
-                        </Typography>
-                        {doc.fileSize && (
-                          <Typography variant="caption" color="text.disabled">
-                            {formatFileSize(doc.fileSize)}
-                          </Typography>
-                        )}
-                      </Box>
-                    </Box>
-                  </Box>
-                ) : (
-                  <Typography variant="body2" color="text.disabled" sx={{ fontStyle: "italic", fontSize: "0.75rem" }}>
-                    Tài liệu đã xóa
-                  </Typography>
-                )}
+                {/* Tài liệu - flat fields from backend */}
+                <DocumentCell
+                  documentId={log.documentId}
+                  title={log.documentTitle}
+                  fileType={log.fileType}
+                  fileSize={log.fileSize}
+                />
 
                 {/* Chi tiết */}
                 <Box sx={{ display: "flex", justifyContent: "center" }}>
                   <Tooltip title="Xem chi tiết">
                     <IconButton
                       size="small"
-                      onClick={() => setDetailLog(log)}
+                      onClick={() => setSelectedLog(log)}
                       sx={{
-                        color: "#f97316",
-                        bgcolor: "rgba(249, 115, 22, 0.08)",
+                        color: "#6366f1",
+                        bgcolor: "rgba(99, 102, 241, 0.08)",
                         "&:hover": {
-                          bgcolor: "rgba(249, 115, 22, 0.15)",
+                          bgcolor: "rgba(99, 102, 241, 0.15)",
                         },
                       }}
                     >
-                      <InfoOutlined sx={{ fontSize: 16 }} />
+                      <VisibilityOutlined sx={{ fontSize: 16 }} />
                     </IconButton>
                   </Tooltip>
                 </Box>
@@ -306,72 +383,7 @@ export default function DownloadLogTable({ download }) {
         </Box>
       )}
 
-      <DownloadLogDetailDialog log={detailLog} onClose={() => setDetailLog(null)} />
+      <DetailDialog log={selectedLog} open={Boolean(selectedLog)} onClose={() => setSelectedLog(null)} />
     </>
-  );
-}
-
-function DownloadLogDetailDialog({ log, onClose }) {
-  if (!log) return null;
-  return (
-    <Box
-      sx={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        bgcolor: "rgba(0,0,0,0.5)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 1300,
-      }}
-      onClick={onClose}
-    >
-      <Box
-        onClick={(e) => e.stopPropagation()}
-        sx={{
-          bgcolor: "background.paper",
-          borderRadius: "20px",
-          width: "100%",
-          maxWidth: 480,
-          maxHeight: "80vh",
-          overflow: "hidden",
-          boxShadow: 24,
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, borderBottom: "1px solid", borderColor: "divider" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box sx={{ width: 36, height: 36, borderRadius: "10px", background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)", display: "flex", alignItems: "center", justifyContent: "center", color: "white" }}>
-              <DownloadOutlined sx={{ fontSize: 18 }} />
-            </Box>
-            <Typography variant="body1" fontWeight={700}>Chi tiết tải xuống</Typography>
-          </Box>
-          <IconButton size="small" onClick={onClose}>
-            <CloseOutlined />
-          </IconButton>
-        </Box>
-        <Box sx={{ p: 2.5, overflowY: "auto" }}>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {[
-              { label: "ID bản ghi", value: log.id },
-              { label: "User ID", value: log.userId },
-              { label: "Document ID", value: log.documentId },
-              { label: "Thời gian", value: formatDate(log.downloadedAt) },
-            ].map(({ label, value }) => (
-              <Box key={label} sx={{ display: "flex", gap: 2 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ minWidth: 110, fontWeight: 600, fontSize: "0.82rem" }}>
-                  {label}
-                </Typography>
-                <Typography variant="body2" sx={{ fontFamily: value?.length > 30 ? "monospace" : "inherit", fontSize: "0.82rem", wordBreak: "break-all" }}>
-                  {value || "—"}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
-        </Box>
-      </Box>
-    </Box>
   );
 }
