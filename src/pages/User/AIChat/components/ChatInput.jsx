@@ -1,8 +1,8 @@
-import { Button, Paper, Stack, TextField } from "@mui/material";
+import { Alert, Button, Paper, Stack, TextField } from "@mui/material";
 import SendRounded from "@mui/icons-material/SendRounded";
 
-export default function ChatInput({ value, onChange, onSend }) {
-  const isDisabled = !value.trim();
+export default function ChatInput({ value, onChange, onSend, isSending, error }) {
+  const isDisabled = !value.trim() || isSending;
 
   function handleKeyDown(event) {
     if (event.key === "Enter" && !event.shiftKey) {
@@ -22,6 +22,11 @@ export default function ChatInput({ value, onChange, onSend }) {
         bgcolor: "background.paper",
       }}
     >
+      {error && (
+        <Alert severity="error" sx={{ mb: 1.5 }}>
+          {error}
+        </Alert>
+      )}
       <Stack direction="row" spacing={1.5} alignItems="flex-end">
         <TextField
           value={value}
@@ -34,6 +39,7 @@ export default function ChatInput({ value, onChange, onSend }) {
           fullWidth
           size="small"
           variant="outlined"
+          disabled={isSending}
           inputProps={{ "aria-label": "Nhập câu hỏi cho AI" }}
           sx={{
             "& .MuiInputBase-root": {
@@ -54,7 +60,7 @@ export default function ChatInput({ value, onChange, onSend }) {
             flexShrink: 0,
           }}
         >
-          Gửi
+          {isSending ? "Đang gửi" : "Gửi"}
         </Button>
       </Stack>
     </Paper>

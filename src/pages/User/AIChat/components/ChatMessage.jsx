@@ -1,6 +1,16 @@
-import { Avatar, Box, Paper, Stack, Typography } from "@mui/material";
+import {
+  Alert,
+  Avatar,
+  Box,
+  Button,
+  CircularProgress,
+  Paper,
+  Stack,
+  Typography,
+} from "@mui/material";
 import SmartToyOutlined from "@mui/icons-material/SmartToyOutlined";
 import PersonOutlineOutlined from "@mui/icons-material/PersonOutlineOutlined";
+import ReplayRounded from "@mui/icons-material/ReplayRounded";
 
 function renderContent(content) {
   const blocks = [];
@@ -51,8 +61,10 @@ function renderContent(content) {
   });
 }
 
-export default function ChatMessage({ message }) {
+export default function ChatMessage({ message, isSending, onRetry }) {
   const isUser = message.role === "user";
+  const isLoading = message.status === "loading";
+  const isError = message.status === "error";
 
   return (
     <Stack
@@ -91,14 +103,53 @@ export default function ChatMessage({ message }) {
             px: { xs: 1.75, sm: 2 },
             py: 1.5,
             borderRadius: isUser ? "18px 18px 6px 18px" : "18px 18px 18px 6px",
-            bgcolor: isUser ? "primary.main" : "background.paper",
+            bgcolor: isUser
+              ? "primary.main"
+              : isError
+                ? "error.light"
+                : "background.paper",
             color: isUser ? "primary.contrastText" : "text.primary",
             border: "1px solid",
-            borderColor: isUser ? "primary.main" : "divider",
+            borderColor: isUser ? "primary.main" : isError ? "error.main" : "divider",
             overflowWrap: "anywhere",
           }}
         >
-          <Stack spacing={1.25}>{renderContent(message.content)}</Stack>
+          {isLoading ? (
+            <Stack direction="row" spacing={1.25} alignItems="center">
+              <CircularProgress size={18} thickness={5} />
+              <Typography sx={{ fontSize: "0.95rem", lineHeight: 1.7 }}>
+                {message.content}
+              </Typography>
+            </Stack>
+          ) : isError ? (
+            <Stack spacing={1.25}>
+              <Alert
+                severity="error"
+                variant="standard"
+                sx={{
+                  p: 0,
+                  bgcolor: "transparent",
+                  color: "inherit",
+                  "& .MuiAlert-icon": { mt: 0.15 },
+                }}
+              >
+                {message.content}
+              </Alert>
+              <Button
+                type="button"
+                size="small"
+                variant="outlined"
+                startIcon={<ReplayRounded />}
+                onClick={() => onRetry(message.id)}
+                disabled={isSending}
+                sx={{ alignSelf: "flex-start" }}
+              >
+                Thử lại
+              </Button>
+            </Stack>
+          ) : (
+            <Stack spacing={1.25}>{renderContent(message.content)}</Stack>
+          )}
         </Paper>
         <Typography
           sx={{

@@ -1,18 +1,20 @@
-import { useMemo, useState } from "react";
 import { Box, Paper } from "@mui/material";
 import UserLayout from "../Layout/UserLayout.jsx";
 import ChatHeader from "./components/ChatHeader.jsx";
 import ChatInput from "./components/ChatInput.jsx";
 import ChatMessageList from "./components/ChatMessageList.jsx";
-import { mockChatMessages } from "./mocks/chat.mock.js";
+import { useChat } from "./hooks/useChat.js";
 
 export default function ChatPage() {
-  const [draft, setDraft] = useState("");
-  const messages = useMemo(() => mockChatMessages, []);
-
-  function handleSend() {
-    setDraft("");
-  }
+  const {
+    messages,
+    inputValue,
+    setInputValue,
+    isSending,
+    error,
+    sendMessage,
+    retryMessage,
+  } = useChat();
 
   return (
     <UserLayout>
@@ -33,9 +35,19 @@ export default function ChatPage() {
         }}
       >
         <ChatHeader />
-        <ChatMessageList messages={messages} />
+        <ChatMessageList
+          messages={messages}
+          isSending={isSending}
+          onRetry={retryMessage}
+        />
         <Box sx={{ flexShrink: 0 }}>
-          <ChatInput value={draft} onChange={setDraft} onSend={handleSend} />
+          <ChatInput
+            value={inputValue}
+            onChange={setInputValue}
+            onSend={sendMessage}
+            isSending={isSending}
+            error={error}
+          />
         </Box>
       </Paper>
     </UserLayout>
