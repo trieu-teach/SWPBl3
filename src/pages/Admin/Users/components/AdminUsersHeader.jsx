@@ -3,7 +3,9 @@ import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
 
 export default function AdminUsersHeader() {
   return (
-    <Box sx={{ mb: 3, pb: 3, borderBottom: "1px solid", borderColor: "divider" }}>
+    <Box
+      sx={{ mb: 3, pb: 3, borderBottom: "1px solid", borderColor: "divider" }}
+    >
       <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
         <Box
           sx={{
@@ -20,7 +22,9 @@ export default function AdminUsersHeader() {
           <PeopleAltOutlined />
         </Box>
         <Box>
-          <Typography sx={{ fontWeight: 800, fontSize: "1.75rem", lineHeight: 1.1 }}>
+          <Typography
+            sx={{ fontWeight: 800, fontSize: "1.75rem", lineHeight: 1.1 }}
+          >
             Quản lý người dùng
           </Typography>
           <Typography color="text.secondary" sx={{ fontSize: "0.9rem" }}>

@@ -10,19 +10,36 @@ import {
   Typography,
 } from "@mui/material";
 
-export default function UserStatusDialog({ user, loading, onClose, onConfirm }) {
+export default function UserStatusDialog({
+  user,
+  loading,
+  onClose,
+  onConfirm,
+}) {
   const [reason, setReason] = useState("");
   useEffect(() => setReason(""), [user]);
   if (!user) return null;
   const blocking = user.status === "ACTIVE";
   return (
-    <Dialog open onClose={loading ? undefined : onClose} fullWidth maxWidth="xs">
-      <DialogTitle>{blocking ? "Khóa tài khoản" : "Mở khóa tài khoản"}</DialogTitle>
+    <Dialog
+      open
+      onClose={loading ? undefined : onClose}
+      fullWidth
+      maxWidth="xs"
+    >
+      <DialogTitle>
+        {blocking ? "Khóa tài khoản" : "Mở khóa tài khoản"}
+      </DialogTitle>
       <DialogContent>
         <Typography sx={{ mb: 2 }}>
-          Bạn có chắc muốn {blocking ? "khóa" : "mở khóa"} tài khoản <strong>{user.email}</strong>?
+          Bạn có chắc muốn {blocking ? "khóa" : "mở khóa"} tài khoản{" "}
+          <strong>{user.email}</strong>?
         </Typography>
-        {blocking && <Alert severity="warning" sx={{ mb: 2 }}>Người dùng sẽ không thể tiếp tục sử dụng hệ thống.</Alert>}
+        {blocking && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            Người dùng sẽ không thể tiếp tục sử dụng hệ thống.
+          </Alert>
+        )}
         <TextField
           fullWidth
           multiline
@@ -34,8 +51,15 @@ export default function UserStatusDialog({ user, loading, onClose, onConfirm }) 
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={loading}>Hủy</Button>
-        <Button variant="contained" color={blocking ? "error" : "success"} onClick={() => onConfirm(reason)} disabled={loading}>
+        <Button onClick={onClose} disabled={loading}>
+          Hủy
+        </Button>
+        <Button
+          variant="contained"
+          color={blocking ? "error" : "success"}
+          onClick={() => onConfirm(reason)}
+          disabled={loading}
+        >
           {loading ? "Đang cập nhật..." : "Xác nhận"}
         </Button>
       </DialogActions>
