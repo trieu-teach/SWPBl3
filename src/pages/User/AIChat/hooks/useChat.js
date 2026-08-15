@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { sendMockMessage } from "../services/chat.mock.service.js";
+import { getChatErrorMessage, sendChatMessage } from "../../../../api/chat.api.js";
 
 const ERROR_MESSAGE =
   "Đã xảy ra lỗi khi tạo phản hồi. Tin nhắn của bạn vẫn được giữ lại.";
@@ -64,14 +64,19 @@ export function useChat() {
       sendingRef.current = true;
 
       try {
-        const response = await sendMockMessage(content);
+        const response = await sendChatMessage({ question: content });
         setMessages((current) =>
           current.map((message) =>
             message.id === pendingMessage.id
               ? {
                   ...message,
-                  content: response.content,
+                  content: response.answer,
                   status: "complete",
+                  backendMessageId: response.messageId,
+                  sessionId: response.sessionId,
+                  sources: response.sources,
+                  suggestedPrompts: response.suggestedPrompts,
+                  answerStatus: response.answerStatus,
                   createdAt: formatTime(new Date()),
                 }
               : message,
@@ -79,7 +84,7 @@ export function useChat() {
         );
         setStatus("success");
       } catch (requestError) {
-        const message = requestError?.message || ERROR_MESSAGE;
+        const message = getChatErrorMessage(requestError) || ERROR_MESSAGE;
 
         setMessages((current) =>
           current.map((item) =>
@@ -133,14 +138,19 @@ export function useChat() {
       sendingRef.current = true;
 
       try {
-        const response = await sendMockMessage(content);
+        const response = await sendChatMessage({ question: content });
         setMessages((current) =>
           current.map((message) =>
             message.id === assistantMessageId
               ? {
                   ...message,
-                  content: response.content,
+                  content: response.answer,
                   status: "complete",
+                  backendMessageId: response.messageId,
+                  sessionId: response.sessionId,
+                  sources: response.sources,
+                  suggestedPrompts: response.suggestedPrompts,
+                  answerStatus: response.answerStatus,
                   createdAt: formatTime(new Date()),
                 }
               : message,
@@ -148,7 +158,7 @@ export function useChat() {
         );
         setStatus("success");
       } catch (requestError) {
-        const message = requestError?.message || ERROR_MESSAGE;
+        const message = getChatErrorMessage(requestError) || ERROR_MESSAGE;
 
         setMessages((current) =>
           current.map((item) =>
