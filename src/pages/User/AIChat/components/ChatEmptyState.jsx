@@ -1,7 +1,10 @@
 import { Box, Card, Chip, Stack, Typography } from "@mui/material";
 import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
-import { mockEmptyChatSuggestions } from "../mocks/chat.mock.js";
-
+const CHAT_SUGGESTIONS = [
+  "Tóm tắt nội dung chính của một chương học",
+  "Gợi ý kế hoạch ôn tập trong 7 ngày",
+  "Giải thích một khái niệm khó hiểu",
+];
 export default function ChatEmptyState() {
   return (
     <Card
@@ -40,7 +43,7 @@ export default function ChatEmptyState() {
       </Typography>
 
       <Stack direction="row" gap={1} justifyContent="center" flexWrap="wrap">
-        {mockEmptyChatSuggestions.map((suggestion) => (
+        {CHAT_SUGGESTIONS.map((suggestion) => (
           <Chip key={suggestion} label={suggestion} variant="outlined" />
         ))}
       </Stack>
