@@ -41,6 +41,7 @@ const USER_NAVIGATION = [
     icon: UploadFileOutlined,
   },
   { label: "Đã lưu", path: "/saved-documents", icon: BookmarkOutlined },
+  { label: "Đăng ký gói", path: "/subscription", icon: ShoppingCartOutlined },
   { label: "Hỏi AI", path: "/ai-chat", icon: SmartToyOutlined },
   { label: "Cộng đồng", path: "/community", icon: PeopleAltOutlined },
 ];

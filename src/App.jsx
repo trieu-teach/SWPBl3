@@ -24,6 +24,8 @@ import DocumentLibrary from "./pages/User/DocumentLibrary/DocumentLibrary.jsx";
 import DocumentDetails from "./pages/User/DocumentDetails/DocumentDetails.jsx";
 import CommunityLibrary from "./pages/User/CommunityLibrary/CommunityLibrary.jsx";
 import SavedDocuments from "./pages/User/SavedDocuments/SavedDocuments.jsx";
+import Subscription from "./pages/User/Subscription/Subscription.jsx";
+import ChatPage from "./pages/User/AIChat/ChatPage.jsx";
 
 // Admin routes
 import AdminDashboard from "./pages/Admin/Dashboard/AdminDashboard.jsx";
@@ -35,6 +37,9 @@ import AuditLogs from "./pages/Admin/AuditLogs/AuditLogs.jsx";
 import DownloadLogs from "./pages/Admin/DownloadLogs/DownloadLogs.jsx";
 import Reports from "./pages/Admin/Reports/Reports.jsx";
 import ComingSoon from "./pages/Shared/ComingSoon.jsx";
+
+// Moderator routes
+import ModeratorDashboard from "./pages/Moderator/Dashboard/ModeratorDashboard.jsx";
 
 // Public
 import Homepage from "./pages/Home/Homepage.jsx";
@@ -230,7 +235,7 @@ export default function App() {
                       path="/ai-chat"
                       element={
                         <RequireAuth>
-                          <ComingSoon title="Hỏi đáp với AI" />
+                          <ChatPage />
                         </RequireAuth>
                       }
                     />
@@ -249,6 +254,14 @@ export default function App() {
                       element={
                         <RequireAuth>
                           <SavedDocuments />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/subscription"
+                      element={
+                        <RequireAuth>
+                          <Subscription />
                         </RequireAuth>
                       }
                     />
@@ -324,6 +337,25 @@ export default function App() {
                         <GuestRoute>
                           <Homepage />
                         </GuestRoute>
+                      }
+                    />
+                  </Routes>
+                  <Routes>
+                    {/* ── Moderator ── */}
+                    <Route
+                      path="/moderator/dashboard"
+                      element={
+                        <RequireAuth allowedRoles={["MODERATOR"]}>
+                          <ModeratorDashboard />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/moderator/moderation"
+                      element={
+                        <RequireAuth allowedRoles={["MODERATOR"]}>
+                          <ComingSoon title="Kiểm duyệt tài liệu" />
+                        </RequireAuth>
                       }
                     />
                   </Routes>

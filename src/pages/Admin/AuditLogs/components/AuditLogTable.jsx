@@ -15,73 +15,55 @@ import {
 import {
   AccessTimeOutlined,
   AutoAwesomeOutlined,
-  BookmarkOutlined,
-  ChevronRightOutlined,
-  DeleteOutlined,
   DescriptionOutlined,
-  DownloadOutlined,
-  EditOutlined,
   InfoOutlined,
-  LockOutlined,
-  LockOpenOutlined,
-  LoginOutlined,
-  LogoutOutlined,
-  PersonAddOutlined,
   PersonOutlined,
   RefreshOutlined,
-  SyncOutlined,
-  UploadOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
 import { useState } from "react";
-import { formatRelativeFull, getActionConfig } from "../../utils/admin-formatters.js";
+import { formatRelativeFull } from "../../utils/admin-formatters.js";
 import AuditLogDetailDrawer from "./AuditLogDetailDrawer.jsx";
 
-const ACTION_ICONS = {
-  Login: LoginOutlined,
-  Logout: LogoutOutlined,
-  Refresh: SyncOutlined,
-  Edit: EditOutlined,
-  Block: LockOutlined,
-  CheckCircle: LockOpenOutlined,
-  AdminPanelSettings: LockOpenOutlined,
-  UploadFile: UploadOutlined,
-  Delete: DeleteOutlined,
-  Visibility: VisibilityOutlined,
-  Download: DownloadOutlined,
-  Bookmark: BookmarkOutlined,
-  AutoAwesome: AutoAwesomeOutlined,
-  PersonAdd: PersonAddOutlined,
-  Error: InfoOutlined,
-  Info: InfoOutlined,
-};
-
-function ActionBadge({ action }) {
-  const cfg = getActionConfig(action);
-  const IconComponent = ACTION_ICONS[cfg.Icon] || InfoOutlined;
+function ActionBadge({ log }) {
+  const label = log.actionLabel || log.action || 'Hành động khác';
+  const color = log.actionGroup === 'BILLING' ? '#f59e0b' :
+                log.actionGroup === 'AUTH' ? '#06b6d4' :
+                log.actionGroup === 'ADMIN' ? '#8b5cf6' :
+                log.actionGroup === 'DOCUMENT' ? '#6366f1' :
+                log.actionGroup === 'MODERATION' ? '#f59e0b' :
+                log.actionGroup === 'PROFILE' ? '#8b5cf6' :
+                '#64748b';
+  const bg = log.actionGroup === 'BILLING' ? '#fffbeb' :
+             log.actionGroup === 'AUTH' ? '#ecfeff' :
+             log.actionGroup === 'ADMIN' ? '#f5f3ff' :
+             log.actionGroup === 'DOCUMENT' ? '#eef2ff' :
+             log.actionGroup === 'MODERATION' ? '#fffbeb' :
+             log.actionGroup === 'PROFILE' ? '#f5f3ff' :
+             '#f8fafc';
 
   return (
     <Chip
-      icon={<IconComponent sx={{ fontSize: 14 }} />}
-      label={cfg.label}
+      label={label}
       size="small"
       sx={{
-        backgroundColor: cfg.bg,
-        color: cfg.color,
+        backgroundColor: bg,
+        color: color,
         fontWeight: 600,
         fontSize: "0.7rem",
         height: 26,
-        border: `1px solid ${cfg.border || cfg.bg}`,
-        "& .MuiChip-icon": {
-          color: cfg.color,
-        },
+        border: `1px solid ${color}30`,
+        maxWidth: 120,
+        "& .MuiChip-label": { overflow: "hidden", textOverflow: "ellipsis" }
       }}
     />
   );
 }
 
-function UserCell({ userId, fullName }) {
-  if (!userId) {
+function UserCell({ userId, fullName, email }) {
+  const displayName = fullName || email || null;
+
+  if (!userId && !displayName) {
     return (
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <Avatar sx={{ width: 28, height: 28, bgcolor: "action.disabledBackground" }}>
@@ -96,10 +78,10 @@ function UserCell({ userId, fullName }) {
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
       <Avatar sx={{ width: 28, height: 28, bgcolor: "#6366f1", fontSize: "0.7rem" }}>
-        {fullName ? fullName.charAt(0).toUpperCase() : <PersonOutlined sx={{ fontSize: 14 }} />}
+        {displayName ? displayName.charAt(0).toUpperCase() : <PersonOutlined sx={{ fontSize: 14 }} />}
       </Avatar>
       <Typography variant="body2" fontWeight={500} sx={{ fontSize: "0.8rem" }}>
-        {fullName || userId.slice(0, 8) + "..."}
+        {displayName || userId.slice(0, 8) + "..."}
       </Typography>
     </Box>
   );
@@ -294,13 +276,13 @@ export default function AuditLogTable({ audit }) {
               onClick={() => setSelectedLog(log)}
             >
               {/* Người thực hiện */}
-              <UserCell userId={log.userId} />
+              <UserCell userId={log.userId} fullName={log.userFullName} email={log.userEmail} />
 
               {/* Đối tượng */}
               <TargetCell log={log} />
 
               {/* Hành động */}
-              <ActionBadge action={log.action} />
+              <ActionBadge log={log} />
 
               {/* Thời gian */}
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
@@ -320,14 +302,14 @@ export default function AuditLogTable({ audit }) {
                       setSelectedLog(log);
                     }}
                     sx={{
-                      color: "#f97316",
-                      bgcolor: "rgba(249, 115, 22, 0.08)",
+                      color: "#6366f1",
+                      bgcolor: "rgba(99, 102, 241, 0.08)",
                       "&:hover": {
-                        bgcolor: "rgba(249, 115, 22, 0.15)",
+                        bgcolor: "rgba(99, 102, 241, 0.15)",
                       },
                     }}
                   >
-                    <ChevronRightOutlined sx={{ fontSize: 18 }} />
+                    <VisibilityOutlined sx={{ fontSize: 18 }} />
                   </IconButton>
                 </Tooltip>
               </Box>

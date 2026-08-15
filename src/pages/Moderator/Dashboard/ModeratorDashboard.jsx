@@ -1,5 +1,5 @@
 import { Box, Typography, Card, CardContent, Grid } from "@mui/material";
-import TeacherLayout from "../Layout/TeacherLayout.jsx";
+import ModeratorLayout from "../Layout/ModeratorLayout.jsx";
 
 const STATS = [
   { label: "Tài liệu chờ duyệt", value: "—", color: "#fbbf24" },
@@ -8,9 +8,9 @@ const STATS = [
   { label: "Tổng đã duyệt", value: "—", color: "#818cf8" },
 ];
 
-export default function TeacherDashboard() {
+export default function ModeratorDashboard() {
   return (
-    <TeacherLayout>
+    <ModeratorLayout>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5 }}>
           Bảng điều khiển
@@ -55,6 +55,6 @@ export default function TeacherDashboard() {
       >
         Nội dung kiểm duyệt sẽ được phát triển trong các bước tiếp theo.
       </Typography>
-    </TeacherLayout>
+    </ModeratorLayout>
   );
 }
