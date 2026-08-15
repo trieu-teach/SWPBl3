@@ -1,0 +1,125 @@
+.site-header {
+  background: color-mix(in srgb, var(--bg) 88%, transparent) !important;
+  backdrop-filter: saturate(180%) blur(16px);
+  border-bottom: 1px solid transparent;
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.site-header.is-scrolled {
+  background: color-mix(in srgb, var(--bg) 96%, transparent) !important;
+  border-bottom-color: var(--line);
+}
+
+.public-header__toolbar {
+  min-height: 76px !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.public-header__brand,
+.public-header__actions,
+.public-header__nav {
+  display: flex;
+  align-items: center;
+}
+
+.public-header__brand {
+  text-decoration: none;
+}
+
+.public-header__nav {
+  gap: 6px;
+}
+
+.public-header__link {
+  padding: 8px 16px;
+  border-radius: 999px;
+  color: #475569 !important;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.public-header__link:hover {
+  color: #0b1020 !important;
+  background: var(--bg-soft);
+}
+
+.public-header__link.active {
+  color: #ffffff !important;
+  background: #0b1020 !important;
+}
+
+body[data-theme="dark"] .public-header__link {
+  color: #aab6c8 !important;
+}
+
+body[data-theme="dark"] .public-header__link:hover {
+  color: #f8fafc !important;
+  background: #1e293b;
+}
+
+body[data-theme="dark"] .public-header__link.active {
+  color: #0b1020 !important;
+  background: #f8fafc !important;
+}
+
+.public-header__actions {
+  gap: 8px;
+}
+
+.public-header__login.MuiButton-root {
+  color: var(--ink);
+  font-weight: 600;
+  text-transform: none;
+}
+
+.public-header__cta.MuiButton-root {
+  padding: 10px 20px;
+  border-radius: 999px;
+  color: var(--bg);
+  background: var(--ink);
+  font-weight: 600;
+  text-transform: none;
+}
+
+.public-header__cta.MuiButton-root:hover {
+  background: var(--ink-mute);
+}
+
+.public-header__menu {
+  display: none !important;
+  color: var(--ink) !important;
+}
+
+.public-header__drawer-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.public-header__drawer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .public-header__nav,
+  .public-header__login,
+  .public-header__cta {
+    display: none !important;
+  }
+
+  .public-header__menu {
+    display: inline-flex !important;
+  }
+}
