@@ -1,12 +1,21 @@
 import { ApiError, apiRequest } from "../lib/http.js";
 
 const DEFAULT_LIBRARY_LIMIT = 5;
+const MAX_SELECTED_DOCUMENTS = 10;
 
-function mapChatRequest({ question }) {
-  return {
+export { MAX_SELECTED_DOCUMENTS };
+
+function mapChatRequest({ question, documentIds }) {
+  const body = {
     question,
     limit: DEFAULT_LIBRARY_LIMIT,
   };
+
+  if (Array.isArray(documentIds) && documentIds.length > 0) {
+    body.filters = { documentIds };
+  }
+
+  return body;
 }
 
 function mapChatResponse(response) {
@@ -62,10 +71,10 @@ export function getChatErrorMessage(error) {
   return error?.message || "Đã xảy ra lỗi khi tạo phản hồi AI.";
 }
 
-export async function sendChatMessage({ question }) {
+export async function sendChatMessage({ question, documentIds }) {
   const response = await apiRequest("/chat/ask-library", {
     method: "POST",
-    body: mapChatRequest({ question }),
+    body: mapChatRequest({ question, documentIds }),
   });
 
   return mapChatResponse(response);

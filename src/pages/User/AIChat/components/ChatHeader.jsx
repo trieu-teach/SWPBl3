@@ -1,7 +1,10 @@
-import { Box, Chip, Stack, Typography } from "@mui/material";
+import { Box, Chip, Stack, Tooltip, Typography } from "@mui/material";
 import SmartToyOutlined from "@mui/icons-material/SmartToyOutlined";
+import LibraryBooksOutlined from "@mui/icons-material/LibraryBooksOutlined";
 
-export default function ChatHeader() {
+export default function ChatHeader({ selectedDocuments = [], onOpenPicker }) {
+  const count = selectedDocuments.length;
+
   return (
     <Stack
       direction={{ xs: "column", sm: "row" }}
@@ -40,13 +43,24 @@ export default function ChatHeader() {
         </Box>
       </Stack>
 
-      <Chip
-        label="Mock UI"
-        color="primary"
-        variant="outlined"
-        size="small"
-        sx={{ fontWeight: 700 }}
-      />
+      <Tooltip
+        title={
+          count > 0
+            ? `Đang dùng ${count} tài liệu làm ngữ cảnh`
+            : "Chọn tài liệu để AI trả lời chính xác hơn"
+        }
+      >
+        <Chip
+          icon={<LibraryBooksOutlined />}
+          label={count > 0 ? `${count} tài liệu` : "Chọn tài liệu"}
+          onClick={onOpenPicker}
+          color={count > 0 ? "primary" : "default"}
+          variant={count > 0 ? "filled" : "outlined"}
+          size="small"
+          clickable
+          sx={{ fontWeight: 700 }}
+        />
+      </Tooltip>
     </Stack>
   );
 }

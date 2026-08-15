@@ -11,6 +11,7 @@ import {
 import SmartToyOutlined from "@mui/icons-material/SmartToyOutlined";
 import PersonOutlineOutlined from "@mui/icons-material/PersonOutlineOutlined";
 import ReplayRounded from "@mui/icons-material/ReplayRounded";
+import ChatSources from "./ChatSources.jsx";
 
 function renderContent(content) {
   const blocks = [];
@@ -65,6 +66,8 @@ export default function ChatMessage({ message, isSending, onRetry }) {
   const isUser = message.role === "user";
   const isLoading = message.status === "loading";
   const isError = message.status === "error";
+  const isComplete = message.status === "complete";
+  const hasSources = !isUser && isComplete && message.sources?.length > 0;
 
   return (
     <Stack
@@ -112,6 +115,7 @@ export default function ChatMessage({ message, isSending, onRetry }) {
             border: "1px solid",
             borderColor: isUser ? "primary.main" : isError ? "error.main" : "divider",
             overflowWrap: "anywhere",
+            width: "100%",
           }}
         >
           {isLoading ? (
@@ -148,7 +152,10 @@ export default function ChatMessage({ message, isSending, onRetry }) {
               </Button>
             </Stack>
           ) : (
-            <Stack spacing={1.25}>{renderContent(message.content)}</Stack>
+            <Stack spacing={1.25}>
+              {renderContent(message.content)}
+              {hasSources && <ChatSources sources={message.sources} />}
+            </Stack>
           )}
         </Paper>
         <Typography

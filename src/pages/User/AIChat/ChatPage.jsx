@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { Box, Paper } from "@mui/material";
 import UserLayout from "../Layout/UserLayout.jsx";
 import ChatHeader from "./components/ChatHeader.jsx";
+import ChatContextBar from "./components/ChatContextBar.jsx";
 import ChatInput from "./components/ChatInput.jsx";
 import ChatMessageList from "./components/ChatMessageList.jsx";
+import DocumentPickerDialog from "./components/DocumentPickerDialog.jsx";
 import { useChat } from "./hooks/useChat.js";
 
 export default function ChatPage() {
@@ -14,7 +17,12 @@ export default function ChatPage() {
     error,
     sendMessage,
     retryMessage,
+    selectedDocuments,
+    removeDocument,
+    applyDocuments,
   } = useChat();
+
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   return (
     <UserLayout>
@@ -34,12 +42,23 @@ export default function ChatPage() {
           bgcolor: "background.default",
         }}
       >
-        <ChatHeader />
+        <ChatHeader
+          selectedDocuments={selectedDocuments}
+          onOpenPicker={() => setIsPickerOpen(true)}
+        />
+
+        <ChatContextBar
+          selectedDocuments={selectedDocuments}
+          onRemove={removeDocument}
+          onOpenPicker={() => setIsPickerOpen(true)}
+        />
+
         <ChatMessageList
           messages={messages}
           isSending={isSending}
           onRetry={retryMessage}
         />
+
         <Box sx={{ flexShrink: 0 }}>
           <ChatInput
             value={inputValue}
@@ -50,6 +69,13 @@ export default function ChatPage() {
           />
         </Box>
       </Paper>
+
+      <DocumentPickerDialog
+        open={isPickerOpen}
+        onClose={() => setIsPickerOpen(false)}
+        selectedDocuments={selectedDocuments}
+        onApply={applyDocuments}
+      />
     </UserLayout>
   );
 }

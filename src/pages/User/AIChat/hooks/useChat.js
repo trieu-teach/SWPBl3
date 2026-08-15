@@ -35,9 +35,40 @@ export function useChat() {
   const [inputValue, setInputValue] = useState("");
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState(null);
+  const [selectedDocuments, setSelectedDocuments] = useState([]);
   const sendingRef = useRef(false);
 
   const isSending = status === "sending";
+
+  // Derived: IDs only for request mapping
+  const selectedDocumentIds = useMemo(
+    () => selectedDocuments.map((d) => d.id),
+    [selectedDocuments],
+  );
+
+  // ── Document context actions ──────────────────────────────────────────────
+
+  const addDocument = useCallback((doc) => {
+    setSelectedDocuments((current) => {
+      if (current.some((d) => d.id === doc.id)) return current;
+      return [...current, { id: doc.id, title: doc.title }];
+    });
+  }, []);
+
+  const removeDocument = useCallback((id) => {
+    setSelectedDocuments((current) => current.filter((d) => d.id !== id));
+  }, []);
+
+  const applyDocuments = useCallback((docs) => {
+    // docs: Array<{ id, title }> — full replacement from picker Apply
+    setSelectedDocuments(docs.map((d) => ({ id: d.id, title: d.title })));
+  }, []);
+
+  const clearDocuments = useCallback(() => {
+    setSelectedDocuments([]);
+  }, []);
+
+  // ── Send message ──────────────────────────────────────────────────────────
 
   const sendMessage = useCallback(
     async (rawMessage = inputValue) => {
@@ -63,8 +94,11 @@ export function useChat() {
       setStatus("sending");
       sendingRef.current = true;
 
+      // Capture IDs at send time — snapshot, not reactive
+      const documentIds = selectedDocuments.map((d) => d.id);
+
       try {
-        const response = await sendChatMessage({ question: content });
+        const response = await sendChatMessage({ question: content, documentIds });
         setMessages((current) =>
           current.map((message) =>
             message.id === pendingMessage.id
@@ -104,8 +138,10 @@ export function useChat() {
         sendingRef.current = false;
       }
     },
-    [inputValue],
+    [inputValue, selectedDocuments],
   );
+
+  // ── Retry message ─────────────────────────────────────────────────────────
 
   const retryMessage = useCallback(
     async (assistantMessageId) => {
@@ -137,8 +173,11 @@ export function useChat() {
       setStatus("sending");
       sendingRef.current = true;
 
+      // Retry with current document context
+      const documentIds = selectedDocuments.map((d) => d.id);
+
       try {
-        const response = await sendChatMessage({ question: content });
+        const response = await sendChatMessage({ question: content, documentIds });
         setMessages((current) =>
           current.map((message) =>
             message.id === assistantMessageId
@@ -178,7 +217,7 @@ export function useChat() {
         sendingRef.current = false;
       }
     },
-    [messages],
+    [messages, selectedDocuments],
   );
 
   return useMemo(
@@ -191,7 +230,28 @@ export function useChat() {
       error,
       sendMessage,
       retryMessage,
+      // document context
+      selectedDocuments,
+      selectedDocumentIds,
+      addDocument,
+      removeDocument,
+      applyDocuments,
+      clearDocuments,
     }),
-    [error, inputValue, isSending, messages, retryMessage, sendMessage, status],
+    [
+      error,
+      inputValue,
+      isSending,
+      messages,
+      retryMessage,
+      sendMessage,
+      status,
+      selectedDocuments,
+      selectedDocumentIds,
+      addDocument,
+      removeDocument,
+      applyDocuments,
+      clearDocuments,
+    ],
   );
 }
