@@ -18,7 +18,7 @@ import {
 import { useAuth } from "../../../features/auth/AuthProvider";
 import { useColorMode } from "../../../App.jsx";
 
-export default function TeacherLayout({ children }) {
+export default function ModeratorLayout({ children }) {
   const { user, logout } = useAuth();
   const { mode, toggle } = useColorMode();
 
@@ -29,7 +29,7 @@ export default function TeacherLayout({ children }) {
         .join("")
         .slice(0, 2)
         .toUpperCase()
-    : "T";
+    : "M";
 
   return (
     <Box
@@ -81,7 +81,7 @@ export default function TeacherLayout({ children }) {
               letterSpacing: "0.05em",
             }}
           >
-            Teacher
+            Moderator
           </Box>
         </Box>
 
@@ -92,12 +92,12 @@ export default function TeacherLayout({ children }) {
             </IconButton>
           </Tooltip>
           <Tooltip title="Dashboard">
-            <IconButton component={Link} to="/teacher/dashboard" sx={{ color: "#fbbf24" }}>
+            <IconButton component={Link} to="/moderator/dashboard" sx={{ color: "#fbbf24" }}>
               <Dashboard />
             </IconButton>
           </Tooltip>
           <Tooltip title="Kiểm duyệt tài liệu">
-            <IconButton component={Link} to="/teacher/moderation" sx={{ color: "var(--text-secondary)" }}>
+            <IconButton component={Link} to="/moderator/moderation" sx={{ color: "var(--text-secondary)" }}>
               <FactCheck />
             </IconButton>
           </Tooltip>
