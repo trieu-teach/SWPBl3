@@ -3,6 +3,7 @@ import AdminLayout from "../Layout/AdminLayout.jsx";
 import SubscriptionFilters from "./components/SubscriptionFilters.jsx";
 import SubscriptionStats from "./components/SubscriptionStats.jsx";
 import SubscriptionTable from "./components/SubscriptionTable.jsx";
+import SubscriptionDetailDialog from "./components/SubscriptionDetailDialog.jsx";
 import useAdminSubscriptions from "./hooks/useAdminSubscriptions.js";
 
 export default function Subscriptions() {
@@ -21,6 +22,7 @@ export default function Subscriptions() {
       <SubscriptionStats stats={admin.stats} />
       <SubscriptionFilters admin={admin} />
       <SubscriptionTable admin={admin} />
+      <SubscriptionDetailDialog admin={admin} />
     </AdminLayout>
   );
 }

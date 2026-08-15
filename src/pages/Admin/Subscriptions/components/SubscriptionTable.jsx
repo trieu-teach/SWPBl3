@@ -1,4 +1,4 @@
-import { RefreshOutlined } from "@mui/icons-material";
+import { RefreshOutlined, VisibilityOutlined } from "@mui/icons-material";
 import {
   Alert,
   Box,
@@ -70,13 +70,14 @@ export default function SubscriptionTable({ admin }) {
                 <TableCell>Ngày mua</TableCell>
                 <TableCell>Ngày hết hạn</TableCell>
                 <TableCell>Mã giao dịch</TableCell>
+                <TableCell align="right">Thao tác</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {admin.loading &&
                 Array.from({ length: 6 }).map((_, index) => (
                   <TableRow key={index}>
-                    <TableCell colSpan={5}>
+                    <TableCell colSpan={6}>
                       <Skeleton height={42} />
                     </TableCell>
                   </TableRow>
@@ -84,7 +85,7 @@ export default function SubscriptionTable({ admin }) {
 
               {!admin.loading && admin.purchases.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
                     <Typography fontWeight={700}>
                       Không tìm thấy đăng ký
                     </Typography>
@@ -125,6 +126,15 @@ export default function SubscriptionTable({ admin }) {
                       >
                         {purchase.transactionCode || "—"}
                       </Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Button
+                        size="small"
+                        startIcon={<VisibilityOutlined />}
+                        onClick={() => admin.openDetail(purchase)}
+                      >
+                        Chi tiết
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

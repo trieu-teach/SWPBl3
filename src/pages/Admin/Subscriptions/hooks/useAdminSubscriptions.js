@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getAdminSubscriptionPurchases,
   getAdminSubscriptionStats,
+  getAdminUserBilling,
 } from "../../../../api/admin-subscriptions.api.js";
 
 export default function useAdminSubscriptions() {
@@ -17,6 +18,10 @@ export default function useAdminSubscriptions() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [detailTarget, setDetailTarget] = useState(null);
+  const [billingDetail, setBillingDetail] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState("");
 
   const query = useMemo(
     () => ({ page, limit: 20, search, plan }),
@@ -76,6 +81,37 @@ export default function useAdminSubscriptions() {
     setPage(1);
   }
 
+  const openDetail = useCallback(async (purchase) => {
+    setDetailTarget(purchase);
+    setBillingDetail(null);
+    setDetailError("");
+    setDetailLoading(true);
+
+    try {
+      const response = await getAdminUserBilling(
+        purchase.userId,
+        purchase.invoiceNumber,
+      );
+      setBillingDetail(response);
+    } catch (requestError) {
+      setDetailError(
+        requestError.message || "Không thể tải chi tiết đăng ký gói.",
+      );
+    } finally {
+      setDetailLoading(false);
+    }
+  }, []);
+
+  function closeDetail() {
+    setDetailTarget(null);
+    setBillingDetail(null);
+    setDetailError("");
+  }
+
+  function retryDetail() {
+    if (detailTarget) openDetail(detailTarget);
+  }
+
   return {
     stats,
     purchases,
@@ -85,11 +121,18 @@ export default function useAdminSubscriptions() {
     page,
     loading,
     error,
+    detailTarget,
+    billingDetail,
+    detailLoading,
+    detailError,
     setSearchInput,
     setPage,
     submitSearch,
     changePlan,
     resetFilters,
     load,
+    openDetail,
+    closeDetail,
+    retryDetail,
   };
 }
