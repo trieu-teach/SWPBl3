@@ -1,8 +1,13 @@
-import { Box, Chip, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import SmartToyOutlined from "@mui/icons-material/SmartToyOutlined";
 import LibraryBooksOutlined from "@mui/icons-material/LibraryBooksOutlined";
+import MenuOpenRounded from "@mui/icons-material/MenuOpenRounded";
 
-export default function ChatHeader({ selectedDocuments = [], onOpenPicker }) {
+export default function ChatHeader({ 
+  selectedDocuments = [], 
+  onOpenPicker,
+  onOpenSidebar 
+}) {
   const count = selectedDocuments.length;
 
   return (
@@ -19,6 +24,15 @@ export default function ChatHeader({ selectedDocuments = [], onOpenPicker }) {
       }}
     >
       <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
+        {/* Mobile Sidebar Toggle */}
+        <IconButton
+          onClick={onOpenSidebar}
+          sx={{ display: { md: "none" }, mr: -0.5 }}
+          aria-label="Mở danh sách hội thoại"
+        >
+          <MenuOpenRounded />
+        </IconButton>
+
         <Box
           sx={{
             width: 44,
@@ -37,7 +51,7 @@ export default function ChatHeader({ selectedDocuments = [], onOpenPicker }) {
           <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
             Hỏi AI
           </Typography>
-          <Typography color="text.secondary" sx={{ fontSize: "0.9rem" }}>
+          <Typography color="text.secondary" sx={{ fontSize: "0.9rem", display: { xs: 'none', sm: 'block' } }}>
             Trợ lý học tập giúp giải thích, tóm tắt và gợi ý cách ôn bài.
           </Typography>
         </Box>
