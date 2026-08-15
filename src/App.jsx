@@ -25,6 +25,7 @@ import DocumentDetails from "./pages/User/DocumentDetails/DocumentDetails.jsx";
 import CommunityLibrary from "./pages/User/CommunityLibrary/CommunityLibrary.jsx";
 import SavedDocuments from "./pages/User/SavedDocuments/SavedDocuments.jsx";
 import Subscription from "./pages/User/Subscription/Subscription.jsx";
+import ChatPage from "./pages/User/AIChat/ChatPage.jsx";
 
 // Admin routes
 import AdminDashboard from "./pages/Admin/Dashboard/AdminDashboard.jsx";
@@ -234,7 +235,7 @@ export default function App() {
                       path="/ai-chat"
                       element={
                         <RequireAuth>
-                          <ComingSoon title="Hỏi đáp với AI" />
+                          <ChatPage />
                         </RequireAuth>
                       }
                     />
