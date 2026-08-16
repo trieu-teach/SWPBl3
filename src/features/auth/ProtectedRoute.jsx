@@ -1,6 +1,17 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthProvider";
 
+function getRoleBasedRoute(role) {
+  switch (role) {
+    case "ADMIN":
+      return "/admin/dashboard";
+    case "MODERATOR":
+      return "/moderator/dashboard";
+    default:
+      return "/dashboard";
+  }
+}
+
 /**
  * GuestGuard — chặn người đã đăng nhập truy cập trang auth
  * (login / register / forgot-password / reset-password)
@@ -12,9 +23,24 @@ export function GuestGuard({ children }) {
   if (isLoading) return null;
 
   if (user) {
-    const destination =
-      user.role === "ADMIN" ? "/admin/dashboard" : "/dashboard";
-    return <Navigate to={destination} state={{ from: location }} replace />;
+    return <Navigate to={getRoleBasedRoute(user.role)} state={{ from: location }} replace />;
+  }
+
+  return children;
+}
+
+/**
+ * GuestRoute — redirect người đã đăng nhập ra khỏi trang public
+ * (homepage)
+ */
+export function GuestRoute({ children }) {
+  const { user, isLoading } = useAuth();
+  const location = useLocation();
+
+  if (isLoading) return null;
+
+  if (user) {
+    return <Navigate to={getRoleBasedRoute(user.role)} state={{ from: location }} replace />;
   }
 
   return children;
@@ -37,9 +63,7 @@ export function RequireAuth({ children, allowedRoles }) {
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    const destination =
-      user.role === "ADMIN" ? "/admin/dashboard" : "/dashboard";
-    return <Navigate to={destination} state={{ from: location }} replace />;
+    return <Navigate to={getRoleBasedRoute(user.role)} state={{ from: location }} replace />;
   }
 
   return children;

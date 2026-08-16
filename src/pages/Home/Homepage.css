@@ -137,7 +137,7 @@
 
 .nav-link:hover {
   background: var(--bg-soft);
-  color: var(--ink);
+  color: var(--ink) !important;
 }
 
 .nav-link.active {
@@ -1904,8 +1904,8 @@ body[data-theme="dark"] .nav-link:hover {
 }
 
 body[data-theme="dark"] .nav-link.active {
-  background: var(--ink);
-  color: var(--bg);
+  background: var(--ink) !important;
+  color: var(--bg) !important;
 }
 
 body[data-theme="dark"] .login-btn {
@@ -1978,6 +1978,29 @@ body[data-theme="dark"] .stat-tile,
 body[data-theme="dark"] .faq-item {
   background: var(--bg-elev) !important;
   border-color: var(--line) !important;
+}
+
+/* Highlighted pricing cards always sit on a dark gradient. Keep their
+   content readable regardless of the active page theme. */
+body[data-theme="light"] .plan-card.is-highlight .plan-name,
+body[data-theme="light"] .plan-card.is-highlight .plan-price,
+body[data-theme="light"] .plan-card.is-highlight .plan-feat,
+body[data-theme="light"] .plan-card.is-highlight .plan-feat-text,
+body[data-theme="dark"] .plan-card.is-highlight .plan-name,
+body[data-theme="dark"] .plan-card.is-highlight .plan-price,
+body[data-theme="dark"] .plan-card.is-highlight .plan-feat,
+body[data-theme="dark"] .plan-card.is-highlight .plan-feat-text {
+  color: #fff !important;
+}
+
+body[data-theme="light"] .plan-card.is-highlight .plan-period,
+body[data-theme="dark"] .plan-card.is-highlight .plan-period {
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+
+body[data-theme="light"] .plan-card.is-highlight .MuiDivider-root,
+body[data-theme="dark"] .plan-card.is-highlight .MuiDivider-root {
+  border-color: rgba(255, 255, 255, 0.42) !important;
 }
 
 body[data-theme="dark"] .security-line {
