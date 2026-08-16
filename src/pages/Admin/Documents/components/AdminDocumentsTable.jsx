@@ -153,7 +153,13 @@ export default function AdminDocumentsTable({ admin }) {
                           <VisibilityOutlined />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Chi tiết và kiểm duyệt">
+                      <Tooltip
+                        title={
+                          document.moderationStatus === "PENDING"
+                            ? "Chi tiết và kiểm duyệt"
+                            : "Xem chi tiết"
+                        }
+                      >
                         <IconButton
                           color="primary"
                           onClick={() => admin.openDetail(document)}
