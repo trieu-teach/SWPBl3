@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getAdminUsers,
+  updateAdminUserRole,
   updateAdminUserStatus,
 } from "../../../../api/admin-users.api.js";
 import { useToast } from "../../../../components/Toast/ToastProvider.jsx";
@@ -18,6 +19,7 @@ export default function useAdminUsers() {
   const [error, setError] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [statusTarget, setStatusTarget] = useState(null);
+  const [roleTarget, setRoleTarget] = useState(null);
   const [updating, setUpdating] = useState(false);
 
   const query = useMemo(
@@ -82,7 +84,37 @@ export default function useAdminUsers() {
           : "Đã mở khóa tài khoản người dùng.",
       );
     } catch (requestError) {
-      toast.error(requestError.message || "Không thể cập nhật trạng thái tài khoản.");
+      toast.error(
+        requestError.message || "Không thể cập nhật trạng thái tài khoản.",
+      );
+    } finally {
+      setUpdating(false);
+    }
+  }
+
+  async function changeRole(role) {
+    if (!roleTarget || roleTarget.role === role) return;
+
+    setUpdating(true);
+    try {
+      const updated = await updateAdminUserRole(roleTarget.id, role);
+
+      setUsers((current) =>
+        current.map((user) => (user.id === updated.id ? updated : user)),
+      );
+      setSelectedUser((current) =>
+        current?.id === updated.id ? updated : current,
+      );
+      setRoleTarget(null);
+      toast.success(
+        role === "MODERATOR"
+          ? "Đã cấp vai trò kiểm duyệt viên."
+          : "Đã chuyển về vai trò người dùng.",
+      );
+    } catch (requestError) {
+      toast.error(
+        requestError.message || "Không thể cập nhật vai trò người dùng.",
+      );
     } finally {
       setUpdating(false);
     }
@@ -98,6 +130,7 @@ export default function useAdminUsers() {
     error,
     selectedUser,
     statusTarget,
+    roleTarget,
     updating,
     setSearchInput,
     setPage,
@@ -107,6 +140,8 @@ export default function useAdminUsers() {
     load,
     setSelectedUser,
     setStatusTarget,
+    setRoleTarget,
     changeStatus,
+    changeRole,
   };
 }

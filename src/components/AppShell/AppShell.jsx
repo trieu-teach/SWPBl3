@@ -9,7 +9,6 @@ import {
   Typography,
   Badge,
 } from "@mui/material";
-import AdminPanelSettingsOutlined from "@mui/icons-material/AdminPanelSettingsOutlined";
 import AssessmentOutlined from "@mui/icons-material/AssessmentOutlined";
 import BookmarkOutlined from "@mui/icons-material/BookmarkOutlined";
 import DashboardOutlined from "@mui/icons-material/DashboardOutlined";
@@ -18,23 +17,33 @@ import DownloadOutlined from "@mui/icons-material/DownloadOutlined";
 import FolderOpenOutlined from "@mui/icons-material/FolderOpenOutlined";
 import HistoryOutlined from "@mui/icons-material/HistoryOutlined";
 import LogoutOutlined from "@mui/icons-material/LogoutOutlined";
+import LocalOfferOutlined from "@mui/icons-material/LocalOfferOutlined";
 import MenuRounded from "@mui/icons-material/MenuRounded";
 import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
 import SmartToyOutlined from "@mui/icons-material/SmartToyOutlined";
+import ShoppingCartOutlined from "@mui/icons-material/ShoppingCartOutlined";
 import UploadFileOutlined from "@mui/icons-material/UploadFileOutlined";
 import NotificationsOutlined from "@mui/icons-material/NotificationsOutlined";
+import ChevronLeftRounded from "@mui/icons-material/ChevronLeftRounded";
+import ChevronRightRounded from "@mui/icons-material/ChevronRightRounded";
 import { useColorMode } from "../../App.jsx";
 import ColorModeToggle from "../ColorModeToggle/ColorModeToggle.jsx";
 import Logo from "../Logo/Logo.jsx";
 import { useAuth } from "../../features/auth/AuthProvider.jsx";
 
 const DRAWER_WIDTH = 280;
+const COLLAPSED_DRAWER_WIDTH = 88;
 
 const USER_NAVIGATION = [
   { label: "Tổng quan", path: "/dashboard", icon: DashboardOutlined },
   { label: "Thư viện", path: "/documents", icon: FolderOpenOutlined },
-  { label: "Tải tài liệu", path: "/documents/upload", icon: UploadFileOutlined },
+  {
+    label: "Tải tài liệu",
+    path: "/documents/upload",
+    icon: UploadFileOutlined,
+  },
   { label: "Đã lưu", path: "/saved-documents", icon: BookmarkOutlined },
+  { label: "Đăng ký gói", path: "/subscription", icon: ShoppingCartOutlined },
   { label: "Hỏi AI", path: "/ai-chat", icon: SmartToyOutlined },
   { label: "Cộng đồng", path: "/community", icon: PeopleAltOutlined },
 ];
@@ -43,8 +52,26 @@ const ADMIN_NAVIGATION = [
   { label: "Tổng quan", path: "/admin/dashboard", icon: DashboardOutlined },
   { label: "Người dùng", path: "/admin/users", icon: PeopleAltOutlined },
   { label: "Tài liệu", path: "/admin/documents", icon: DescriptionOutlined },
-  { label: "Nhật ký kiểm tra", path: "/admin/audit-logs", icon: HistoryOutlined },
-  { label: "Nhật ký tải xuống", path: "/admin/download-logs", icon: DownloadOutlined },
+  {
+    label: "Gói dịch vụ",
+    path: "/admin/subscription-plans",
+    icon: LocalOfferOutlined,
+  },
+  {
+    label: "Đăng ký gói",
+    path: "/admin/subscriptions",
+    icon: ShoppingCartOutlined,
+  },
+  {
+    label: "Nhật ký kiểm tra",
+    path: "/admin/audit-logs",
+    icon: HistoryOutlined,
+  },
+  {
+    label: "Nhật ký tải xuống",
+    path: "/admin/download-logs",
+    icon: DownloadOutlined,
+  },
   { label: "Báo cáo", path: "/admin/reports", icon: AssessmentOutlined },
 ];
 
@@ -65,9 +92,9 @@ function isActivePath(currentPath, itemPath) {
   return currentPath === itemPath || currentPath.startsWith(`${itemPath}/`);
 }
 
-function NavItem({ item, active, onClick, accent }) {
+function NavItem({ item, active, onClick, accent, collapsed = false }) {
   const Icon = item.icon;
-  return (
+  const content = (
     <Box
       component={Link}
       to={item.path}
@@ -75,8 +102,9 @@ function NavItem({ item, active, onClick, accent }) {
       sx={{
         display: "flex",
         alignItems: "center",
-        gap: 1.5,
-        px: 2,
+        justifyContent: collapsed ? "center" : "flex-start",
+        gap: collapsed ? 0 : 1.5,
+        px: collapsed ? 1 : 2,
         py: 1.25,
         borderRadius: "12px",
         textDecoration: "none",
@@ -92,24 +120,45 @@ function NavItem({ item, active, onClick, accent }) {
       }}
     >
       <Icon sx={{ fontSize: 20, opacity: active ? 1 : 0.7 }} />
-      <Typography
-        sx={{
-          fontWeight: active ? 600 : 500,
-          fontSize: "0.875rem",
-        }}
-      >
-        {item.label}
-      </Typography>
+      {!collapsed && (
+        <Typography
+          sx={{
+            fontWeight: active ? 600 : 500,
+            fontSize: "0.875rem",
+          }}
+        >
+          {item.label}
+        </Typography>
+      )}
     </Box>
+  );
+
+  return collapsed ? (
+    <Tooltip title={item.label} placement="right" arrow>
+      {content}
+    </Tooltip>
+  ) : (
+    content
   );
 }
 
-function SidebarContent({ isAdmin, navigation, location, setMobileOpen, user, initials, handleLogout }) {
+function SidebarContent({
+  isAdmin,
+  navigation,
+  location,
+  setMobileOpen,
+  user,
+  initials,
+  handleLogout,
+  collapsed = false,
+  onToggle,
+}) {
   const accent = isAdmin ? "#f97316" : "#6366f1";
 
   return (
     <Box
       sx={{
+        position: "relative",
         height: "100%",
         display: "flex",
         flexDirection: "column",
@@ -118,7 +167,7 @@ function SidebarContent({ isAdmin, navigation, location, setMobileOpen, user, in
         borderColor: "divider",
       }}
     >
-        {/* Logo Section */}
+      {/* Logo Section */}
       <Box
         component={Link}
         to={isAdmin ? "/admin/dashboard" : "/dashboard"}
@@ -126,8 +175,9 @@ function SidebarContent({ isAdmin, navigation, location, setMobileOpen, user, in
         sx={{
           display: "flex",
           alignItems: "center",
-          gap: 1.5,
-          px: 2.5,
+          justifyContent: collapsed ? "center" : "flex-start",
+          gap: collapsed ? 0 : 1.5,
+          px: collapsed ? 1 : 2.5,
           py: 2.5,
           textDecoration: "none",
           color: "inherit",
@@ -136,51 +186,80 @@ function SidebarContent({ isAdmin, navigation, location, setMobileOpen, user, in
         }}
       >
         <Logo size={44} color={accent} showText={false} />
-        <Box>
-          <Typography
-            sx={{
-              fontWeight: 800,
-              lineHeight: 1.1,
-              fontSize: "1.1rem",
-              letterSpacing: "-0.01em",
-            }}
-          >
-            DocuMind
-          </Typography>
-          <Typography
-            sx={{
-              color: "text.secondary",
-              fontSize: "0.7rem",
-              fontWeight: 500,
-            }}
-          >
-            {isAdmin ? "Hệ thống quản trị" : "Không gian học tập"}
-          </Typography>
-        </Box>
+        {!collapsed && (
+          <Box>
+            <Typography
+              sx={{
+                fontWeight: 800,
+                lineHeight: 1.1,
+                fontSize: "1.1rem",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              DocuMind
+            </Typography>
+            <Typography
+              sx={{
+                color: "text.secondary",
+                fontSize: "0.7rem",
+                fontWeight: 500,
+              }}
+            >
+              {isAdmin ? "Hệ thống quản trị" : "Không gian học tập"}
+            </Typography>
+          </Box>
+        )}
       </Box>
+
+      {onToggle && (
+        <Tooltip title={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}>
+          <IconButton
+            size="small"
+            onClick={onToggle}
+            aria-label={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
+            sx={{
+              position: "absolute",
+              top: 28,
+              right: -15,
+              zIndex: 2,
+              width: 30,
+              height: 30,
+              bgcolor: "background.paper",
+              border: "1px solid",
+              borderColor: "divider",
+              boxShadow: 2,
+              "&:hover": { bgcolor: "action.hover" },
+            }}
+          >
+            {collapsed ? <ChevronRightRounded /> : <ChevronLeftRounded />}
+          </IconButton>
+        </Tooltip>
+      )}
 
       {/* Navigation */}
       <Box
         sx={{
           flex: 1,
-          px: 1.5,
+          px: collapsed ? 1 : 1.5,
           py: 2,
           overflowY: "auto",
         }}
       >
-        <Typography
-          sx={{
-            px: 2,
-            py: 1,
-            fontSize: "0.65rem",
-            fontWeight: 700,
-            color: "text.disabled",
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-          }}
-        >
-          {isAdmin ? "Quản trị" : "Chính"}
-        </Typography>
+        {!collapsed && (
+          <Typography
+            sx={{
+              px: 2,
+              py: 1,
+              fontSize: "0.65rem",
+              fontWeight: 700,
+              color: "text.disabled",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+            }}
+          >
+            {isAdmin ? "Quản trị" : "Chính"}
+          </Typography>
+        )}
         {navigation.map((item) => (
           <NavItem
             key={item.path}
@@ -188,16 +267,24 @@ function SidebarContent({ isAdmin, navigation, location, setMobileOpen, user, in
             active={isActivePath(location.pathname, item.path)}
             onClick={() => setMobileOpen(false)}
             accent={accent}
+            collapsed={collapsed}
           />
         ))}
       </Box>
 
       {/* Footer Section */}
-      <Box sx={{ px: 1.5, py: 2, borderTop: "1px solid", borderColor: "divider" }}>
+      <Box
+        sx={{
+          px: collapsed ? 1 : 1.5,
+          py: 2,
+          borderTop: "1px solid",
+          borderColor: "divider",
+        }}
+      >
         {/* User Card */}
         <Box
           sx={{
-            p: 2,
+            p: collapsed ? 1 : 2,
             borderRadius: "16px",
             backgroundColor: "action.hover",
             mb: 1.5,
@@ -210,7 +297,8 @@ function SidebarContent({ isAdmin, navigation, location, setMobileOpen, user, in
             sx={{
               display: "flex",
               alignItems: "center",
-              gap: 1.5,
+              justifyContent: collapsed ? "center" : "flex-start",
+              gap: collapsed ? 0 : 1.5,
               textDecoration: "none",
               color: "inherit",
               mb: 1.5,
@@ -228,22 +316,26 @@ function SidebarContent({ isAdmin, navigation, location, setMobileOpen, user, in
             >
               {initials}
             </Avatar>
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography
-                sx={{
-                  fontSize: "0.85rem",
-                  fontWeight: 600,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {user?.fullName || "Người dùng"}
-              </Typography>
-              <Typography sx={{ fontSize: "0.72rem", color: "text.secondary" }}>
-                {isAdmin ? "Quản trị viên" : "Sinh viên"}
-              </Typography>
-            </Box>
+            {!collapsed && (
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                  sx={{
+                    fontSize: "0.85rem",
+                    fontWeight: 600,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {user?.fullName || "Người dùng"}
+                </Typography>
+                <Typography
+                  sx={{ fontSize: "0.72rem", color: "text.secondary" }}
+                >
+                  {isAdmin ? "Quản trị viên" : "Sinh viên"}
+                </Typography>
+              </Box>
+            )}
           </Box>
           <Box
             onClick={handleLogout}
@@ -265,22 +357,26 @@ function SidebarContent({ isAdmin, navigation, location, setMobileOpen, user, in
             }}
           >
             <LogoutOutlined sx={{ fontSize: 18 }} />
-            <Typography sx={{ fontSize: "0.8rem", fontWeight: 500 }}>
-              Đăng xuất
-            </Typography>
+            {!collapsed && (
+              <Typography sx={{ fontSize: "0.8rem", fontWeight: 500 }}>
+                Đăng xuất
+              </Typography>
+            )}
           </Box>
         </Box>
 
         {/* Version */}
-        <Typography
-          sx={{
-            textAlign: "center",
-            fontSize: "0.65rem",
-            color: "text.disabled",
-          }}
-        >
-          DocuMind v1.0.0
-        </Typography>
+        {!collapsed && (
+          <Typography
+            sx={{
+              textAlign: "center",
+              fontSize: "0.65rem",
+              color: "text.disabled",
+            }}
+          >
+            DocuMind v1.0.0
+          </Typography>
+        )}
       </Box>
     </Box>
   );
@@ -288,6 +384,13 @@ function SidebarContent({ isAdmin, navigation, location, setMobileOpen, user, in
 
 export default function AppShell({ children, role = "USER" }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("app_sidebar_collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
   const { user, logout } = useAuth();
   const { mode } = useColorMode();
   const location = useLocation();
@@ -304,7 +407,17 @@ export default function AppShell({ children, role = "USER" }) {
     navigate("/login", { replace: true });
   }
 
-  const accent = isAdmin ? "#f97316" : "#6366f1";
+  function toggleSidebar() {
+    setSidebarCollapsed((current) => {
+      const next = !current;
+      try {
+        localStorage.setItem("app_sidebar_collapsed", String(next));
+      } catch {
+        // Ignore storage errors and keep the in-memory state.
+      }
+      return next;
+    });
+  }
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
@@ -313,13 +426,14 @@ export default function AppShell({ children, role = "USER" }) {
         component="aside"
         sx={{
           display: { xs: "none", md: "block" },
-          width: DRAWER_WIDTH,
+          width: sidebarCollapsed ? COLLAPSED_DRAWER_WIDTH : DRAWER_WIDTH,
           flexShrink: 0,
           position: "fixed",
           top: 0,
           left: 0,
           bottom: 0,
           zIndex: 1200,
+          transition: "width 0.22s ease",
         }}
       >
         <SidebarContent
@@ -330,6 +444,8 @@ export default function AppShell({ children, role = "USER" }) {
           user={user}
           initials={initials}
           handleLogout={handleLogout}
+          collapsed={sidebarCollapsed}
+          onToggle={toggleSidebar}
         />
       </Box>
 
@@ -362,11 +478,14 @@ export default function AppShell({ children, role = "USER" }) {
         component="main"
         sx={{
           flex: 1,
-          ml: { md: `${DRAWER_WIDTH}px` },
+          ml: {
+            md: `${sidebarCollapsed ? COLLAPSED_DRAWER_WIDTH : DRAWER_WIDTH}px`,
+          },
           display: "flex",
           flexDirection: "column",
           minHeight: "100vh",
           backgroundColor: "background.default",
+          transition: "margin-left 0.22s ease",
         }}
       >
         {/* Top Header */}
@@ -382,9 +501,7 @@ export default function AppShell({ children, role = "USER" }) {
             alignItems: "center",
             justifyContent: "space-between",
             bgcolor:
-              mode === "dark"
-                ? "rgba(11,15,26,.88)"
-                : "rgba(255,255,255,.88)",
+              mode === "dark" ? "rgba(11,15,26,.88)" : "rgba(255,255,255,.88)",
             backdropFilter: "blur(16px)",
             borderBottom: "1px solid",
             borderColor: "divider",
@@ -405,7 +522,9 @@ export default function AppShell({ children, role = "USER" }) {
                   fontSize: "1rem",
                 }}
               >
-                {navigation.find((item) => isActivePath(location.pathname, item.path))?.label || "DocuMind"}
+                {navigation.find((item) =>
+                  isActivePath(location.pathname, item.path),
+                )?.label || "DocuMind"}
               </Typography>
               <Typography
                 sx={{
