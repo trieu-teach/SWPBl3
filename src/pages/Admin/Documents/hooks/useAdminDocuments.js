@@ -138,6 +138,19 @@ export default function useAdminDocuments() {
       setDetail(null);
       await load();
     } catch (requestError) {
+      if (
+        requestError.status === 409 &&
+        requestError.message?.includes("no longer pending moderation")
+      ) {
+        setAction(null);
+        setDetail(null);
+        await load();
+        toast.warning(
+          "Tài liệu đã được kiểm duyệt trước đó. Danh sách đã được cập nhật.",
+        );
+        return;
+      }
+
       toast.error(requestError.message || "Không thể cập nhật tài liệu.");
     } finally {
       setActing(false);

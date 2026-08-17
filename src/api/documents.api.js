@@ -4,9 +4,23 @@ export function getSubjects() {
   return apiRequest("/subjects");
 }
 
+export function createSubject(payload) {
+  return apiRequest("/subjects", {
+    method: "POST",
+    body: payload,
+  });
+}
+
 export function getCategories(subjectId) {
   const query = subjectId ? `?subjectId=${encodeURIComponent(subjectId)}` : "";
   return apiRequest(`/categories${query}`);
+}
+
+export function createCategory(payload) {
+  return apiRequest("/categories", {
+    method: "POST",
+    body: payload,
+  });
 }
 
 export function uploadDocument(payload, onProgress) {

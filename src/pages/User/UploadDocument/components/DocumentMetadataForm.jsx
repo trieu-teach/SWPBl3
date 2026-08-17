@@ -1,5 +1,6 @@
 import {
   Box,
+  Button,
   FormControl,
   FormLabel,
   MenuItem,
@@ -10,6 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import DocumentTagInput from "./DocumentTagInput.jsx";
+import CreateTaxonomyDialog from "./CreateTaxonomyDialog.jsx";
 
 export default function DocumentMetadataForm({ upload }) {
   return (
@@ -44,45 +46,64 @@ export default function DocumentMetadataForm({ upload }) {
             gap: 2,
           }}
         >
-          <FormControl required disabled={upload.loadingOptions}>
-            <FormLabel sx={{ mb: 0.75 }}>Môn học</FormLabel>
-            <Select
-              value={upload.subjectId}
-              displayEmpty
-              onChange={(event) =>
-                upload.updateField("subjectId", event.target.value)
-              }
-            >
-              <MenuItem value="" disabled>
-                {upload.loadingOptions ? "Đang tải..." : "Chọn môn học"}
-              </MenuItem>
-              {upload.subjects.map((item) => (
-                <MenuItem key={item.id} value={item.id}>
-                  {item.name}
-                  {item.code ? ` (${item.code})` : ""}
+          <Stack spacing={1}>
+            <FormControl required disabled={upload.loadingOptions}>
+              <FormLabel sx={{ mb: 0.75 }}>Môn học</FormLabel>
+              <Select
+                value={upload.subjectId}
+                displayEmpty
+                onChange={(event) =>
+                  upload.updateField("subjectId", event.target.value)
+                }
+              >
+                <MenuItem value="" disabled>
+                  {upload.loadingOptions ? "Đang tải..." : "Chọn môn học"}
                 </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl required disabled={!upload.subjectId}>
-            <FormLabel sx={{ mb: 0.75 }}>Danh mục</FormLabel>
-            <Select
-              value={upload.categoryId}
-              displayEmpty
-              onChange={(event) =>
-                upload.updateField("categoryId", event.target.value)
-              }
+                {upload.subjects.map((item) => (
+                  <MenuItem key={item.id} value={item.id}>
+                    {item.name}
+                    {item.code ? ` (${item.code})` : ""}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Button
+              size="small"
+              sx={{ alignSelf: "flex-start" }}
+              onClick={() => upload.openTaxonomyDialog("subject")}
             >
-              <MenuItem value="" disabled>
-                {upload.subjectId ? "Chọn danh mục" : "Chọn môn học trước"}
-              </MenuItem>
-              {upload.categories.map((item) => (
-                <MenuItem key={item.id} value={item.id}>
-                  {item.name}
+              + Tạo môn học mới
+            </Button>
+          </Stack>
+          <Stack spacing={1}>
+            <FormControl required disabled={!upload.subjectId}>
+              <FormLabel sx={{ mb: 0.75 }}>Danh mục</FormLabel>
+              <Select
+                value={upload.categoryId}
+                displayEmpty
+                onChange={(event) =>
+                  upload.updateField("categoryId", event.target.value)
+                }
+              >
+                <MenuItem value="" disabled>
+                  {upload.subjectId ? "Chọn danh mục" : "Chọn môn học trước"}
                 </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+                {upload.categories.map((item) => (
+                  <MenuItem key={item.id} value={item.id}>
+                    {item.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Button
+              size="small"
+              sx={{ alignSelf: "flex-start" }}
+              disabled={!upload.subjectId}
+              onClick={() => upload.openTaxonomyDialog("category")}
+            >
+              + Tạo danh mục mới
+            </Button>
+          </Stack>
         </Box>
         <DocumentTagInput
           value={upload.tagInput}
@@ -92,6 +113,14 @@ export default function DocumentMetadataForm({ upload }) {
           onRemove={upload.removeTag}
         />
       </Stack>
+      <CreateTaxonomyDialog
+        open={Boolean(upload.taxonomyDialog)}
+        type={upload.taxonomyDialog}
+        loading={upload.creatingTaxonomy}
+        error={upload.taxonomyError}
+        onClose={upload.closeTaxonomyDialog}
+        onSubmit={upload.submitTaxonomy}
+      />
     </Paper>
   );
 }

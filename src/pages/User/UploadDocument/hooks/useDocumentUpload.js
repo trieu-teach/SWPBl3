@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import {
+  createCategory,
+  createSubject,
   getCategories,
   getSubjects,
   uploadDocument,
@@ -34,6 +36,9 @@ export default function useDocumentUpload() {
   const [submitError, setSubmitError] = useState("");
   const [result, setResult] = useState(null);
   const [acceptedUploadTerms, setAcceptedUploadTerms] = useState(false);
+  const [taxonomyDialog, setTaxonomyDialog] = useState(null);
+  const [creatingTaxonomy, setCreatingTaxonomy] = useState(false);
+  const [taxonomyError, setTaxonomyError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -71,6 +76,49 @@ export default function useDocumentUpload() {
       [name]: value,
       ...(name === "subjectId" ? { categoryId: "" } : {}),
     }));
+  }
+
+  function openTaxonomyDialog(type) {
+    setTaxonomyError("");
+    setTaxonomyDialog(type);
+  }
+
+  function closeTaxonomyDialog() {
+    if (creatingTaxonomy) return;
+    setTaxonomyDialog(null);
+    setTaxonomyError("");
+  }
+
+  async function submitTaxonomy(payload) {
+    setCreatingTaxonomy(true);
+    setTaxonomyError("");
+    try {
+      if (taxonomyDialog === "subject") {
+        const subject = await createSubject(payload);
+        setSubjects((current) => [
+          ...current.filter((item) => item.id !== subject.id),
+          subject,
+        ]);
+        updateField("subjectId", subject.id);
+        toast.success("Đã tạo và chọn môn học mới.");
+      } else {
+        const category = await createCategory({
+          ...payload,
+          subjectId: form.subjectId,
+        });
+        setCategories((current) => [
+          ...current.filter((item) => item.id !== category.id),
+          category,
+        ]);
+        updateField("categoryId", category.id);
+        toast.success("Đã tạo và chọn danh mục mới.");
+      }
+      setTaxonomyDialog(null);
+    } catch (error) {
+      setTaxonomyError(error.message || "Không thể tạo dữ liệu mới.");
+    } finally {
+      setCreatingTaxonomy(false);
+    }
   }
 
   function selectFile(nextFile) {
@@ -161,6 +209,9 @@ export default function useDocumentUpload() {
     submitError,
     result,
     acceptedUploadTerms,
+    taxonomyDialog,
+    creatingTaxonomy,
+    taxonomyError,
     updateField,
     selectFile,
     removeFile,
@@ -168,6 +219,9 @@ export default function useDocumentUpload() {
     addTag,
     removeTag,
     setAcceptedUploadTerms,
+    openTaxonomyDialog,
+    closeTaxonomyDialog,
+    submitTaxonomy,
     submit,
     reset,
   };
