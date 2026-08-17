@@ -7,12 +7,22 @@ const CHAT_SUGGESTIONS = [
 ];
 export default function ChatEmptyState() {
   return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100%",
+        width: "100%",
+        py: 2,
+      }}
+    >
     <Card
       variant="outlined"
       sx={{
         maxWidth: 720,
+        width: "100%",
         mx: "auto",
-        my: { xs: 3, md: 8 },
         px: { xs: 2.5, sm: 4 },
         py: { xs: 4, sm: 5 },
         textAlign: "center",
@@ -48,5 +58,6 @@ export default function ChatEmptyState() {
         ))}
       </Stack>
     </Card>
+    </Box>
   );
 }
