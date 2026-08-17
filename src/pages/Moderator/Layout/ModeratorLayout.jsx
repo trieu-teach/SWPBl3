@@ -59,7 +59,7 @@ export default function ModeratorLayout({ children }) {
           <Box
             component={Link}
             to="/"
-            sx={{ textDecoration: "none", color: "inherit" }}
+            sx={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
           >
             <Typography
               variant="h6"
