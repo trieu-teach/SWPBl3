@@ -483,7 +483,8 @@ export default function AppShell({ children, role = "USER" }) {
           },
           display: "flex",
           flexDirection: "column",
-          minHeight: "100vh",
+          height: "100vh",
+          overflow: "hidden",
           backgroundColor: "background.default",
           transition: "margin-left 0.22s ease",
         }}
@@ -570,10 +571,14 @@ export default function AppShell({ children, role = "USER" }) {
         <Box
           sx={{
             flex: 1,
+            minHeight: 0,
+            display: "flex",
+            flexDirection: "column",
             p: { xs: 2, sm: 3, lg: 4 },
             maxWidth: 1600,
             mx: "auto",
             width: "100%",
+            overflow: "hidden",
           }}
         >
           {children}

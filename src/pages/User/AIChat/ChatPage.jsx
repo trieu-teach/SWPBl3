@@ -59,11 +59,7 @@ export default function ChatPage() {
       <Paper
         variant="outlined"
         sx={{
-          height: {
-            xs: "calc(100dvh - 106px)",
-            sm: "calc(100dvh - 122px)",
-            lg: "calc(100dvh - 138px)",
-          },
+          height: "100%",
           minHeight: 0,
           display: "flex",
           flexDirection: "row",
@@ -85,7 +81,7 @@ export default function ChatPage() {
           onMobileClose={() => setMobileSidebarOpen(false)}
         />
 
-        <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+        <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, minHeight: 0 }}>
           <ChatHeader
             selectedDocuments={selectedDocuments}
             onOpenPicker={() => setIsPickerOpen(true)}
