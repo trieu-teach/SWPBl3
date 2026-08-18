@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import {
   createCategory,
   createSubject,
+  deleteCategory,
+  deleteSubject,
   getCategories,
   getSubjects,
   uploadDocument,
@@ -39,6 +41,9 @@ export default function useDocumentUpload() {
   const [taxonomyDialog, setTaxonomyDialog] = useState(null);
   const [creatingTaxonomy, setCreatingTaxonomy] = useState(false);
   const [taxonomyError, setTaxonomyError] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deletingTaxonomy, setDeletingTaxonomy] = useState(false);
+  const [deleteTaxonomyError, setDeleteTaxonomyError] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -118,6 +123,50 @@ export default function useDocumentUpload() {
       setTaxonomyError(error.message || "Không thể tạo dữ liệu mới.");
     } finally {
       setCreatingTaxonomy(false);
+    }
+  }
+
+  function openDeleteDialog(type, item) {
+    setDeleteTaxonomyError(null);
+    setDeleteTarget({ type, item });
+  }
+
+  function closeDeleteDialog() {
+    if (deletingTaxonomy) return;
+    setDeleteTarget(null);
+    setDeleteTaxonomyError(null);
+  }
+
+  async function confirmDeleteTaxonomy() {
+    if (!deleteTarget) return;
+    setDeletingTaxonomy(true);
+    setDeleteTaxonomyError(null);
+    try {
+      if (deleteTarget.type === "subject") {
+        await deleteSubject(deleteTarget.item.id);
+        setSubjects((current) =>
+          current.filter((item) => item.id !== deleteTarget.item.id),
+        );
+        if (form.subjectId === deleteTarget.item.id) {
+          updateField("subjectId", "");
+        }
+      } else {
+        await deleteCategory(deleteTarget.item.id);
+        setCategories((current) =>
+          current.filter((item) => item.id !== deleteTarget.item.id),
+        );
+        if (form.categoryId === deleteTarget.item.id) {
+          updateField("categoryId", "");
+        }
+      }
+      toast.success(
+        `Đã xóa ${deleteTarget.type === "subject" ? "môn học" : "danh mục"}.`,
+      );
+      setDeleteTarget(null);
+    } catch (error) {
+      setDeleteTaxonomyError(error);
+    } finally {
+      setDeletingTaxonomy(false);
     }
   }
 
@@ -212,6 +261,9 @@ export default function useDocumentUpload() {
     taxonomyDialog,
     creatingTaxonomy,
     taxonomyError,
+    deleteTarget,
+    deletingTaxonomy,
+    deleteTaxonomyError,
     updateField,
     selectFile,
     removeFile,
@@ -222,6 +274,9 @@ export default function useDocumentUpload() {
     openTaxonomyDialog,
     closeTaxonomyDialog,
     submitTaxonomy,
+    openDeleteDialog,
+    closeDeleteDialog,
+    confirmDeleteTaxonomy,
     submit,
     reset,
   };

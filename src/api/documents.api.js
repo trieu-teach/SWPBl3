@@ -11,6 +11,10 @@ export function createSubject(payload) {
   });
 }
 
+export function deleteSubject(id) {
+  return apiRequest(`/subjects/${id}`, { method: "DELETE" });
+}
+
 export function getCategories(subjectId) {
   const query = subjectId ? `?subjectId=${encodeURIComponent(subjectId)}` : "";
   return apiRequest(`/categories${query}`);
@@ -21,6 +25,10 @@ export function createCategory(payload) {
     method: "POST",
     body: payload,
   });
+}
+
+export function deleteCategory(id) {
+  return apiRequest(`/categories/${id}`, { method: "DELETE" });
 }
 
 export function uploadDocument(payload, onProgress) {

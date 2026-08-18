@@ -88,6 +88,13 @@ function getInitials(name, fallback) {
 function isActivePath(currentPath, itemPath) {
   if (["/dashboard", "/admin/dashboard"].includes(itemPath))
     return currentPath === itemPath;
+  if (itemPath === "/documents") {
+    return (
+      currentPath === "/documents" ||
+      (/^\/documents\/[^/]+$/.test(currentPath) &&
+        currentPath !== "/documents/upload")
+    );
+  }
   return currentPath === itemPath || currentPath.startsWith(`${itemPath}/`);
 }
 

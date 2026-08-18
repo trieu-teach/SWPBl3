@@ -11,10 +11,12 @@ export function normalizeApiBaseUrl(value) {
 }
 
 export class ApiError extends Error {
-  constructor(message, status) {
+  constructor(message, status, code, details) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.code = code;
+    this.details = details;
   }
 }
 
@@ -88,7 +90,10 @@ apiClient.interceptors.response.use(
         }
         return data.data;
       }
-      throw new ApiError(data.error?.message || "Request failed", response.status);
+      throw new ApiError(
+        data.error?.message || "Request failed",
+        response.status,
+      );
     }
     return data;
   },
@@ -102,8 +107,13 @@ apiClient.interceptors.response.use(
       error.response?.data?.message ||
       error.message ||
       "Request failed";
-    throw new ApiError(message, error.response?.status || 0);
-  }
+    throw new ApiError(
+      message,
+      error.response?.status || 0,
+      error.response?.data?.error?.code,
+      error.response?.data?.error?.details,
+    );
+  },
 );
 
 export async function apiRequest(path, options = {}) {
@@ -113,7 +123,11 @@ export async function apiRequest(path, options = {}) {
     method: rest.method || "GET",
     headers: { ...headers },
   };
-  if (body !== undefined && !(body instanceof FormData) && typeof body !== "string") {
+  if (
+    body !== undefined &&
+    !(body instanceof FormData) &&
+    typeof body !== "string"
+  ) {
     config.data = body;
   } else if (body !== undefined) {
     config.data = body;
