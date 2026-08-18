@@ -44,6 +44,10 @@ export default function AdminDocumentDetailDialog({
         <Stack direction="row" gap={1} flexWrap="wrap" sx={{ my: 2 }}>
           <Chip
             size="small"
+            color={
+              document.visibility === "PUBLIC" ? "success" : "secondary"
+            }
+            variant="outlined"
             label={document.visibility === "PUBLIC" ? "Công khai" : "Riêng tư"}
           />
           <Chip
