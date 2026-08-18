@@ -128,32 +128,24 @@ export default function SubscriptionCard({
         </Box>
 
         {showPaymentSelector && !buttonState?.disabled && (
-          <FormControl component="fieldset" sx={{ mb: 2 }}>
-            <RadioGroup
-              row
-              value={selectedPaymentMethod}
-              onChange={(e) => onPaymentMethodChange?.(e.target.value)}
+          <Box sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+            <Box
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 0.5,
+                px: 1.5,
+                py: 0.5,
+                borderRadius: "8px",
+                backgroundColor: "#d1fae5",
+                color: "#059669",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+              }}
             >
-              <FormControlLabel
-                value="BANK_TRANSFER"
-                control={<Radio size="small" />}
-                label={
-                  <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
-                    QR VietQR
-                  </Typography>
-                }
-              />
-              <FormControlLabel
-                value="CARD"
-                control={<Radio size="small" />}
-                label={
-                  <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
-                    Thẻ Visa/Mastercard
-                  </Typography>
-                }
-              />
-            </RadioGroup>
-          </FormControl>
+              QR VietQR
+            </Box>
+          </Box>
         )}
 
         <Button
