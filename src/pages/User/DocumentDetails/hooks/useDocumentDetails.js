@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
+  deleteCategory,
   deleteDocument,
+  deleteSubject,
   getCategories,
   getDocument,
   getDocumentDownload,
@@ -31,6 +33,9 @@ export default function useDocumentDetails() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [preview, setPreview] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deletingTaxonomy, setDeletingTaxonomy] = useState(false);
+  const [deleteTaxonomyError, setDeleteTaxonomyError] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -72,6 +77,50 @@ export default function useDocumentDetails() {
       [name]: value,
       ...(name === "subjectId" ? { categoryId: "" } : {}),
     }));
+  }
+
+  function openDeleteDialog(type, item) {
+    setDeleteTaxonomyError(null);
+    setDeleteTarget({ type, item });
+  }
+
+  function closeDeleteDialog() {
+    if (deletingTaxonomy) return;
+    setDeleteTarget(null);
+    setDeleteTaxonomyError(null);
+  }
+
+  async function confirmDeleteTaxonomy() {
+    if (!deleteTarget) return;
+    setDeletingTaxonomy(true);
+    setDeleteTaxonomyError(null);
+    try {
+      if (deleteTarget.type === "subject") {
+        await deleteSubject(deleteTarget.item.id);
+        setSubjects((current) =>
+          current.filter((item) => item.id !== deleteTarget.item.id),
+        );
+        if (form.subjectId === deleteTarget.item.id) {
+          updateField("subjectId", "");
+        }
+      } else {
+        await deleteCategory(deleteTarget.item.id);
+        setCategories((current) =>
+          current.filter((item) => item.id !== deleteTarget.item.id),
+        );
+        if (form.categoryId === deleteTarget.item.id) {
+          updateField("categoryId", "");
+        }
+      }
+      toast.success(
+        `Đã xóa ${deleteTarget.type === "subject" ? "môn học" : "danh mục"}.`,
+      );
+      setDeleteTarget(null);
+    } catch (requestError) {
+      setDeleteTaxonomyError(requestError);
+    } finally {
+      setDeletingTaxonomy(false);
+    }
   }
 
   async function save(event) {
@@ -183,11 +232,17 @@ export default function useDocumentDetails() {
     error,
     success,
     preview,
+    deleteTarget,
+    deletingTaxonomy,
+    deleteTaxonomyError,
     updateField,
     save,
     changeVisibility,
     openFile,
     remove,
+    openDeleteDialog,
+    closeDeleteDialog,
+    confirmDeleteTaxonomy,
     reload: load,
     closePreview: () => setPreview(null),
   };
