@@ -35,7 +35,6 @@ const DRAWER_WIDTH = 280;
 const COLLAPSED_DRAWER_WIDTH = 88;
 
 const USER_NAVIGATION = [
-  { label: "Tổng quan", path: "/dashboard", icon: DashboardOutlined },
   { label: "Thư viện", path: "/documents", icon: FolderOpenOutlined },
   {
     label: "Tải tài liệu",
@@ -89,6 +88,13 @@ function getInitials(name, fallback) {
 function isActivePath(currentPath, itemPath) {
   if (["/dashboard", "/admin/dashboard"].includes(itemPath))
     return currentPath === itemPath;
+  if (itemPath === "/documents") {
+    return (
+      currentPath === "/documents" ||
+      (/^\/documents\/[^/]+$/.test(currentPath) &&
+        currentPath !== "/documents/upload")
+    );
+  }
   return currentPath === itemPath || currentPath.startsWith(`${itemPath}/`);
 }
 
@@ -170,7 +176,7 @@ function SidebarContent({
       {/* Logo Section */}
       <Box
         component={Link}
-        to={isAdmin ? "/admin/dashboard" : "/dashboard"}
+        to={isAdmin ? "/admin/dashboard" : "/documents"}
         onClick={() => setMobileOpen(false)}
         sx={{
           display: "flex",

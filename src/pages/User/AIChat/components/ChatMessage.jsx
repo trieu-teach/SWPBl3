@@ -62,7 +62,7 @@ function renderContent(content) {
   });
 }
 
-export default function ChatMessage({ message, isSending, onRetry }) {
+export default function ChatMessage({ message, isSending, onRetry, onSend }) {
   const isUser = message.role === "user";
   const isLoading = message.status === "loading";
   const isError = message.status === "error";
@@ -127,6 +127,12 @@ export default function ChatMessage({ message, isSending, onRetry }) {
             </Stack>
           ) : isError ? (
             <Stack spacing={1.25}>
+              {message.content && message.content !== "Đang suy nghĩ..." && (
+                <Box>
+                  {renderContent(message.content)}
+                  {hasSources && <ChatSources sources={message.sources} />}
+                </Box>
+              )}
               <Alert
                 severity="error"
                 variant="standard"
@@ -137,7 +143,7 @@ export default function ChatMessage({ message, isSending, onRetry }) {
                   "& .MuiAlert-icon": { mt: 0.15 },
                 }}
               >
-                {message.content}
+                {message.errorDetail || message.content}
               </Alert>
               <Button
                 type="button"
@@ -154,7 +160,43 @@ export default function ChatMessage({ message, isSending, onRetry }) {
           ) : (
             <Stack spacing={1.25}>
               {renderContent(message.content)}
-              {hasSources && <ChatSources sources={message.sources} />}
+              
+              {/* If streaming and verifying, show a subtle indicator */}
+              {message.status === "streaming" && message.streamPhase === "verifying" && (
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ opacity: 0.7 }}>
+                  <CircularProgress size={14} thickness={4} />
+                  <Typography variant="caption">Đang kiểm tra thông tin...</Typography>
+                </Stack>
+              )}
+              
+              {/* Show generating if streaming but no content yet */}
+              {message.status === "streaming" && message.streamPhase === "generating" && !message.content && (
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ opacity: 0.7 }}>
+                  <CircularProgress size={14} thickness={4} />
+                  <Typography variant="caption">Đang tạo câu trả lời...</Typography>
+                </Stack>
+              )}
+
+              {/* Show retrieving if streaming but no content yet */}
+              {message.status === "streaming" && message.streamPhase === "retrieving" && !message.content && (
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ opacity: 0.7 }}>
+                  <CircularProgress size={14} thickness={4} />
+                  <Typography variant="caption">Đang tìm kiếm tài liệu...</Typography>
+                </Stack>
+              )}
+
+              {message.sources?.length > 0 && <ChatSources sources={message.sources} />}
+
+              {message.answerStatus === "FALLBACK_WITH_SOURCES" && (
+                <Typography variant="caption" sx={{ fontStyle: "italic", opacity: 0.8, display: "block", mt: 0.5 }}>
+                  Câu trả lời được tạo từ các nguồn phù hợp.
+                </Typography>
+              )}
+              {message.answerStatus === "NO_SOURCES" && (
+                <Typography variant="caption" sx={{ fontStyle: "italic", opacity: 0.8, display: "block", mt: 0.5 }}>
+                  Không tìm thấy nguồn phù hợp trong phạm vi tài liệu hiện tại.
+                </Typography>
+              )}
             </Stack>
           )}
         </Paper>
@@ -167,6 +209,38 @@ export default function ChatMessage({ message, isSending, onRetry }) {
         >
           {isUser ? "Bạn" : "AI Study Hub"} · {message.createdAt}
         </Typography>
+
+        {/* Suggested Prompts below the paper bubble */}
+        {!isUser && isComplete && message.suggestedPrompts?.length > 0 && (
+          <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mt: 0.5 }}>
+            {message.suggestedPrompts.map((prompt) => (
+              <Button
+                key={prompt}
+                variant="outlined"
+                size="small"
+                onClick={() => onSend(prompt)}
+                disabled={isSending}
+                sx={{
+                  borderRadius: 4,
+                  textTransform: "none",
+                  fontSize: "0.8rem",
+                  color: "text.secondary",
+                  borderColor: "divider",
+                  textAlign: "left",
+                  lineHeight: 1.3,
+                  whiteSpace: "normal",
+                  "&:hover": {
+                    borderColor: "primary.main",
+                    color: "primary.main",
+                    bgcolor: "transparent",
+                  },
+                }}
+              >
+                {prompt}
+              </Button>
+            ))}
+          </Stack>
+        )}
       </Box>
 
       {isUser && (

@@ -1,13 +1,20 @@
 import { Box, Chip, Stack, Tooltip, Typography } from "@mui/material";
 import AddOutlined from "@mui/icons-material/AddOutlined";
 import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
+import LibraryBooksOutlined from "@mui/icons-material/LibraryBooksOutlined";
+import { isDocumentContext, isLibraryContext } from "../chatContext.js";
 
 export default function ChatContextBar({
+  chatContext,
   selectedDocuments = [],
   onRemove,
   onOpenPicker,
 }) {
-  if (selectedDocuments.length === 0) return null;
+  // In ASK_THIS_DOCUMENT mode, the header already shows the document.
+  if (isDocumentContext(chatContext)) return null;
+  
+  // Only render for ASK_MY_LIBRARY or when we don't have a specific context but want to default to library visually
+  if (!isLibraryContext(chatContext)) return null;
 
   return (
     <Box
@@ -25,13 +32,16 @@ export default function ChatContextBar({
         spacing={1}
         sx={{ flexWrap: "wrap", gap: 0.75 }}
       >
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ fontWeight: 600, flexShrink: 0, mr: 0.5 }}
-        >
-          Ngữ cảnh:
-        </Typography>
+        <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mr: 1 }}>
+          <LibraryBooksOutlined sx={{ fontSize: "1rem", color: "text.secondary" }} />
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ fontWeight: 600, flexShrink: 0 }}
+          >
+            Thư viện của bạn
+          </Typography>
+        </Stack>
 
         {selectedDocuments.map((doc) => (
           <Tooltip key={doc.id} title={doc.title}>
@@ -55,10 +65,10 @@ export default function ChatContextBar({
           </Tooltip>
         ))}
 
-        <Tooltip title="Thêm tài liệu">
+        <Tooltip title={selectedDocuments.length > 0 ? "Thêm tài liệu lọc" : "Lọc theo tài liệu cụ thể"}>
           <Chip
             icon={<AddOutlined sx={{ fontSize: "0.95rem !important" }} />}
-            label="Thêm"
+            label={selectedDocuments.length > 0 ? "Thêm" : "Lọc kết quả"}
             onClick={onOpenPicker}
             size="small"
             variant="outlined"

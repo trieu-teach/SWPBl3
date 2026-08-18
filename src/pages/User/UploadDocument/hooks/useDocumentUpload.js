@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import {
+  createCategory,
+  createSubject,
+  deleteCategory,
+  deleteSubject,
   getCategories,
   getSubjects,
   uploadDocument,
@@ -34,6 +38,12 @@ export default function useDocumentUpload() {
   const [submitError, setSubmitError] = useState("");
   const [result, setResult] = useState(null);
   const [acceptedUploadTerms, setAcceptedUploadTerms] = useState(false);
+  const [taxonomyDialog, setTaxonomyDialog] = useState(null);
+  const [creatingTaxonomy, setCreatingTaxonomy] = useState(false);
+  const [taxonomyError, setTaxonomyError] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deletingTaxonomy, setDeletingTaxonomy] = useState(false);
+  const [deleteTaxonomyError, setDeleteTaxonomyError] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -71,6 +81,93 @@ export default function useDocumentUpload() {
       [name]: value,
       ...(name === "subjectId" ? { categoryId: "" } : {}),
     }));
+  }
+
+  function openTaxonomyDialog(type) {
+    setTaxonomyError("");
+    setTaxonomyDialog(type);
+  }
+
+  function closeTaxonomyDialog() {
+    if (creatingTaxonomy) return;
+    setTaxonomyDialog(null);
+    setTaxonomyError("");
+  }
+
+  async function submitTaxonomy(payload) {
+    setCreatingTaxonomy(true);
+    setTaxonomyError("");
+    try {
+      if (taxonomyDialog === "subject") {
+        const subject = await createSubject(payload);
+        setSubjects((current) => [
+          ...current.filter((item) => item.id !== subject.id),
+          subject,
+        ]);
+        updateField("subjectId", subject.id);
+        toast.success("Đã tạo và chọn môn học mới.");
+      } else {
+        const category = await createCategory({
+          ...payload,
+          subjectId: form.subjectId,
+        });
+        setCategories((current) => [
+          ...current.filter((item) => item.id !== category.id),
+          category,
+        ]);
+        updateField("categoryId", category.id);
+        toast.success("Đã tạo và chọn danh mục mới.");
+      }
+      setTaxonomyDialog(null);
+    } catch (error) {
+      setTaxonomyError(error.message || "Không thể tạo dữ liệu mới.");
+    } finally {
+      setCreatingTaxonomy(false);
+    }
+  }
+
+  function openDeleteDialog(type, item) {
+    setDeleteTaxonomyError(null);
+    setDeleteTarget({ type, item });
+  }
+
+  function closeDeleteDialog() {
+    if (deletingTaxonomy) return;
+    setDeleteTarget(null);
+    setDeleteTaxonomyError(null);
+  }
+
+  async function confirmDeleteTaxonomy() {
+    if (!deleteTarget) return;
+    setDeletingTaxonomy(true);
+    setDeleteTaxonomyError(null);
+    try {
+      if (deleteTarget.type === "subject") {
+        await deleteSubject(deleteTarget.item.id);
+        setSubjects((current) =>
+          current.filter((item) => item.id !== deleteTarget.item.id),
+        );
+        if (form.subjectId === deleteTarget.item.id) {
+          updateField("subjectId", "");
+        }
+      } else {
+        await deleteCategory(deleteTarget.item.id);
+        setCategories((current) =>
+          current.filter((item) => item.id !== deleteTarget.item.id),
+        );
+        if (form.categoryId === deleteTarget.item.id) {
+          updateField("categoryId", "");
+        }
+      }
+      toast.success(
+        `Đã xóa ${deleteTarget.type === "subject" ? "môn học" : "danh mục"}.`,
+      );
+      setDeleteTarget(null);
+    } catch (error) {
+      setDeleteTaxonomyError(error);
+    } finally {
+      setDeletingTaxonomy(false);
+    }
   }
 
   function selectFile(nextFile) {
@@ -161,6 +258,12 @@ export default function useDocumentUpload() {
     submitError,
     result,
     acceptedUploadTerms,
+    taxonomyDialog,
+    creatingTaxonomy,
+    taxonomyError,
+    deleteTarget,
+    deletingTaxonomy,
+    deleteTaxonomyError,
     updateField,
     selectFile,
     removeFile,
@@ -168,6 +271,12 @@ export default function useDocumentUpload() {
     addTag,
     removeTag,
     setAcceptedUploadTerms,
+    openTaxonomyDialog,
+    closeTaxonomyDialog,
+    submitTaxonomy,
+    openDeleteDialog,
+    closeDeleteDialog,
+    confirmDeleteTaxonomy,
     submit,
     reset,
   };

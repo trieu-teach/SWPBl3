@@ -3,6 +3,8 @@ import {
   Button,
   FormControl,
   FormLabel,
+  IconButton,
+  ListItemText,
   MenuItem,
   Paper,
   Select,
@@ -11,8 +13,37 @@ import {
   Typography,
 } from "@mui/material";
 import { SaveOutlined } from "@mui/icons-material";
+import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
+import { useState } from "react";
+import { useAuth } from "../../../../features/auth/AuthProvider.jsx";
+import DeleteSubjectCategoryDialog from "../../UploadDocument/components/DeleteSubjectCategoryDialog.jsx";
 
 export default function DocumentEditForm({ details }) {
+  const { user } = useAuth();
+  const [subjectMenuOpen, setSubjectMenuOpen] = useState(false);
+  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
+
+  function deleteButton(type, item, closeMenu) {
+    if (!item.ownerId || item.ownerId !== user?.id) return null;
+    return (
+      <IconButton
+        size="small"
+        color="error"
+        aria-label={`Xóa ${type === "subject" ? "môn học" : "danh mục"} ${item.name}`}
+        onMouseDown={(event) => event.stopPropagation()}
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          closeMenu();
+          details.openDeleteDialog(type, item);
+        }}
+        sx={{ ml: 1 }}
+      >
+        <DeleteOutlineOutlined fontSize="small" />
+      </IconButton>
+    );
+  }
+
   return (
     <Paper
       component="form"
@@ -52,13 +83,32 @@ export default function DocumentEditForm({ details }) {
             <FormLabel sx={{ mb: 0.75 }}>Môn học</FormLabel>
             <Select
               value={details.form.subjectId}
+              open={subjectMenuOpen}
+              onOpen={() => setSubjectMenuOpen(true)}
+              onClose={() => setSubjectMenuOpen(false)}
+              renderValue={(selectedId) => {
+                const selected = details.subjects.find(
+                  (item) => item.id === selectedId,
+                );
+                if (!selected) return "Chọn môn học";
+                return `${selected.name}${selected.code ? ` (${selected.code})` : ""}`;
+              }}
               onChange={(event) =>
                 details.updateField("subjectId", event.target.value)
               }
             >
               {details.subjects.map((item) => (
-                <MenuItem key={item.id} value={item.id}>
-                  {item.name}
+                <MenuItem
+                  key={item.id}
+                  value={item.id}
+                  sx={{ display: "flex", gap: 1 }}
+                >
+                  <ListItemText
+                    primary={`${item.name}${item.code ? ` (${item.code})` : ""}`}
+                  />
+                  {deleteButton("subject", item, () =>
+                    setSubjectMenuOpen(false),
+                  )}
                 </MenuItem>
               ))}
             </Select>
@@ -67,13 +117,27 @@ export default function DocumentEditForm({ details }) {
             <FormLabel sx={{ mb: 0.75 }}>Danh mục</FormLabel>
             <Select
               value={details.form.categoryId}
+              open={categoryMenuOpen}
+              onOpen={() => setCategoryMenuOpen(true)}
+              onClose={() => setCategoryMenuOpen(false)}
+              renderValue={(selectedId) =>
+                details.categories.find((item) => item.id === selectedId)
+                  ?.name || "Chọn danh mục"
+              }
               onChange={(event) =>
                 details.updateField("categoryId", event.target.value)
               }
             >
               {details.categories.map((item) => (
-                <MenuItem key={item.id} value={item.id}>
-                  {item.name}
+                <MenuItem
+                  key={item.id}
+                  value={item.id}
+                  sx={{ display: "flex", gap: 1 }}
+                >
+                  <ListItemText primary={item.name} />
+                  {deleteButton("category", item, () =>
+                    setCategoryMenuOpen(false),
+                  )}
                 </MenuItem>
               ))}
             </Select>
@@ -89,6 +153,7 @@ export default function DocumentEditForm({ details }) {
           {details.saving ? "Đang lưu..." : "Lưu thay đổi"}
         </Button>
       </Stack>
+      <DeleteSubjectCategoryDialog upload={details} />
     </Paper>
   );
 }

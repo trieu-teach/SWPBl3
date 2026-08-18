@@ -9,9 +9,11 @@ export default function SubscriptionGrid({ subscription }) {
           <Grid size={{ xs: 12, md: 6, lg: 4 }} key={plan.id}>
             <SubscriptionCard
               plan={plan}
-              isCurrentPlan={subscription.mySubscription?.plan === plan.code}
+              buttonState={subscription.getButtonState(plan)}
               onPurchase={subscription.purchasePlan}
               loading={subscription.processing}
+              selectedPaymentMethod={subscription.selectedPaymentMethod}
+              onPaymentMethodChange={subscription.setSelectedPaymentMethod}
             />
           </Grid>
         ))}

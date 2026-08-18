@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState, useEffect } from "react";
 import {
   getChatErrorMessage,
   getChatMessages,
@@ -6,6 +6,15 @@ import {
   mapHistoryMessage,
   sendChatMessage,
 } from "../../../../api/chat.api.js";
+import { askDocumentStream, askLibraryStream } from "../../../../api/chat.stream.js";
+import {
+  createDocumentContext,
+  createLibraryContext,
+  deriveContextFromSession,
+  hasActiveContext,
+  isDocumentContext,
+  isLibraryContext,
+} from "../chatContext.js";
 
 const ERROR_MESSAGE =
   "Đã xảy ra lỗi khi tạo phản hồi. Tin nhắn của bạn vẫn được giữ lại.";
@@ -39,6 +48,7 @@ function formatTime(date) {
   });
 }
 
+
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
 export function useChat() {
@@ -51,52 +61,160 @@ export function useChat() {
 
   // ── Session state ─────────────────────────────────────────────────────────
   const [currentSessionId, setCurrentSessionId] = useState(null);
-  const [sessionStatus, setSessionStatus] = useState("idle"); // "idle"|"loading"|"error"
+  const [sessionStatus, setSessionStatus] = useState("idle"); // "idle"|"loading"|"error"|"success"
   const [sessionError, setSessionError] = useState(null);
   const [historyPage, setHistoryPage] = useState(1);
   const [hasMoreHistory, setHasMoreHistory] = useState(false);
   const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
   const historyLoadingRef = useRef(false);
+  const abortControllerRef = useRef(null);
+  const activeSessionIdRef = useRef(null);
 
-  // ── Document context state ────────────────────────────────────────────────
-  const [selectedDocuments, setSelectedDocuments] = useState([]);
+  // Sync ref with state for async callbacks
+  useEffect(() => {
+    activeSessionIdRef.current = currentSessionId;
+  }, [currentSessionId]);
+
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
+  // ── Chat context state ────────────────────────────────────────────────────
+  //
+  // Replaces the old flat `selectedDocuments` array.
+  //
+  // null   = no mode/context selected yet
+  // { mode: "ASK_MY_LIBRARY", ... }   = library chat (default new-chat mode)
+  // { mode: "ASK_THIS_DOCUMENT", ... } = document chat
+  //
+  // Important: chatContext === null is different from "no documents selected".
+  // An ASK_MY_LIBRARY context with libraryFilters === null still has a valid context.
+  const [chatContext, setChatContext] = useState(null);
 
   const isSending = status === "sending";
 
-  // Derived: IDs only for request mapping
+  // ── Derived: backward-compat helpers for existing components ─────────────
+  //
+  // These bridge the gap between the old `selectedDocuments` prop API that
+  // ChatContextBar / ChatHeader / DocumentPickerDialog currently consume and
+  // the new context model. They will be removed when those components are
+  // redesigned in later tasks.
+
+  /** Documents currently used as library filters (optional narrowing). */
+  const selectedDocuments = useMemo(() => {
+    if (!isLibraryContext(chatContext)) return [];
+    const ids = chatContext.libraryFilters?.documentIds ?? [];
+    // The context only stores IDs; we need {id, title} pairs.
+    // ChatContextBar currently only needs {id, title} — the titles were
+    // supplied by the picker dialog when applying. We reconstruct them here
+    // by reading the stored title metadata if available.
+    return (chatContext.libraryFilters?._documentMeta ?? []).filter((d) =>
+      ids.includes(d.id),
+    );
+  }, [chatContext]);
+
+  /** Derived IDs array for request mapping (backward compat). */
   const selectedDocumentIds = useMemo(
     () => selectedDocuments.map((d) => d.id),
     [selectedDocuments],
   );
 
-  // ── Document context actions ──────────────────────────────────────────────
+  // ── Context actions ───────────────────────────────────────────────────────
 
-  const addDocument = useCallback((doc) => {
-    setSelectedDocuments((current) => {
-      if (current.some((d) => d.id === doc.id)) return current;
-      return [...current, { id: doc.id, title: doc.title }];
+  /**
+   * Activate ASK_THIS_DOCUMENT mode with a specific document.
+   * Called by Task 2 (Document Detail → Ask AI entry point).
+   *
+   * @param {{ id: string, title: string }} document
+   */
+  const setDocumentContext = useCallback((document) => {
+    setChatContext(createDocumentContext(document));
+  }, []);
+
+  /**
+   * Activate ASK_MY_LIBRARY mode (default new-chat mode).
+   * Optional filters can be supplied later via updateLibraryFilters.
+   */
+  const setLibraryContext = useCallback(() => {
+    setChatContext(createLibraryContext(null));
+  }, []);
+
+  /**
+   * Apply library document filters from the DocumentPickerDialog.
+   *
+   * This replaces the old `applyDocuments` action.
+   * The dialog supplies an array of { id, title } objects.
+   * We store documentIds inside libraryFilters and keep the full
+   * { id, title } metadata in _documentMeta for backward-compat rendering.
+   *
+   * If docs is empty the filters are cleared but the Library context is kept.
+   *
+   * @param {{ id: string, title: string }[]} docs
+   */
+  const applyLibraryFilters = useCallback((docs) => {
+    setChatContext((current) => {
+      const base = isLibraryContext(current) ? current : createLibraryContext(null);
+      if (!docs || docs.length === 0) {
+        return { ...base, libraryFilters: null };
+      }
+      return {
+        ...base,
+        libraryFilters: {
+          ...(base.libraryFilters ?? {}),
+          documentIds: docs.map((d) => d.id),
+          _documentMeta: docs.map((d) => ({ id: d.id, title: d.title })),
+        },
+      };
     });
   }, []);
 
-  const removeDocument = useCallback((id) => {
-    setSelectedDocuments((current) => current.filter((d) => d.id !== id));
+  /**
+   * Remove one document from the library filters.
+   * Matches the old `removeDocument` prop API.
+   *
+   * @param {string} id
+   */
+  const removeLibraryFilter = useCallback((id) => {
+    setChatContext((current) => {
+      if (!isLibraryContext(current)) return current;
+      const prev = current.libraryFilters ?? {};
+      const nextIds = (prev.documentIds ?? []).filter((d) => d !== id);
+      const nextMeta = (prev._documentMeta ?? []).filter((d) => d.id !== id);
+      return {
+        ...current,
+        libraryFilters:
+          nextIds.length === 0
+            ? null
+            : { ...prev, documentIds: nextIds, _documentMeta: nextMeta },
+      };
+    });
   }, []);
 
-  const applyDocuments = useCallback((docs) => {
-    setSelectedDocuments(docs.map((d) => ({ id: d.id, title: d.title })));
-  }, []);
-
-  const clearDocuments = useCallback(() => {
-    setSelectedDocuments([]);
+  /**
+   * Clear the chat context entirely (no mode selected).
+   */
+  const clearContext = useCallback(() => {
+    setChatContext(null);
   }, []);
 
   // ── Session actions ───────────────────────────────────────────────────────
 
   /**
-   * Start a new blank chat — clears all session + message state.
+   * Start a new library chat session — clears all session + message state,
+   * and initialises the Library context as the default mode.
    */
   const startNewChat = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    
     setCurrentSessionId(null);
+    activeSessionIdRef.current = null;
     setMessages([]);
     setInputValue("");
     setError(null);
@@ -105,17 +223,28 @@ export function useChat() {
     setSessionError(null);
     setHistoryPage(1);
     setHasMoreHistory(false);
+    // Default mode for a new chat is ASK_MY_LIBRARY.
+    setChatContext(createLibraryContext(null));
   }, []);
 
   /**
    * Load page 1 of a session's message history.
-   * Replaces the current message list.
+   * Derives the chat context from the session metadata returned by the sidebar.
+   *
+   * @param {string} sessionId
+   * @param {{ mode?: string, documentId?: string | null, document?: object | null } | null} [sessionMeta]
    */
-  const loadSession = useCallback(async (sessionId) => {
+  const loadSession = useCallback(async (sessionId, sessionMeta = null) => {
     if (!sessionId) return;
     if (historyLoadingRef.current) return;
 
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+
     setCurrentSessionId(sessionId);
+    activeSessionIdRef.current = sessionId;
     setMessages([]);
     setError(null);
     setStatus("idle");
@@ -124,6 +253,14 @@ export function useChat() {
     setHistoryPage(1);
     setHasMoreHistory(false);
     historyLoadingRef.current = true;
+
+    // Restore context from session metadata when available.
+    // This ensures the context banner / header shows correct info
+    // even before the first message is received.
+    if (sessionMeta) {
+      const derived = deriveContextFromSession(sessionMeta);
+      if (derived) setChatContext(derived);
+    }
 
     try {
       const response = await getChatMessages(sessionId, {
@@ -134,29 +271,31 @@ export function useChat() {
       const items = Array.isArray(response?.items) ? response.items : [];
       const meta = response?.meta || {};
 
-      // API returns messages oldest-first based on createdAt order
-      // Map and preserve all fields including sources
       const mapped = items.map(mapHistoryMessage);
 
-      setMessages(mapped);
-      setHistoryPage(1);
-      // Check if there are older pages (page 2+)
-      // totalPages > 1 means there are older messages on higher page numbers
-      const totalPages = meta.totalPages ?? 1;
-      setHasMoreHistory(totalPages > 1);
-      setSessionStatus("success");
+      // Prevent race condition if user started a new chat or switched again
+      if (activeSessionIdRef.current === sessionId) {
+        setMessages(mapped);
+        setHistoryPage(1);
+        const totalPages = meta.totalPages ?? 1;
+        setHasMoreHistory(totalPages > 1);
+        setSessionStatus("success");
+      }
     } catch (err) {
-      const message = getHistoryErrorMessage(err);
-      setSessionError(message);
-      setSessionStatus("error");
+      if (activeSessionIdRef.current === sessionId) {
+        const message = getHistoryErrorMessage(err);
+        setSessionError(message);
+        setSessionStatus("error");
+      }
     } finally {
-      historyLoadingRef.current = false;
+      if (activeSessionIdRef.current === sessionId) {
+        historyLoadingRef.current = false;
+      }
     }
   }, []);
 
   /**
    * Load the next (older) page of messages and prepend to the list.
-   * The parent component is responsible for scroll preservation.
    */
   const loadOlderMessages = useCallback(async () => {
     if (!currentSessionId || !hasMoreHistory || historyLoadingRef.current) return;
@@ -188,6 +327,135 @@ export function useChat() {
     }
   }, [currentSessionId, hasMoreHistory, historyPage]);
 
+  // ── Execute Request (Helper) ──────────────────────────────────────────────
+
+  const performRequest = async (targetMessageId, questionText, effectiveContext, activeSessionId) => {
+    try {
+      if (isDocumentContext(effectiveContext) || isLibraryContext(effectiveContext)) {
+        let stream;
+        
+        abortControllerRef.current = new AbortController();
+        const signal = abortControllerRef.current.signal;
+
+        if (isDocumentContext(effectiveContext)) {
+          stream = askDocumentStream({
+            documentId: effectiveContext.document?.id,
+            question: questionText,
+            sessionId: activeSessionId,
+            signal,
+          });
+        } else {
+          // ASK_MY_LIBRARY
+          stream = askLibraryStream({
+            question: questionText,
+            sessionId: activeSessionId,
+            limit: 5,
+            filters: effectiveContext.libraryFilters,
+            signal,
+          });
+        }
+
+        for await (const event of stream) {
+          const { type, data } = event;
+          setMessages((current) => {
+            const message = current.find((m) => m.id === targetMessageId);
+            if (!message) return current;
+
+            let nextMessage = { ...message };
+
+            if (type === "status") {
+              nextMessage.status = "streaming";
+              nextMessage.streamPhase = data.phase;
+              if (data.phase === "generating" && nextMessage.content === "Đang suy nghĩ...") {
+                nextMessage.content = "";
+              }
+            } else if (type === "sources") {
+              nextMessage.status = "streaming";
+              nextMessage.sources = data;
+              if (nextMessage.content === "Đang suy nghĩ...") nextMessage.content = "";
+            } else if (type === "delta") {
+              nextMessage.status = "streaming";
+              if (nextMessage.content === "Đang suy nghĩ...") nextMessage.content = "";
+              nextMessage.content += data.text;
+            } else if (type === "done") {
+              nextMessage.content = data.answer;
+              nextMessage.status = "complete";
+              nextMessage.streamPhase = "COMPLETED";
+              nextMessage.backendMessageId = data.messageId;
+              nextMessage.sessionId = data.sessionId;
+              nextMessage.sources = data.sources;
+              nextMessage.suggestedPrompts = data.suggestedPrompts || [];
+              nextMessage.answerStatus = data.answerStatus;
+              nextMessage.createdAt = formatTime(new Date());
+
+              if (!activeSessionId && data.sessionId) {
+                setCurrentSessionId(data.sessionId);
+              }
+            } else if (type === "error") {
+              throw new Error(data.message || "Lỗi stream");
+            }
+            
+            return current.map((m) => (m.id === targetMessageId ? nextMessage : m));
+          });
+        }
+        setStatus("success");
+      } else {
+        // Fallback for unknown context
+        const response = await sendChatMessage({
+          question: questionText,
+          sessionId: activeSessionId,
+        });
+
+        if (!activeSessionId && response.sessionId) {
+          setCurrentSessionId(response.sessionId);
+        }
+
+        setMessages((current) =>
+          current.map((message) =>
+            message.id === targetMessageId
+              ? {
+                  ...message,
+                  content: response.answer,
+                  status: "complete",
+                  backendMessageId: response.messageId,
+                  sessionId: response.sessionId,
+                  sources: response.sources,
+                  suggestedPrompts: response.suggestedPrompts,
+                  answerStatus: response.answerStatus,
+                  createdAt: formatTime(new Date()),
+                }
+              : message,
+          ),
+        );
+        setStatus("success");
+      }
+    } catch (requestError) {
+      if (requestError.name === "AbortError") {
+        return;
+      }
+      const errorMessage = getChatErrorMessage(requestError) || ERROR_MESSAGE;
+      setMessages((current) =>
+        current.map((item) => {
+          if (item.id === targetMessageId) {
+            const hasPartial = hasActiveContext(effectiveContext) && item.content && item.content !== "Đang suy nghĩ...";
+            return {
+              ...item,
+              content: hasPartial ? item.content : errorMessage,
+              errorDetail: hasPartial ? errorMessage : undefined,
+              status: "error",
+              createdAt: formatTime(new Date()),
+            };
+          }
+          return item;
+        }),
+      );
+      setError(errorMessage);
+      setStatus("error");
+    } finally {
+      sendingRef.current = false;
+    }
+  };
+
   // ── Send message ──────────────────────────────────────────────────────────
 
   const sendMessage = useCallback(
@@ -213,61 +481,15 @@ export function useChat() {
       setStatus("sending");
       sendingRef.current = true;
 
-      // Snapshot at send time
-      const documentIds = selectedDocuments.map((d) => d.id);
+      const contextSnapshot = chatContext;
       const sessionId = currentSessionId;
+      const effectiveContext = hasActiveContext(contextSnapshot)
+        ? contextSnapshot
+        : createLibraryContext(null);
 
-      try {
-        const response = await sendChatMessage({
-          question: content,
-          documentIds,
-          sessionId,
-        });
-
-        // Capture sessionId from first response if we didn't have one
-        if (!sessionId && response.sessionId) {
-          setCurrentSessionId(response.sessionId);
-        }
-
-        setMessages((current) =>
-          current.map((message) =>
-            message.id === pendingMessage.id
-              ? {
-                  ...message,
-                  content: response.answer,
-                  status: "complete",
-                  backendMessageId: response.messageId,
-                  sessionId: response.sessionId,
-                  sources: response.sources,
-                  suggestedPrompts: response.suggestedPrompts,
-                  answerStatus: response.answerStatus,
-                  createdAt: formatTime(new Date()),
-                }
-              : message,
-          ),
-        );
-        setStatus("success");
-      } catch (requestError) {
-        const message = getChatErrorMessage(requestError) || ERROR_MESSAGE;
-        setMessages((current) =>
-          current.map((item) =>
-            item.id === pendingMessage.id
-              ? {
-                  ...item,
-                  content: message,
-                  status: "error",
-                  createdAt: formatTime(new Date()),
-                }
-              : item,
-          ),
-        );
-        setError(message);
-        setStatus("error");
-      } finally {
-        sendingRef.current = false;
-      }
+      await performRequest(pendingMessage.id, content, effectiveContext, sessionId);
     },
-    [inputValue, selectedDocuments, currentSessionId],
+    [inputValue, chatContext, currentSessionId], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   // ── Retry message ─────────────────────────────────────────────────────────
@@ -287,6 +509,7 @@ export function useChat() {
             ? {
                 ...message,
                 content: "Đang suy nghĩ...",
+                errorDetail: undefined,
                 status: "loading",
                 createdAt: formatTime(new Date()),
               }
@@ -297,54 +520,15 @@ export function useChat() {
       setStatus("sending");
       sendingRef.current = true;
 
-      const documentIds = selectedDocuments.map((d) => d.id);
+      const contextSnapshot = chatContext;
       const sessionId = currentSessionId;
+      const effectiveContext = hasActiveContext(contextSnapshot)
+        ? contextSnapshot
+        : createLibraryContext(null);
 
-      try {
-        const response = await sendChatMessage({
-          question: content,
-          documentIds,
-          sessionId,
-        });
-        setMessages((current) =>
-          current.map((message) =>
-            message.id === assistantMessageId
-              ? {
-                  ...message,
-                  content: response.answer,
-                  status: "complete",
-                  backendMessageId: response.messageId,
-                  sessionId: response.sessionId,
-                  sources: response.sources,
-                  suggestedPrompts: response.suggestedPrompts,
-                  answerStatus: response.answerStatus,
-                  createdAt: formatTime(new Date()),
-                }
-              : message,
-          ),
-        );
-        setStatus("success");
-      } catch (requestError) {
-        const message = getChatErrorMessage(requestError) || ERROR_MESSAGE;
-        setMessages((current) =>
-          current.map((item) =>
-            item.id === assistantMessageId
-              ? {
-                  ...item,
-                  content: message,
-                  status: "error",
-                  createdAt: formatTime(new Date()),
-                }
-              : item,
-          ),
-        );
-        setError(message);
-        setStatus("error");
-      } finally {
-        sendingRef.current = false;
-      }
+      await performRequest(assistantMessageId, content, effectiveContext, sessionId);
     },
-    [messages, selectedDocuments, currentSessionId],
+    [messages, chatContext, currentSessionId], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   // ── Return value ──────────────────────────────────────────────────────────
@@ -369,13 +553,22 @@ export function useChat() {
       loadSession,
       loadOlderMessages,
       startNewChat,
-      // document context
+      // ── Chat context (new model) ──────────────────────────
+      chatContext,
+      setDocumentContext,
+      setLibraryContext,
+      applyLibraryFilters,
+      removeLibraryFilter,
+      clearContext,
+      // ── Backward-compat helpers ───────────────────────────
+      // These bridge the old `selectedDocuments` prop API used by ChatContextBar,
+      // ChatHeader, and DocumentPickerDialog. They will be removed when those
+      // components are updated in later tasks.
       selectedDocuments,
       selectedDocumentIds,
-      addDocument,
-      removeDocument,
-      applyDocuments,
-      clearDocuments,
+      // Map old prop names so ChatPage doesn't need to change today:
+      applyDocuments: applyLibraryFilters,
+      removeDocument: removeLibraryFilter,
     }),
     [
       messages,
@@ -393,12 +586,14 @@ export function useChat() {
       loadSession,
       loadOlderMessages,
       startNewChat,
+      chatContext,
+      setDocumentContext,
+      setLibraryContext,
+      applyLibraryFilters,
+      removeLibraryFilter,
+      clearContext,
       selectedDocuments,
       selectedDocumentIds,
-      addDocument,
-      removeDocument,
-      applyDocuments,
-      clearDocuments,
     ],
   );
 }
