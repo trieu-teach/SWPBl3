@@ -48,6 +48,17 @@ function formatTime(date) {
   });
 }
 
+function prependUniqueMessages(olderMessages, currentMessages) {
+  const seenIds = new Set(currentMessages.map((message) => message.id));
+  const uniqueOlderMessages = olderMessages.filter((message) => {
+    if (seenIds.has(message.id)) return false;
+    seenIds.add(message.id);
+    return true;
+  });
+
+  return [...uniqueOlderMessages, ...currentMessages];
+}
+
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
@@ -228,7 +239,7 @@ export function useChat() {
   }, []);
 
   /**
-   * Load page 1 of a session's message history.
+   * Load the latest page of a session's message history.
    * Derives the chat context from the session metadata returned by the sidebar.
    *
    * @param {string} sessionId
@@ -263,22 +274,32 @@ export function useChat() {
     }
 
     try {
-      const response = await getChatMessages(sessionId, {
+      const firstPageResponse = await getChatMessages(sessionId, {
         page: 1,
         limit: HISTORY_PAGE_LIMIT,
       });
+      const firstPageMeta = firstPageResponse?.meta || {};
+      const totalPages = firstPageMeta.totalPages ?? 1;
+      const latestPage = Math.max(1, totalPages);
+      const latestPageResponse =
+        latestPage === 1
+          ? firstPageResponse
+          : await getChatMessages(sessionId, {
+              page: latestPage,
+              limit: HISTORY_PAGE_LIMIT,
+            });
 
-      const items = Array.isArray(response?.items) ? response.items : [];
-      const meta = response?.meta || {};
+      const items = Array.isArray(latestPageResponse?.items)
+        ? latestPageResponse.items
+        : [];
 
       const mapped = items.map(mapHistoryMessage);
 
       // Prevent race condition if user started a new chat or switched again
       if (activeSessionIdRef.current === sessionId) {
         setMessages(mapped);
-        setHistoryPage(1);
-        const totalPages = meta.totalPages ?? 1;
-        setHasMoreHistory(totalPages > 1);
+        setHistoryPage(latestPage);
+        setHasMoreHistory(latestPage > 1);
         setSessionStatus("success");
       }
     } catch (err) {
@@ -295,30 +316,37 @@ export function useChat() {
   }, []);
 
   /**
-   * Load the next (older) page of messages and prepend to the list.
+   * Load the previous (older) page of messages and prepend to the list.
    */
   const loadOlderMessages = useCallback(async () => {
     if (!currentSessionId || !hasMoreHistory || historyLoadingRef.current) return;
     historyLoadingRef.current = true;
     setIsLoadingOlderMessages(true);
 
-    const nextPage = historyPage + 1;
+    const sessionId = currentSessionId;
+    const nextPage = historyPage - 1;
+
+    if (nextPage < 1) {
+      setHasMoreHistory(false);
+      setIsLoadingOlderMessages(false);
+      historyLoadingRef.current = false;
+      return;
+    }
 
     try {
-      const response = await getChatMessages(currentSessionId, {
+      const response = await getChatMessages(sessionId, {
         page: nextPage,
         limit: HISTORY_PAGE_LIMIT,
       });
 
       const items = Array.isArray(response?.items) ? response.items : [];
-      const meta = response?.meta || {};
       const mapped = items.map(mapHistoryMessage);
 
-      setMessages((current) => [...mapped, ...current]);
-      setHistoryPage(nextPage);
-
-      const totalPages = meta.totalPages ?? nextPage;
-      setHasMoreHistory(nextPage < totalPages);
+      if (activeSessionIdRef.current === sessionId) {
+        setMessages((current) => prependUniqueMessages(mapped, current));
+        setHistoryPage(nextPage);
+        setHasMoreHistory(nextPage > 1);
+      }
     } catch {
       // silent — user can retry by clicking again
     } finally {
