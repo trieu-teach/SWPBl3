@@ -23,7 +23,7 @@ export default function useAuditLogs() {
   const query = useMemo(() => {
     const q = {
       page,
-      limit: 10,
+      limit: 20,
       sortOrder: filters.sortOrder || "desc",
     };
     if (filters.userRole) q.userRole = filters.userRole;

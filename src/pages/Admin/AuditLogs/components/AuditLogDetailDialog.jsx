@@ -39,35 +39,41 @@ const ACTION_GROUP_COLORS = {
   OTHER: { bg: "#f3f4f6", color: "#475569", label: "Khác" },
 };
 
-const RESULT_COLORS = {
-  SUCCESS: { bg: "#d1fae5", color: "#059669", label: "Thành công" },
-  FAILURE: { bg: "#fee2e2", color: "#dc2626", label: "Thất bại" },
-  ACTIVE: { bg: "#d1fae5", color: "#059669", label: "Hoạt động" },
-  BLOCKED: { bg: "#fee2e2", color: "#dc2626", label: "Bị chặn" },
-  HIDDEN: { bg: "#fee2e2", color: "#dc2626", label: "Bị ẩn" },
-  APPROVED: { bg: "#d1fae5", color: "#059669", label: "Đã duyệt" },
-  REJECTED: { bg: "#fee2e2", color: "#dc2626", label: "Bị từ chối" },
-  MODERATOR: { bg: "#fef3c7", color: "#d97706", label: "Kiểm duyệt" },
-  PAID: { bg: "#d1fae5", color: "#059669", label: "Đã thanh toán" },
-  EXPIRED: { bg: "#f3f4f6", color: "#6b7280", label: "Hết hạn" },
-  CANCELLED: { bg: "#f3f4f6", color: "#6b7280", label: "Đã hủy" },
-  REFUNDED: { bg: "#fef3c7", color: "#d97706", label: "Đã hoàn tiền" },
-  PENDING: { bg: "#fef3c7", color: "#d97706", label: "Đang chờ" },
-};
-
 const USER_ROLE_COLORS = {
   ADMIN: { bg: "#fee2e2", color: "#dc2626" },
   MODERATOR: { bg: "#fef3c7", color: "#d97706" },
   USER: { bg: "#d1fae5", color: "#059669" },
 };
 
+const RESULT_COLORS_MAP = {
+  "Đã đăng nhập": { bg: "#d1fae5", color: "#059669" },
+  "Đã kích hoạt": { bg: "#d1fae5", color: "#059669" },
+  "Đã tải lên": { bg: "#d1fae5", color: "#059669" },
+  "Đã xóa": { bg: "#d1fae5", color: "#059669" },
+  "Đã ẩn": { bg: "#d1fae5", color: "#059669" },
+  "Đã lưu": { bg: "#d1fae5", color: "#059669" },
+  "Đã bỏ lưu": { bg: "#f3f4f6", color: "#6b7280" },
+  "Đã kiểm duyệt": { bg: "#d1fae5", color: "#059669" },
+  "Đã xử lý": { bg: "#d1fae5", color: "#059669" },
+  "Đã bác bỏ": { bg: "#fee2e2", color: "#dc2626" },
+  "Đã cập nhật": { bg: "#e0f2fe", color: "#0891b2" },
+  "Đã tạo": { bg: "#e0f2fe", color: "#0891b2" },
+  "Đã thanh toán": { bg: "#d1fae5", color: "#059669" },
+  "Đã hoàn tiền": { bg: "#fef3c7", color: "#d97706" },
+  "Đã áp dụng hoàn tiền": { bg: "#fef3c7", color: "#d97706" },
+  "Đã duyệt": { bg: "#d1fae5", color: "#059669" },
+  "Đang hoạt động": { bg: "#d1fae5", color: "#059669" },
+  "Đã chặn": { bg: "#fee2e2", color: "#dc2626" },
+  "Đã từ chối": { bg: "#fee2e2", color: "#dc2626" },
+  "Đã hết hạn": { bg: "#f3f4f6", color: "#6b7280" },
+  "Chưa kích hoạt": { bg: "#f3f4f6", color: "#6b7280" },
+  "Đang chờ duyệt": { bg: "#fef3c7", color: "#d97706" },
+  "Công khai": { bg: "#d1fae5", color: "#059669" },
+  "Riêng tư": { bg: "#f3f4f6", color: "#6b7280" },
+};
+
 function getActionGroupConfig(actionGroup) {
   return ACTION_GROUP_COLORS[actionGroup?.toUpperCase()] || ACTION_GROUP_COLORS.OTHER;
-}
-
-function getResultConfig(result) {
-  if (!result) return null;
-  return RESULT_COLORS[result.toUpperCase()] || { bg: "#f3f4f6", color: "#6b7280", label: result };
 }
 
 function getUserRoleConfig(role) {
@@ -126,13 +132,9 @@ export default function AuditLogDetailDialog({ log, onClose }) {
   const [expandedTech, setExpandedTech] = useState(false);
 
   const actionGroupConfig = log?.actionGroup ? getActionGroupConfig(log.actionGroup) : null;
-  const resultConfig = log?.result ? getResultConfig(log.result) : null;
   const userRoleConfig = log?.userRole ? getUserRoleConfig(log.userRole) : null;
-
-  const isSuccess = resultConfig?.label?.toLowerCase().includes("thành công") ||
-                    resultConfig?.label?.toLowerCase().includes("đã duyệt") ||
-                    resultConfig?.label?.toLowerCase().includes("hoạt động") ||
-                    resultConfig?.label?.toLowerCase().includes("thanh toán");
+  const resultLabel = log?.resultLabel || log?.result || "—";
+  const resultConfig = RESULT_COLORS_MAP[resultLabel] || { bg: "#f3f4f6", color: "#6b7280" };
 
   return (
     <Dialog
@@ -260,7 +262,7 @@ export default function AuditLogDetailDialog({ log, onClose }) {
                         </Typography>
                       )}
                     </Box>
-                    {resultConfig && (
+                    {resultLabel && (
                       <Box
                         sx={{
                           display: "flex",
@@ -272,13 +274,13 @@ export default function AuditLogDetailDialog({ log, onClose }) {
                           bgcolor: resultConfig.bg,
                         }}
                       >
-                        {isSuccess ? (
+                        {resultConfig.color === "#059669" || resultConfig.color === "#0891b2" ? (
                           <CheckCircle sx={{ fontSize: 20, color: resultConfig.color }} />
                         ) : (
                           <Cancel sx={{ fontSize: 20, color: resultConfig.color }} />
                         )}
                         <Typography variant="body2" sx={{ fontWeight: 700, color: resultConfig.color, fontSize: "0.9rem" }}>
-                          {resultConfig.label}
+                          {resultLabel}
                         </Typography>
                       </Box>
                     )}
