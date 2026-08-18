@@ -1,7 +1,7 @@
-﻿import axios from "axios";
+import axios from "axios";
 import { getAuth } from "firebase/auth";
 
-const API_BASE_URL = (
+export const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api"
 ).replace(/\/+$/, "");
 

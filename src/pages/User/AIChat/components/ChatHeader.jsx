@@ -1,14 +1,16 @@
-import { Box, Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, IconButton, Stack, Typography } from "@mui/material";
 import SmartToyOutlined from "@mui/icons-material/SmartToyOutlined";
-import LibraryBooksOutlined from "@mui/icons-material/LibraryBooksOutlined";
+import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
 import MenuOpenRounded from "@mui/icons-material/MenuOpenRounded";
+import { isDocumentContext, isLibraryContext } from "../chatContext.js";
 
-export default function ChatHeader({ 
-  selectedDocuments = [], 
-  onOpenPicker,
-  onOpenSidebar 
+export default function ChatHeader({
+  chatContext,
+  selectedDocuments = [],
+  onOpenSidebar,
 }) {
-  const count = selectedDocuments.length;
+  const inDocumentMode = isDocumentContext(chatContext);
+  const inLibraryMode = isLibraryContext(chatContext);
 
   return (
     <Stack
@@ -51,30 +53,42 @@ export default function ChatHeader({
           <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
             Hỏi AI
           </Typography>
-          <Typography color="text.secondary" sx={{ fontSize: "0.9rem", display: { xs: 'none', sm: 'block' } }}>
-            Trợ lý học tập giúp giải thích, tóm tắt và gợi ý cách ôn bài.
-          </Typography>
+          {inDocumentMode && chatContext.document?.title && (
+            <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mt: 0.25 }}>
+              <DescriptionOutlined sx={{ fontSize: "0.85rem", color: "text.secondary" }} />
+              <Typography
+                color="text.secondary"
+                sx={{
+                  fontSize: "0.85rem",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  maxWidth: { xs: 180, sm: 320 },
+                }}
+              >
+                {chatContext.document.title}
+              </Typography>
+            </Stack>
+          )}
+          {inLibraryMode && (
+            <Typography
+              color="text.secondary"
+              sx={{ fontSize: "0.85rem", display: { xs: "none", sm: "block" } }}
+            >
+              Thư viện của bạn
+            </Typography>
+          )}
+          {!inDocumentMode && !inLibraryMode && (
+            <Typography
+              color="text.secondary"
+              sx={{ fontSize: "0.9rem", display: { xs: "none", sm: "block" } }}
+            >
+              Trợ lý học tập giúp giải thích, tóm tắt và gợi ý cách ôn bài.
+            </Typography>
+          )}
         </Box>
       </Stack>
 
-      <Tooltip
-        title={
-          count > 0
-            ? `Đang dùng ${count} tài liệu làm ngữ cảnh`
-            : "Chọn tài liệu để AI trả lời chính xác hơn"
-        }
-      >
-        <Chip
-          icon={<LibraryBooksOutlined />}
-          label={count > 0 ? `${count} tài liệu` : "Chọn tài liệu"}
-          onClick={onOpenPicker}
-          color={count > 0 ? "primary" : "default"}
-          variant={count > 0 ? "filled" : "outlined"}
-          size="small"
-          clickable
-          sx={{ fontWeight: 700 }}
-        />
-      </Tooltip>
     </Stack>
   );
 }
