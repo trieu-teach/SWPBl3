@@ -47,13 +47,13 @@ function SourceItem({ source }) {
             &ldquo;{source.snippet}&rdquo;
           </Typography>
         )}
-        {source.sourceLocator?.length > 0 && (
+        {source.sourceLocator?.length > 0 && Array.isArray(source.sourceLocator) && (
           <Typography
             variant="caption"
             color="text.disabled"
             sx={{ display: "block", mt: 0.25 }}
           >
-            {source.sourceLocator[0]}
+            {source.sourceLocator.join(" · ")}
           </Typography>
         )}
       </Box>

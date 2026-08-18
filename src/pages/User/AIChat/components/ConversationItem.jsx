@@ -1,10 +1,11 @@
 import { Box, Skeleton, Stack, Tooltip, Typography } from "@mui/material";
 import SmartToyOutlined from "@mui/icons-material/SmartToyOutlined";
-import MenuBookOutlined from "@mui/icons-material/MenuBookOutlined";
+import LibraryBooksOutlined from "@mui/icons-material/LibraryBooksOutlined";
+import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
 
 const MODE_ICON = {
-  ASK_MY_LIBRARY: MenuBookOutlined,
-  ASK_THIS_DOCUMENT: MenuBookOutlined,
+  ASK_MY_LIBRARY: LibraryBooksOutlined,
+  ASK_THIS_DOCUMENT: DescriptionOutlined,
 };
 
 function formatRelativeTime(isoString) {
@@ -44,12 +45,15 @@ export function ConversationItemSkeleton() {
 export default function ConversationItem({ session, isActive, onSelect }) {
   const Icon = MODE_ICON[session.mode] ?? SmartToyOutlined;
   const label = getSessionLabel(session);
-  const timeLabel = formatRelativeTime(session.updatedAt);
+  
+  const isDocMode = session.mode === "ASK_THIS_DOCUMENT";
+  const docTitle = session.document?.title;
+  const contextSub = isDocMode && docTitle ? docTitle : "Thư viện của bạn";
 
   return (
     <Tooltip title={label} placement="right" enterDelay={700}>
       <Box
-        onClick={() => onSelect(session.id)}
+        onClick={() => onSelect(session)}
         sx={{
           mx: 1,
           px: 1.5,
@@ -95,10 +99,9 @@ export default function ConversationItem({ session, isActive, onSelect }) {
             <Typography
               variant="caption"
               color="text.disabled"
-              sx={{ display: "block", lineHeight: 1.3 }}
+              sx={{ display: "block", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
             >
-              {timeLabel}
-              {session.messageCount > 0 && ` · ${session.messageCount} tin nhắn`}
+              {isDocMode ? "📄 " : "📚 "}{contextSub}
             </Typography>
           </Box>
         </Stack>
