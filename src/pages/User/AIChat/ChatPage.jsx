@@ -1,13 +1,17 @@
-import { useCallback, useMemo, useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Box, Paper } from "@mui/material";
 import UserLayout from "../Layout/UserLayout.jsx";
+import DocumentPreviewDialog from "../DocumentLibrary/components/DocumentPreviewDialog.jsx";
 import ChatHeader from "./components/ChatHeader.jsx";
 import ChatContextBar from "./components/ChatContextBar.jsx";
 import ChatConversation from "./components/ChatConversation.jsx";
-import DocumentPickerDialog from "./components/DocumentPickerDialog.jsx";
-import ConversationSidebar from "./components/ConversationSidebar.jsx";
+import ChatSessionDrawer from "./components/ChatSessionDrawer.jsx";
+import LibraryDocumentSidebar from "./components/LibraryDocumentSidebar.jsx";
+import { MAX_SELECTED_DOCUMENTS } from "../../../api/chat.api.js";
 import { useChatConversation } from "./hooks/useChatConversation.js";
+import useLibraryDocumentPreview from "./hooks/useLibraryDocumentPreview.js";
+import useLibraryDocuments from "./hooks/useLibraryDocuments.js";
 import { useRouteChatSession } from "./hooks/useRouteChatSession.js";
 import { useSessions } from "./hooks/useSessions.js";
 import {
@@ -17,6 +21,13 @@ import {
 } from "./chatContext.js";
 
 const LIBRARY_BASE_PATH = "/ai-chat";
+const LIBRARY_PRESELECTION_KEY = "libraryDocumentPreselection";
+
+function normalizeId(value) {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim();
+  return normalized || null;
+}
 
 function getLegacyDocumentId(locationState) {
   if (locationState?.mode !== CHAT_MODE_DOCUMENT) return null;
@@ -29,18 +40,93 @@ function getLegacyDocumentId(locationState) {
     ? locationState.documentId
     : locationState.document?.id;
 
-  if (typeof candidate !== "string") return null;
-  const normalizedDocumentId = candidate.trim();
-  return normalizedDocumentId || null;
+  return normalizeId(candidate);
+}
+
+function getLibraryPreselection(locationState) {
+  const candidate = locationState?.[LIBRARY_PRESELECTION_KEY];
+  const id = normalizeId(candidate?.id);
+  const title =
+    typeof candidate?.title === "string" ? candidate.title.trim() : "";
+
+  if (!id || !title) return null;
+  return { id, title };
+}
+
+function createInitialLibraryContext(preselectedDocument) {
+  return preselectedDocument
+    ? createLibraryContext({
+        documentIds: [preselectedDocument.id],
+        _documentMeta: [preselectedDocument],
+      })
+    : createLibraryContext(null);
+}
+
+function updateDocumentInContext(currentContext, document, shouldSelect) {
+  const documentId = normalizeId(document?.id);
+  if (!documentId) return currentContext;
+
+  const filters = currentContext.libraryFilters ?? {};
+  const currentIds = Array.isArray(filters.documentIds)
+    ? filters.documentIds
+    : [];
+  const currentMeta = Array.isArray(filters._documentMeta)
+    ? filters._documentMeta
+    : [];
+  const selected = currentIds.includes(documentId);
+  const nextSelected = shouldSelect ?? !selected;
+
+  if (nextSelected && !selected && currentIds.length >= MAX_SELECTED_DOCUMENTS) {
+    return currentContext;
+  }
+
+  const nextIds = nextSelected
+    ? [...new Set([...currentIds, documentId])]
+    : currentIds.filter((id) => id !== documentId);
+  const metaById = new Map(
+    currentMeta
+      .filter((item) => normalizeId(item?.id))
+      .map((item) => [item.id, item]),
+  );
+
+  if (nextSelected) {
+    metaById.set(documentId, {
+      id: documentId,
+      title:
+        typeof document?.title === "string" && document.title.trim()
+          ? document.title.trim()
+          : metaById.get(documentId)?.title || "Tài liệu",
+    });
+  } else {
+    metaById.delete(documentId);
+  }
+
+  const nextFilters = { ...filters };
+  if (nextIds.length > 0) {
+    nextFilters.documentIds = nextIds;
+    nextFilters._documentMeta = nextIds
+      .map((id) => metaById.get(id))
+      .filter(Boolean);
+  } else {
+    delete nextFilters.documentIds;
+    delete nextFilters._documentMeta;
+  }
+
+  return createLibraryContext(
+    Object.keys(nextFilters).length > 0 ? nextFilters : null,
+  );
 }
 
 function ChatPageLayout({
   chatContext,
   selectedDocuments,
   onRemoveDocument,
-  onApplyDocuments,
+  onToggleDocument,
+  libraryDocuments,
+  previewController,
   sessions,
   sessionsLoading,
+  sessionsLoadingMore,
   sessionsError,
   sessionsHasMore,
   currentSessionId,
@@ -49,8 +135,14 @@ function ChatPageLayout({
   onNewChat,
   children,
 }) {
-  const [isPickerOpen, setIsPickerOpen] = useState(false);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [documentsOpen, setDocumentsOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+
+  function handlePreviewDocument(document) {
+    void previewController.openPreview(document).then((opened) => {
+      if (opened) setDocumentsOpen(false);
+    });
+  }
 
   return (
     <UserLayout>
@@ -66,17 +158,15 @@ function ChatPageLayout({
           bgcolor: "background.default",
         }}
       >
-        <ConversationSidebar
-          sessions={sessions}
-          loading={sessionsLoading}
-          error={sessionsError}
-          hasMore={sessionsHasMore}
-          currentSessionId={currentSessionId}
-          mobileOpen={mobileSidebarOpen}
-          onSelect={onSelectSession}
-          onLoadMore={onLoadMoreSessions}
-          onNewChat={onNewChat}
-          onMobileClose={() => setMobileSidebarOpen(false)}
+        <LibraryDocumentSidebar
+          library={libraryDocuments}
+          selectedDocuments={selectedDocuments}
+          onToggleDocument={onToggleDocument}
+          onPreviewDocument={handlePreviewDocument}
+          previewingDocumentId={previewController.loadingDocumentId}
+          previewError={previewController.error}
+          mobileOpen={documentsOpen}
+          onMobileClose={() => setDocumentsOpen(false)}
         />
 
         <Box
@@ -90,36 +180,50 @@ function ChatPageLayout({
         >
           <ChatHeader
             chatContext={chatContext}
-            selectedDocuments={selectedDocuments}
-            onOpenPicker={() => setIsPickerOpen(true)}
-            onOpenSidebar={() => setMobileSidebarOpen(true)}
+            onOpenDocuments={() => setDocumentsOpen(true)}
+            onNewChat={onNewChat}
+            onOpenHistory={() => setHistoryOpen(true)}
           />
 
           <ChatContextBar
             chatContext={chatContext}
             selectedDocuments={selectedDocuments}
             onRemove={onRemoveDocument}
-            onOpenPicker={() => setIsPickerOpen(true)}
           />
 
           {children}
         </Box>
       </Paper>
 
-      <DocumentPickerDialog
-        open={isPickerOpen}
-        onClose={() => setIsPickerOpen(false)}
-        selectedDocuments={selectedDocuments}
-        onApply={onApplyDocuments}
+      <ChatSessionDrawer
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        emptyText="Chưa có cuộc trò chuyện nào trong thư viện."
+        sessions={sessions}
+        activeSessionId={currentSessionId}
+        loading={sessionsLoading}
+        loadingMore={sessionsLoadingMore}
+        error={sessionsError}
+        hasMore={sessionsHasMore}
+        onSelectSession={onSelectSession}
+        onNewChat={onNewChat}
+        onLoadMore={onLoadMoreSessions}
+      />
+
+      <DocumentPreviewDialog
+        preview={previewController.preview}
+        onClose={previewController.closePreview}
       />
     </UserLayout>
   );
 }
 
-function LibraryChatRuntime() {
+function LibraryChatRuntime({ preselectedDocument }) {
   const [libraryContext, setLibraryContext] = useState(() =>
-    createLibraryContext(null),
+    createInitialLibraryContext(preselectedDocument),
   );
+  const libraryDocuments = useLibraryDocuments();
+  const previewController = useLibraryDocumentPreview();
 
   const {
     requestedSessionId,
@@ -138,6 +242,7 @@ function LibraryChatRuntime() {
   const {
     sessions,
     loading: sessionsLoading,
+    loadingMore: sessionsLoadingMore,
     error: sessionsError,
     hasMore: sessionsHasMore,
     loadMore: loadMoreSessions,
@@ -183,41 +288,16 @@ function LibraryChatRuntime() {
     );
   }, [libraryContext]);
 
-  const applyDocuments = useCallback((documents) => {
-    setLibraryContext((current) => {
-      if (!documents || documents.length === 0) {
-        return createLibraryContext(null);
-      }
-
-      return createLibraryContext({
-        ...(current.libraryFilters ?? {}),
-        documentIds: documents.map((document) => document.id),
-        _documentMeta: documents.map((document) => ({
-          id: document.id,
-          title: document.title,
-        })),
-      });
-    });
+  const toggleDocument = useCallback((document) => {
+    setLibraryContext((current) =>
+      updateDocumentInContext(current, document),
+    );
   }, []);
 
   const removeDocument = useCallback((documentId) => {
-    setLibraryContext((current) => {
-      const filters = current.libraryFilters ?? {};
-      const documentIds = (filters.documentIds ?? []).filter(
-        (id) => id !== documentId,
-      );
-      const documentMeta = (filters._documentMeta ?? []).filter(
-        (document) => document.id !== documentId,
-      );
-
-      return documentIds.length === 0
-        ? createLibraryContext(null)
-        : createLibraryContext({
-            ...filters,
-            documentIds,
-            _documentMeta: documentMeta,
-          });
-    });
+    setLibraryContext((current) =>
+      updateDocumentInContext(current, { id: documentId }, false),
+    );
   }, []);
 
   const handleSelectSession = useCallback(
@@ -227,8 +307,7 @@ function LibraryChatRuntime() {
     [selectSession],
   );
 
-  const activeSidebarSessionId =
-    validatedSessionId ?? requestedSessionId;
+  const activeSessionId = validatedSessionId ?? requestedSessionId;
   const conversationError =
     routeError || conversation.historyError || conversation.error;
 
@@ -237,12 +316,15 @@ function LibraryChatRuntime() {
       chatContext={libraryContext}
       selectedDocuments={selectedDocuments}
       onRemoveDocument={removeDocument}
-      onApplyDocuments={applyDocuments}
+      onToggleDocument={toggleDocument}
+      libraryDocuments={libraryDocuments}
+      previewController={previewController}
       sessions={sessions}
       sessionsLoading={sessionsLoading}
+      sessionsLoadingMore={sessionsLoadingMore}
       sessionsError={sessionsError}
       sessionsHasMore={sessionsHasMore}
-      currentSessionId={activeSidebarSessionId}
+      currentSessionId={activeSessionId}
       onSelectSession={handleSelectSession}
       onLoadMoreSessions={loadMoreSessions}
       onNewChat={handleNewChat}
@@ -270,9 +352,44 @@ function LibraryChatRuntime() {
 
 export default function ChatPage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const isLegacyDocumentState =
     location.state?.mode === CHAT_MODE_DOCUMENT;
   const legacyDocumentId = getLegacyDocumentId(location.state);
+  const hasLibraryPreselectionState = Object.prototype.hasOwnProperty.call(
+    location.state ?? {},
+    LIBRARY_PRESELECTION_KEY,
+  );
+  const preselectedDocument = useMemo(
+    () => getLibraryPreselection(location.state),
+    [location.state],
+  );
+
+  useEffect(() => {
+    if (!hasLibraryPreselectionState || isLegacyDocumentState) return;
+
+    const nextState = { ...(location.state ?? {}) };
+    delete nextState[LIBRARY_PRESELECTION_KEY];
+    navigate(
+      {
+        pathname: location.pathname,
+        search: location.search,
+        hash: location.hash,
+      },
+      {
+        replace: true,
+        state: Object.keys(nextState).length > 0 ? nextState : null,
+      },
+    );
+  }, [
+    hasLibraryPreselectionState,
+    isLegacyDocumentState,
+    location.hash,
+    location.pathname,
+    location.search,
+    location.state,
+    navigate,
+  ]);
 
   if (legacyDocumentId) {
     return (
@@ -293,5 +410,5 @@ export default function ChatPage() {
     );
   }
 
-  return <LibraryChatRuntime />;
+  return <LibraryChatRuntime preselectedDocument={preselectedDocument} />;
 }

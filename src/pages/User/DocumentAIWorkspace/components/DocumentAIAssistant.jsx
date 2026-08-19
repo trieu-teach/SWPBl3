@@ -21,7 +21,7 @@ import {
 import { useChatConversation } from "../../AIChat/hooks/useChatConversation.js";
 import { useRouteChatSession } from "../../AIChat/hooks/useRouteChatSession.js";
 import { useSessions } from "../../AIChat/hooks/useSessions.js";
-import DocumentSessionDrawer from "./DocumentSessionDrawer.jsx";
+import ChatSessionDrawer from "../../AIChat/components/ChatSessionDrawer.jsx";
 
 function normalizeString(value) {
   if (typeof value !== "string") return null;
@@ -290,9 +290,10 @@ export default function DocumentAIAssistant({
         />
       </Paper>
 
-      <DocumentSessionDrawer
+      <ChatSessionDrawer
         open={sessionsOpen}
         onClose={() => setSessionsOpen(false)}
+        emptyText="Chưa có cuộc trò chuyện nào với tài liệu này."
         sessions={sessions}
         activeSessionId={activeSessionId}
         loading={sessionsLoading}

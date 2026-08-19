@@ -1,5 +1,4 @@
 import { Box, Chip, Stack, Tooltip, Typography } from "@mui/material";
-import AddOutlined from "@mui/icons-material/AddOutlined";
 import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
 import LibraryBooksOutlined from "@mui/icons-material/LibraryBooksOutlined";
 import { isDocumentContext, isLibraryContext } from "../chatContext.js";
@@ -8,7 +7,6 @@ export default function ChatContextBar({
   chatContext,
   selectedDocuments = [],
   onRemove,
-  onOpenPicker,
 }) {
   // In ASK_THIS_DOCUMENT mode, the header already shows the document.
   if (isDocumentContext(chatContext)) return null;
@@ -27,56 +25,51 @@ export default function ChatContextBar({
       }}
     >
       <Stack
-        direction="row"
-        alignItems="center"
+        direction={{ xs: "column", sm: "row" }}
+        alignItems={{ xs: "flex-start", sm: "center" }}
         spacing={1}
-        sx={{ flexWrap: "wrap", gap: 0.75 }}
+        sx={{ gap: 0.75 }}
       >
-        <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mr: 1 }}>
+        <Stack direction="row" spacing={0.75} alignItems="center">
           <LibraryBooksOutlined sx={{ fontSize: "1rem", color: "text.secondary" }} />
           <Typography
             variant="caption"
             color="text.secondary"
-            sx={{ fontWeight: 600, flexShrink: 0 }}
+            sx={{ fontWeight: 700, flexShrink: 0 }}
           >
-            Thư viện của bạn
+            {selectedDocuments.length === 0
+              ? "Toàn bộ thư viện"
+              : `${selectedDocuments.length} tài liệu đã chọn`}
           </Typography>
         </Stack>
 
-        {selectedDocuments.map((doc) => (
-          <Tooltip key={doc.id} title={doc.title}>
-            <Chip
-              icon={<DescriptionOutlined sx={{ fontSize: "0.95rem !important" }} />}
-              label={doc.title}
-              onDelete={() => onRemove(doc.id)}
-              size="small"
-              variant="outlined"
-              sx={{
-                maxWidth: { xs: 160, sm: 240 },
-                fontWeight: 600,
-                fontSize: "0.78rem",
-                "& .MuiChip-label": {
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                },
-              }}
-            />
-          </Tooltip>
-        ))}
+        <Typography variant="caption" color="text.secondary">
+          Phạm vi áp dụng cho câu hỏi tiếp theo.
+        </Typography>
 
-        <Tooltip title={selectedDocuments.length > 0 ? "Thêm tài liệu lọc" : "Lọc theo tài liệu cụ thể"}>
-          <Chip
-            icon={<AddOutlined sx={{ fontSize: "0.95rem !important" }} />}
-            label={selectedDocuments.length > 0 ? "Thêm" : "Lọc kết quả"}
-            onClick={onOpenPicker}
-            size="small"
-            variant="outlined"
-            color="primary"
-            clickable
-            sx={{ fontWeight: 600, fontSize: "0.78rem" }}
-          />
-        </Tooltip>
+        {selectedDocuments.length > 0 && (
+          <Stack
+            direction="row"
+            gap={0.75}
+            flexWrap="wrap"
+            sx={{ display: { xs: "flex", lg: "none" } }}
+          >
+            {selectedDocuments.map((doc) => (
+              <Tooltip key={doc.id} title={doc.title}>
+                <Chip
+                  icon={
+                    <DescriptionOutlined sx={{ fontSize: "0.95rem !important" }} />
+                  }
+                  label={doc.title}
+                  onDelete={() => onRemove(doc.id)}
+                  size="small"
+                  variant="outlined"
+                  sx={{ maxWidth: 220, fontWeight: 600, fontSize: "0.75rem" }}
+                />
+              </Tooltip>
+            ))}
+          </Stack>
+        )}
       </Stack>
     </Box>
   );

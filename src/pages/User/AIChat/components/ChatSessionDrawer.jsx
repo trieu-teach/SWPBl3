@@ -16,14 +16,16 @@ import {
 } from "@mui/icons-material";
 import ConversationItem, {
   ConversationItemSkeleton,
-} from "../../AIChat/components/ConversationItem.jsx";
+} from "./ConversationItem.jsx";
 
 const DRAWER_WIDTH = 360;
-const DRAWER_TITLE_ID = "document-session-drawer-title";
+const DRAWER_TITLE_ID = "chat-session-drawer-title";
 
-export default function DocumentSessionDrawer({
+export default function ChatSessionDrawer({
   open = false,
   onClose,
+  title = "Lịch sử trò chuyện",
+  emptyText = "Chưa có cuộc trò chuyện nào.",
   sessions = [],
   activeSessionId = null,
   loading = false,
@@ -96,7 +98,7 @@ export default function DocumentSessionDrawer({
             variant="subtitle1"
             sx={{ minWidth: 0, flex: 1, fontWeight: 750 }}
           >
-            Lịch sử trò chuyện
+            {title}
           </Typography>
           <Button
             size="small"
@@ -145,7 +147,7 @@ export default function DocumentSessionDrawer({
                 color="text.secondary"
                 textAlign="center"
               >
-                Chưa có cuộc trò chuyện nào với tài liệu này.
+                {emptyText}
               </Typography>
             </Stack>
           )}

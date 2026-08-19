@@ -1,13 +1,16 @@
-import { Box, IconButton, Stack, Typography } from "@mui/material";
+import { Box, Button, Stack, Typography } from "@mui/material";
 import SmartToyOutlined from "@mui/icons-material/SmartToyOutlined";
 import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
-import MenuOpenRounded from "@mui/icons-material/MenuOpenRounded";
+import AddCommentOutlined from "@mui/icons-material/AddCommentOutlined";
+import FolderOpenOutlined from "@mui/icons-material/FolderOpenOutlined";
+import HistoryOutlined from "@mui/icons-material/HistoryOutlined";
 import { isDocumentContext, isLibraryContext } from "../chatContext.js";
 
 export default function ChatHeader({
   chatContext,
-  selectedDocuments = [],
-  onOpenSidebar,
+  onOpenDocuments,
+  onNewChat,
+  onOpenHistory,
 }) {
   const inDocumentMode = isDocumentContext(chatContext);
   const inLibraryMode = isLibraryContext(chatContext);
@@ -20,21 +23,12 @@ export default function ChatHeader({
       gap={2}
       sx={{
         px: { xs: 2, sm: 3 },
-        py: 2.5,
+        py: 2,
         borderBottom: "1px solid",
         borderColor: "divider",
       }}
     >
       <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
-        {/* Mobile Sidebar Toggle */}
-        <IconButton
-          onClick={onOpenSidebar}
-          sx={{ display: { md: "none" }, mr: -0.5 }}
-          aria-label="Mở danh sách hội thoại"
-        >
-          <MenuOpenRounded />
-        </IconButton>
-
         <Box
           sx={{
             width: 44,
@@ -88,7 +82,32 @@ export default function ChatHeader({
           )}
         </Box>
       </Stack>
-
+      {inLibraryMode && (
+        <Stack direction="row" spacing={0.75} flexWrap="wrap">
+          <Button
+            size="small"
+            startIcon={<FolderOpenOutlined />}
+            onClick={onOpenDocuments}
+            sx={{ display: { xs: "inline-flex", lg: "none" } }}
+          >
+            Tài liệu
+          </Button>
+          <Button
+            size="small"
+            startIcon={<AddCommentOutlined />}
+            onClick={onNewChat}
+          >
+            Chat mới
+          </Button>
+          <Button
+            size="small"
+            startIcon={<HistoryOutlined />}
+            onClick={onOpenHistory}
+          >
+            Lịch sử
+          </Button>
+        </Stack>
+      )}
     </Stack>
   );
 }

@@ -30,7 +30,19 @@ export default function DocumentActions({ details }) {
 
   function handleAskAI() {
     if (!documentId) return;
-    navigate(`/documents/${encodeURIComponent(documentId)}/ai`);
+    const title =
+      typeof document?.title === "string" && document.title.trim()
+        ? document.title.trim()
+        : document?.fileName || "Tài liệu";
+
+    navigate("/ai-chat", {
+      state: {
+        libraryDocumentPreselection: {
+          id: documentId,
+          title,
+        },
+      },
+    });
   }
 
   return (
