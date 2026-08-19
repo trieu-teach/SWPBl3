@@ -169,6 +169,12 @@ function LibraryChatRuntime() {
     onSessionCreated: handleSessionCreated,
     onConversationCompleted: handleConversationCompleted,
   });
+  const resetConversation = conversation.reset;
+
+  const handleNewChat = useCallback(() => {
+    resetConversation();
+    return startNewChat();
+  }, [resetConversation, startNewChat]);
 
   const selectedDocuments = useMemo(() => {
     const ids = libraryContext.libraryFilters?.documentIds ?? [];
@@ -239,7 +245,7 @@ function LibraryChatRuntime() {
       currentSessionId={activeSidebarSessionId}
       onSelectSession={handleSelectSession}
       onLoadMoreSessions={loadMoreSessions}
-      onNewChat={startNewChat}
+      onNewChat={handleNewChat}
     >
       <ChatConversation
         chatContext={libraryContext}

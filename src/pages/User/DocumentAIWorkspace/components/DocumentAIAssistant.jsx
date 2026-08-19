@@ -120,6 +120,7 @@ export default function DocumentAIAssistant({
     sendMessage,
     retryMessage,
     loadOlderMessages,
+    reset: resetConversation,
   } = useChatConversation({
     context: documentChatContext,
     sessionId: validatedSessionId,
@@ -153,8 +154,9 @@ export default function DocumentAIAssistant({
 
   const handleNewChat = useCallback(() => {
     if (!scopeEnabled) return false;
+    resetConversation();
     return startNewChat();
-  }, [scopeEnabled, startNewChat]);
+  }, [scopeEnabled, resetConversation, startNewChat]);
 
   const handleOpenSessions = useCallback(() => {
     if (scopeEnabled) setSessionsOpen(true);
