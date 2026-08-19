@@ -117,7 +117,8 @@ export function useChat() {
   const [historyPage, setHistoryPage] = useState(1);
   const [hasMoreHistory, setHasMoreHistory] = useState(false);
   const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
-  const historyLoadingRef = useRef(false);
+  const historyGenerationRef = useRef(0);
+  const historyRequestRef = useRef(null);
   const abortControllerRef = useRef(null);
   const activeSessionIdRef = useRef(null);
 
@@ -128,6 +129,8 @@ export function useChat() {
 
   useEffect(() => {
     return () => {
+      historyGenerationRef.current += 1;
+      historyRequestRef.current = null;
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -259,6 +262,9 @@ export function useChat() {
    * and initialises the Library context as the default mode.
    */
   const startNewChat = useCallback(() => {
+    historyGenerationRef.current += 1;
+    historyRequestRef.current = null;
+
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
@@ -274,6 +280,7 @@ export function useChat() {
     setSessionError(null);
     setHistoryPage(1);
     setHasMoreHistory(false);
+    setIsLoadingOlderMessages(false);
     // Default mode for a new chat is ASK_MY_LIBRARY.
     setChatContext(createLibraryContext(null));
   }, []);
@@ -287,7 +294,19 @@ export function useChat() {
    */
   const loadSession = useCallback(async (sessionId, sessionMeta = null) => {
     if (!sessionId) return;
-    if (historyLoadingRef.current) return;
+    if (historyRequestRef.current?.sessionId === sessionId) return;
+
+    const historyRequest = {
+      generation: ++historyGenerationRef.current,
+      sessionId,
+      type: "session",
+    };
+    historyRequestRef.current = historyRequest;
+    const ownsHistoryRequest = () =>
+      historyRequestRef.current === historyRequest &&
+      historyGenerationRef.current === historyRequest.generation;
+    const isValidHistoryRequest = () =>
+      ownsHistoryRequest() && activeSessionIdRef.current === sessionId;
 
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -303,7 +322,7 @@ export function useChat() {
     setSessionError(null);
     setHistoryPage(1);
     setHasMoreHistory(false);
-    historyLoadingRef.current = true;
+    setIsLoadingOlderMessages(false);
 
     // Restore context from session metadata when available.
     // This ensures the context banner / header shows correct info
@@ -318,6 +337,8 @@ export function useChat() {
         page: 1,
         limit: HISTORY_PAGE_LIMIT,
       });
+      if (!isValidHistoryRequest()) return;
+
       const firstPageMeta = firstPageResponse?.meta || {};
       const totalPages = firstPageMeta.totalPages ?? 1;
       const latestPage = Math.max(1, totalPages);
@@ -335,22 +356,21 @@ export function useChat() {
 
       const mapped = items.map(mapHistoryMessage);
 
-      // Prevent race condition if user started a new chat or switched again
-      if (activeSessionIdRef.current === sessionId) {
+      if (isValidHistoryRequest()) {
         setMessages(mapped);
         setHistoryPage(latestPage);
         setHasMoreHistory(latestPage > 1);
         setSessionStatus("success");
       }
     } catch (err) {
-      if (activeSessionIdRef.current === sessionId) {
+      if (isValidHistoryRequest()) {
         const message = getHistoryErrorMessage(err);
         setSessionError(message);
         setSessionStatus("error");
       }
     } finally {
-      if (activeSessionIdRef.current === sessionId) {
-        historyLoadingRef.current = false;
+      if (ownsHistoryRequest()) {
+        historyRequestRef.current = null;
       }
     }
   }, []);
@@ -359,17 +379,31 @@ export function useChat() {
    * Load the previous (older) page of messages and prepend to the list.
    */
   const loadOlderMessages = useCallback(async () => {
-    if (!currentSessionId || !hasMoreHistory || historyLoadingRef.current) return;
-    historyLoadingRef.current = true;
-    setIsLoadingOlderMessages(true);
+    if (!currentSessionId || !hasMoreHistory || historyRequestRef.current) return;
 
     const sessionId = currentSessionId;
+    const historyRequest = {
+      generation: ++historyGenerationRef.current,
+      sessionId,
+      type: "older",
+    };
+    historyRequestRef.current = historyRequest;
+    const ownsHistoryRequest = () =>
+      historyRequestRef.current === historyRequest &&
+      historyGenerationRef.current === historyRequest.generation;
+    const isValidHistoryRequest = () =>
+      ownsHistoryRequest() && activeSessionIdRef.current === sessionId;
+
+    setIsLoadingOlderMessages(true);
+
     const nextPage = historyPage - 1;
 
     if (nextPage < 1) {
-      setHasMoreHistory(false);
-      setIsLoadingOlderMessages(false);
-      historyLoadingRef.current = false;
+      if (ownsHistoryRequest()) {
+        setHasMoreHistory(false);
+        setIsLoadingOlderMessages(false);
+        historyRequestRef.current = null;
+      }
       return;
     }
 
@@ -382,7 +416,7 @@ export function useChat() {
       const items = Array.isArray(response?.items) ? response.items : [];
       const mapped = items.map(mapHistoryMessage);
 
-      if (activeSessionIdRef.current === sessionId) {
+      if (isValidHistoryRequest()) {
         setMessages((current) => prependUniqueMessages(mapped, current));
         setHistoryPage(nextPage);
         setHasMoreHistory(nextPage > 1);
@@ -390,8 +424,10 @@ export function useChat() {
     } catch {
       // silent — user can retry by clicking again
     } finally {
-      setIsLoadingOlderMessages(false);
-      historyLoadingRef.current = false;
+      if (ownsHistoryRequest()) {
+        setIsLoadingOlderMessages(false);
+        historyRequestRef.current = null;
+      }
     }
   }, [currentSessionId, hasMoreHistory, historyPage]);
 
