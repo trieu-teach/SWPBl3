@@ -1,7 +1,8 @@
 import { Alert, Button, Paper, Stack, TextField } from "@mui/material";
 import SendRounded from "@mui/icons-material/SendRounded";
+import { isLibraryContext } from "../chatContext.js";
 
-export default function ChatInput({ value, onChange, onSend, isSending, error }) {
+export default function ChatInput({ chatContext, value, onChange, onSend, isSending, error }) {
   const isDisabled = !value.trim() || isSending;
 
   function handleKeyDown(event) {
@@ -10,6 +11,10 @@ export default function ChatInput({ value, onChange, onSend, isSending, error })
       if (!isDisabled) onSend();
     }
   }
+
+  const placeholder = isLibraryContext(chatContext)
+    ? "Hỏi về tài liệu trong thư viện của bạn..."
+    : "Nhập câu hỏi học tập của bạn...";
 
   return (
     <Paper
@@ -32,7 +37,7 @@ export default function ChatInput({ value, onChange, onSend, isSending, error })
           value={value}
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Nhập câu hỏi học tập của bạn..."
+          placeholder={placeholder}
           multiline
           minRows={1}
           maxRows={5}

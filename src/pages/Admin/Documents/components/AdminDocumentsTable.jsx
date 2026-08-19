@@ -109,6 +109,12 @@ export default function AdminDocumentsTable({ admin }) {
                     <TableCell>
                       <Chip
                         size="small"
+                        color={
+                          document.visibility === "PUBLIC"
+                            ? "success"
+                            : "secondary"
+                        }
+                        variant="outlined"
                         label={
                           document.visibility === "PUBLIC"
                             ? "Công khai"
@@ -153,7 +159,13 @@ export default function AdminDocumentsTable({ admin }) {
                           <VisibilityOutlined />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Chi tiết và kiểm duyệt">
+                      <Tooltip
+                        title={
+                          document.moderationStatus === "PENDING"
+                            ? "Chi tiết và kiểm duyệt"
+                            : "Xem chi tiết"
+                        }
+                      >
                         <IconButton
                           color="primary"
                           onClick={() => admin.openDetail(document)}

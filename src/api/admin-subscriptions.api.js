@@ -18,3 +18,10 @@ export const getAdminSubscriptionStats = () =>
 
 export const getAdminSubscriptionPurchases = (params) =>
   apiRequest(withQuery("/admin/subscriptions/purchases", params));
+
+export const getAdminUserBilling = (userId, invoiceNumber) =>
+  apiRequest(
+    withQuery(`/admin/users/${userId}/billing`, {
+      invoiceNumber,
+    }),
+  );

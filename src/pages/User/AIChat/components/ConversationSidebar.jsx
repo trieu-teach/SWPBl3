@@ -109,8 +109,8 @@ function SidebarInner({
             key={session.id}
             session={session}
             isActive={session.id === currentSessionId}
-            onSelect={(id) => {
-              onSelect(id);
+            onSelect={(sess) => {
+              onSelect(sess.id, sess);
               if (onClose) onClose(); // close mobile drawer after select
             }}
           />

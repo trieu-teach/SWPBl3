@@ -1,7 +1,10 @@
 import {
   Box,
+  Button,
   FormControl,
   FormLabel,
+  IconButton,
+  ListItemText,
   MenuItem,
   Paper,
   Select,
@@ -9,9 +12,39 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
+import { useState } from "react";
+import { useAuth } from "../../../../features/auth/AuthProvider.jsx";
 import DocumentTagInput from "./DocumentTagInput.jsx";
+import CreateTaxonomyDialog from "./CreateTaxonomyDialog.jsx";
+import DeleteSubjectCategoryDialog from "./DeleteSubjectCategoryDialog.jsx";
 
 export default function DocumentMetadataForm({ upload }) {
+  const { user } = useAuth();
+  const [subjectMenuOpen, setSubjectMenuOpen] = useState(false);
+  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
+
+  function deleteButton(type, item, closeMenu) {
+    if (!item.ownerId || item.ownerId !== user?.id) return null;
+    return (
+      <IconButton
+        size="small"
+        color="error"
+        aria-label={`Xóa ${type === "subject" ? "môn học" : "danh mục"} ${item.name}`}
+        onMouseDown={(event) => event.stopPropagation()}
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          closeMenu();
+          upload.openDeleteDialog(type, item);
+        }}
+        sx={{ ml: 1 }}
+      >
+        <DeleteOutlineOutlined fontSize="small" />
+      </IconButton>
+    );
+  }
+
   return (
     <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, borderRadius: 3 }}>
       <Typography variant="h6" sx={{ fontWeight: 750, mb: 2 }}>
@@ -44,45 +77,96 @@ export default function DocumentMetadataForm({ upload }) {
             gap: 2,
           }}
         >
-          <FormControl required disabled={upload.loadingOptions}>
-            <FormLabel sx={{ mb: 0.75 }}>Môn học</FormLabel>
-            <Select
-              value={upload.subjectId}
-              displayEmpty
-              onChange={(event) =>
-                upload.updateField("subjectId", event.target.value)
-              }
-            >
-              <MenuItem value="" disabled>
-                {upload.loadingOptions ? "Đang tải..." : "Chọn môn học"}
-              </MenuItem>
-              {upload.subjects.map((item) => (
-                <MenuItem key={item.id} value={item.id}>
-                  {item.name}
-                  {item.code ? ` (${item.code})` : ""}
+          <Stack spacing={1}>
+            <FormControl required disabled={upload.loadingOptions}>
+              <FormLabel sx={{ mb: 0.75 }}>Môn học</FormLabel>
+              <Select
+                value={upload.subjectId}
+                displayEmpty
+                renderValue={(selectedId) => {
+                  const selected = upload.subjects.find(
+                    (item) => item.id === selectedId,
+                  );
+                  if (!selected) return "Chọn môn học";
+                  return `${selected.name}${selected.code ? ` (${selected.code})` : ""}`;
+                }}
+                open={subjectMenuOpen}
+                onOpen={() => setSubjectMenuOpen(true)}
+                onClose={() => setSubjectMenuOpen(false)}
+                onChange={(event) =>
+                  upload.updateField("subjectId", event.target.value)
+                }
+              >
+                <MenuItem value="" disabled>
+                  {upload.loadingOptions ? "Đang tải..." : "Chọn môn học"}
                 </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl required disabled={!upload.subjectId}>
-            <FormLabel sx={{ mb: 0.75 }}>Danh mục</FormLabel>
-            <Select
-              value={upload.categoryId}
-              displayEmpty
-              onChange={(event) =>
-                upload.updateField("categoryId", event.target.value)
-              }
+                {upload.subjects.map((item) => (
+                  <MenuItem
+                    key={item.id}
+                    value={item.id}
+                    sx={{ display: "flex", gap: 1 }}
+                  >
+                    <ListItemText
+                      primary={`${item.name}${item.code ? ` (${item.code})` : ""}`}
+                    />
+                    {deleteButton("subject", item, () =>
+                      setSubjectMenuOpen(false),
+                    )}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Button
+              size="small"
+              sx={{ alignSelf: "flex-start" }}
+              onClick={() => upload.openTaxonomyDialog("subject")}
             >
-              <MenuItem value="" disabled>
-                {upload.subjectId ? "Chọn danh mục" : "Chọn môn học trước"}
-              </MenuItem>
-              {upload.categories.map((item) => (
-                <MenuItem key={item.id} value={item.id}>
-                  {item.name}
+              + Tạo môn học mới
+            </Button>
+          </Stack>
+          <Stack spacing={1}>
+            <FormControl required disabled={!upload.subjectId}>
+              <FormLabel sx={{ mb: 0.75 }}>Danh mục</FormLabel>
+              <Select
+                value={upload.categoryId}
+                displayEmpty
+                renderValue={(selectedId) =>
+                  upload.categories.find((item) => item.id === selectedId)
+                    ?.name || "Chọn danh mục"
+                }
+                open={categoryMenuOpen}
+                onOpen={() => setCategoryMenuOpen(true)}
+                onClose={() => setCategoryMenuOpen(false)}
+                onChange={(event) =>
+                  upload.updateField("categoryId", event.target.value)
+                }
+              >
+                <MenuItem value="" disabled>
+                  {upload.subjectId ? "Chọn danh mục" : "Chọn môn học trước"}
                 </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+                {upload.categories.map((item) => (
+                  <MenuItem
+                    key={item.id}
+                    value={item.id}
+                    sx={{ display: "flex", gap: 1 }}
+                  >
+                    <ListItemText primary={item.name} />
+                    {deleteButton("category", item, () =>
+                      setCategoryMenuOpen(false),
+                    )}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Button
+              size="small"
+              sx={{ alignSelf: "flex-start" }}
+              disabled={!upload.subjectId}
+              onClick={() => upload.openTaxonomyDialog("category")}
+            >
+              + Tạo danh mục mới
+            </Button>
+          </Stack>
         </Box>
         <DocumentTagInput
           value={upload.tagInput}
@@ -92,6 +176,15 @@ export default function DocumentMetadataForm({ upload }) {
           onRemove={upload.removeTag}
         />
       </Stack>
+      <CreateTaxonomyDialog
+        open={Boolean(upload.taxonomyDialog)}
+        type={upload.taxonomyDialog}
+        loading={upload.creatingTaxonomy}
+        error={upload.taxonomyError}
+        onClose={upload.closeTaxonomyDialog}
+        onSubmit={upload.submitTaxonomy}
+      />
+      <DeleteSubjectCategoryDialog upload={upload} />
     </Paper>
   );
 }

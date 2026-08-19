@@ -17,7 +17,6 @@ import ForgotPassword from "./pages/Auth/ForgotPassword.jsx";
 import ResetPassword from "./pages/Auth/ResetPassword.jsx";
 
 // Authenticated routes
-import Dashboard from "./pages/User/Dashboard/Dashboard.jsx";
 import Profile from "./pages/Profile/Profile.jsx";
 import UploadDocument from "./pages/User/UploadDocument/UploadDocument.jsx";
 import DocumentLibrary from "./pages/User/DocumentLibrary/DocumentLibrary.jsx";
@@ -25,6 +24,7 @@ import DocumentDetails from "./pages/User/DocumentDetails/DocumentDetails.jsx";
 import CommunityLibrary from "./pages/User/CommunityLibrary/CommunityLibrary.jsx";
 import SavedDocuments from "./pages/User/SavedDocuments/SavedDocuments.jsx";
 import Subscription from "./pages/User/Subscription/Subscription.jsx";
+import PaymentCallback from "./pages/User/Subscription/PaymentCallback.jsx";
 import ChatPage from "./pages/User/AIChat/ChatPage.jsx";
 
 // Admin routes
@@ -192,14 +192,6 @@ export default function App() {
 
                     {/* ── Authenticated (User) ── */}
                     <Route
-                      path="/dashboard"
-                      element={
-                        <RequireAuth>
-                          <Dashboard />
-                        </RequireAuth>
-                      }
-                    />
-                    <Route
                       path="/profile"
                       element={
                         <RequireAuth>
@@ -264,6 +256,10 @@ export default function App() {
                           <Subscription />
                         </RequireAuth>
                       }
+                    />
+                    <Route
+                      path="/goi-dich-vu"
+                      element={<PaymentCallback />}
                     />
                     <Route
                       path="/admin/dashboard"

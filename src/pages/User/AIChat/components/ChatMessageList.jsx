@@ -11,9 +11,11 @@ function isNearBottom(element) {
 }
 
 export default function ChatMessageList({
+  chatContext,
   messages,
   isSending,
   onRetry,
+  onSend,
   // History loader props
   hasMoreHistory,
   isLoadingOlderMessages,
@@ -56,7 +58,7 @@ export default function ChatMessageList({
 
     const lastMessage = messages.at(-1);
     const isNewUserMessage = lastMessage?.role === "user";
-    const isPendingAssistantMessage = lastMessage?.status === "loading";
+    const isPendingAssistantMessage = lastMessage?.status === "loading" || lastMessage?.status === "streaming";
     const shouldForceScroll = isNewUserMessage || isPendingAssistantMessage;
 
     // Only scroll to bottom if we were already near bottom OR it's a new interaction
@@ -79,9 +81,16 @@ export default function ChatMessageList({
       <Box
         ref={listRef}
         onScroll={handleScroll}
-        sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: { xs: 2, sm: 3 } }}
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+          p: { xs: 2, sm: 3 },
+          display: "flex",
+          flexDirection: "column"
+        }}
       >
-        <ChatEmptyState />
+        <ChatEmptyState chatContext={chatContext} />
       </Box>
     );
   }
@@ -105,6 +114,7 @@ export default function ChatMessageList({
             message={message}
             isSending={isSending}
             onRetry={onRetry}
+            onSend={onSend}
           />
         ))}
       </Stack>

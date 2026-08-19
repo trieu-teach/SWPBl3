@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Button,
   Dialog,
@@ -11,17 +12,33 @@ import {
   Radio,
   RadioGroup,
   Stack,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import {
   CloudDownloadOutlined,
   DeleteOutlined,
+  SmartToyOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
+import { CHAT_MODE_DOCUMENT } from "../../AIChat/chatContext.js";
 
 export default function DocumentActions({ details }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const navigate = useNavigate();
   const document = details.document;
+
+  // AI-ready means the document has been indexed and can answer questions.
+  const isAiReady = document.aiStatus === "COMPLETED";
+
+  function handleAskAI() {
+    navigate("/ai-chat", {
+      state: {
+        mode: CHAT_MODE_DOCUMENT,
+        document: { id: document.id, title: document.title },
+      },
+    });
+  }
 
   return (
     <>
@@ -30,6 +47,27 @@ export default function DocumentActions({ details }) {
           Thao tác
         </Typography>
         <Stack spacing={1.25} sx={{ mt: 2 }}>
+          <Tooltip
+            title={
+              isAiReady
+                ? ""
+                : "Tài liệu chưa được AI xử lý. Vui lòng chờ quá trình lập chỉ mục hoàn tất."
+            }
+            disableHoverListener={isAiReady}
+          >
+            <span>
+              <Button
+                fullWidth
+                variant="contained"
+                color="primary"
+                startIcon={<SmartToyOutlined />}
+                onClick={handleAskAI}
+                disabled={!isAiReady}
+              >
+                Hỏi AI
+              </Button>
+            </span>
+          </Tooltip>
           <Button
             variant="contained"
             startIcon={<VisibilityOutlined />}
