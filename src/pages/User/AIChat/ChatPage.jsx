@@ -1,54 +1,37 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useCallback, useMemo, useState } from "react";
+import { Navigate, useLocation } from "react-router-dom";
 import { Box, Paper } from "@mui/material";
 import UserLayout from "../Layout/UserLayout.jsx";
 import ChatHeader from "./components/ChatHeader.jsx";
 import ChatContextBar from "./components/ChatContextBar.jsx";
 import ChatConversation from "./components/ChatConversation.jsx";
-import ChatInput from "./components/ChatInput.jsx";
-import ChatMessageList from "./components/ChatMessageList.jsx";
 import DocumentPickerDialog from "./components/DocumentPickerDialog.jsx";
 import ConversationSidebar from "./components/ConversationSidebar.jsx";
-import { useChat } from "./hooks/useChat.js";
 import { useChatConversation } from "./hooks/useChatConversation.js";
 import { useRouteChatSession } from "./hooks/useRouteChatSession.js";
 import { useSessions } from "./hooks/useSessions.js";
 import {
   CHAT_MODE_DOCUMENT,
   CHAT_MODE_LIBRARY,
-  createDocumentContext,
   createLibraryContext,
 } from "./chatContext.js";
 
 const LIBRARY_BASE_PATH = "/ai-chat";
 
-function getLegacyDocumentContext(locationState) {
+function getLegacyDocumentId(locationState) {
   if (locationState?.mode !== CHAT_MODE_DOCUMENT) return null;
 
-  return createDocumentContext({
-    documentId:
-      locationState.documentId ?? locationState.document?.id,
-    title: locationState.document?.title ?? "",
-  });
-}
+  const hasExplicitDocumentId = Object.prototype.hasOwnProperty.call(
+    locationState,
+    "documentId",
+  );
+  const candidate = hasExplicitDocumentId
+    ? locationState.documentId
+    : locationState.document?.id;
 
-function createLegacySessionListScope(chatContext) {
-  if (chatContext?.mode === CHAT_MODE_LIBRARY) {
-    return { mode: CHAT_MODE_LIBRARY, enabled: true };
-  }
-
-  if (chatContext?.mode === CHAT_MODE_DOCUMENT) {
-    const documentId =
-      typeof chatContext.documentId === "string"
-        ? chatContext.documentId.trim()
-        : "";
-
-    return documentId
-      ? { mode: CHAT_MODE_DOCUMENT, documentId, enabled: true }
-      : { enabled: false };
-  }
-
-  return { enabled: false };
+  if (typeof candidate !== "string") return null;
+  const normalizedDocumentId = candidate.trim();
+  return normalizedDocumentId || null;
 }
 
 function ChatPageLayout({
@@ -279,99 +262,30 @@ function LibraryChatRuntime() {
   );
 }
 
-function LegacyDocumentChatRuntime({ initialContext }) {
-  const {
-    messages,
-    inputValue,
-    setInputValue,
-    isSending,
-    error,
-    sendMessage,
-    retryMessage,
-    currentSessionId,
-    hasMoreHistory,
-    isLoadingOlderMessages,
-    loadSession,
-    loadOlderMessages,
-    startNewChat,
-    chatContext,
-    setDocumentContext,
-    selectedDocuments,
-    removeDocument,
-    applyDocuments,
-  } = useChat();
-
-  const {
-    sessions,
-    loading: sessionsLoading,
-    error: sessionsError,
-    hasMore: sessionsHasMore,
-    loadMore: loadMoreSessions,
-    refresh: refreshSessions,
-  } = useSessions(createLegacySessionListScope(chatContext));
-
-  useEffect(() => {
-    setDocumentContext(initialContext.document);
-  }, [initialContext, setDocumentContext]);
-
-  const prevSessionIdRef = useRef(currentSessionId);
-  useEffect(() => {
-    if (currentSessionId && currentSessionId !== prevSessionIdRef.current) {
-      refreshSessions();
-    }
-    prevSessionIdRef.current = currentSessionId;
-  }, [currentSessionId, refreshSessions]);
-
-  return (
-    <ChatPageLayout
-      chatContext={chatContext}
-      selectedDocuments={selectedDocuments}
-      onRemoveDocument={removeDocument}
-      onApplyDocuments={applyDocuments}
-      sessions={sessions}
-      sessionsLoading={sessionsLoading}
-      sessionsError={sessionsError}
-      sessionsHasMore={sessionsHasMore}
-      currentSessionId={currentSessionId}
-      onSelectSession={loadSession}
-      onLoadMoreSessions={loadMoreSessions}
-      onNewChat={startNewChat}
-    >
-      <ChatMessageList
-        chatContext={chatContext}
-        messages={messages}
-        isSending={isSending}
-        onRetry={retryMessage}
-        onSend={sendMessage}
-        hasMoreHistory={hasMoreHistory}
-        isLoadingOlderMessages={isLoadingOlderMessages}
-        onLoadOlderMessages={loadOlderMessages}
-      />
-
-      <Box sx={{ flexShrink: 0 }}>
-        <ChatInput
-          chatContext={chatContext}
-          value={inputValue}
-          onChange={setInputValue}
-          onSend={sendMessage}
-          isSending={isSending}
-          error={error}
-        />
-      </Box>
-    </ChatPageLayout>
-  );
-}
-
 export default function ChatPage() {
   const location = useLocation();
-  const legacyDocumentContext = getLegacyDocumentContext(location.state);
+  const isLegacyDocumentState =
+    location.state?.mode === CHAT_MODE_DOCUMENT;
+  const legacyDocumentId = getLegacyDocumentId(location.state);
 
-  return legacyDocumentContext ? (
-    <LegacyDocumentChatRuntime
-      key={legacyDocumentContext.documentId}
-      initialContext={legacyDocumentContext}
-    />
-  ) : (
-    <LibraryChatRuntime />
-  );
+  if (legacyDocumentId) {
+    return (
+      <Navigate
+        to={`/documents/${encodeURIComponent(legacyDocumentId)}/ai`}
+        replace
+      />
+    );
+  }
+
+  if (isLegacyDocumentState) {
+    return (
+      <Navigate
+        to={`${location.pathname}${location.search}`}
+        replace
+        state={null}
+      />
+    );
+  }
+
+  return <LibraryChatRuntime />;
 }
