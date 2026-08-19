@@ -11,7 +11,7 @@ export function getCommunityDocuments(params = {}) {
 }
 
 export function getCommunityPreview(id) {
-  return apiRequest(`/community/documents/${id}/preview`);
+  return apiRequest(`/documents/${id}/preview`);
 }
 
 export function saveCommunityDocument(id) {
