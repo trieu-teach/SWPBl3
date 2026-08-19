@@ -64,14 +64,23 @@ export default function useSavedDocuments() {
         mode === "preview"
           ? await getCommunityPreview(document.id)
           : await getDocumentDownload(document.id);
-      if (!response?.url) throw new Error("Không nhận được đường dẫn tệp.");
+
+      const fileUrl =
+        mode === "preview"
+          ? response?.previewUrl || response?.url
+          : response?.url;
+
+      if (!fileUrl) throw new Error("Không nhận được đường dẫn tệp.");
+
       if (mode === "preview")
         setPreview({
           title: document.title,
           fileName: document.fileName,
-          url: response.url,
+          url: fileUrl,
+          contentType: response?.contentType,
+          fallbackToOfficeViewer: response?.fallbackToOfficeViewer,
         });
-      else window.open(response.url, "_blank", "noopener,noreferrer");
+      else window.open(fileUrl, "_blank", "noopener,noreferrer");
     } catch (requestError) {
       setError(requestError.message || "Không thể mở tài liệu.");
     } finally {

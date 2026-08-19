@@ -61,10 +61,18 @@ export default function useCommunityLibrary() {
     setError("");
     try {
       const response = await getCommunityPreview(document.id);
+      const previewUrl = response?.previewUrl || response?.url;
+
+      if (!previewUrl) {
+        throw new Error("Backend không trả về đường dẫn xem trước.");
+      }
+
       setPreview({
         title: document.title,
         fileName: document.fileName,
-        url: response.url,
+        url: previewUrl,
+        contentType: response?.contentType,
+        fallbackToOfficeViewer: response?.fallbackToOfficeViewer,
       });
     } catch (requestError) {
       setError(requestError.message || "Không thể xem tài liệu.");
