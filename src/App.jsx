@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import { ConfigProvider, App as AntApp, theme as antdThemeAlgo } from "antd";
 import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
 import { AuthProvider } from "./features/auth/AuthProvider.jsx";
@@ -37,10 +37,8 @@ import Subscriptions from "./pages/Admin/Subscriptions/Subscriptions.jsx";
 import AuditLogs from "./pages/Admin/AuditLogs/AuditLogs.jsx";
 import DownloadLogs from "./pages/Admin/DownloadLogs/DownloadLogs.jsx";
 import Reports from "./pages/Admin/Reports/Reports.jsx";
-import ComingSoon from "./pages/Shared/ComingSoon.jsx";
-
 // Moderator routes
-import ModeratorDashboard from "./pages/Moderator/Dashboard/ModeratorDashboard.jsx";
+import ModeratorReports from "./pages/Moderator/Reports/ModeratorReports.jsx";
 
 // Public
 import Homepage from "./pages/Home/Homepage.jsx";
@@ -335,6 +333,32 @@ export default function App() {
                       }
                     />
 
+                    {/* ── Moderator ── */}
+                    <Route
+                      path="/moderator/reports"
+                      element={
+                        <RequireAuth allowedRoles={["ADMIN", "MODERATOR"]}>
+                          <ModeratorReports />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/moderator/dashboard"
+                      element={
+                        <RequireAuth allowedRoles={["ADMIN", "MODERATOR"]}>
+                          <Navigate to="/moderator/reports" replace />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/moderator/moderation"
+                      element={
+                        <RequireAuth allowedRoles={["ADMIN", "MODERATOR"]}>
+                          <Navigate to="/moderator/reports" replace />
+                        </RequireAuth>
+                      }
+                    />
+
                     {/* ── Catch-all (Guest → homepage, User → dashboard) ── */}
                     <Route
                       path="*"
@@ -342,25 +366,6 @@ export default function App() {
                         <GuestRoute>
                           <Homepage />
                         </GuestRoute>
-                      }
-                    />
-                  </Routes>
-                  <Routes>
-                    {/* ── Moderator ── */}
-                    <Route
-                      path="/moderator/dashboard"
-                      element={
-                        <RequireAuth allowedRoles={["MODERATOR"]}>
-                          <ModeratorDashboard />
-                        </RequireAuth>
-                      }
-                    />
-                    <Route
-                      path="/moderator/moderation"
-                      element={
-                        <RequireAuth allowedRoles={["MODERATOR"]}>
-                          <ComingSoon title="Kiểm duyệt tài liệu" />
-                        </RequireAuth>
                       }
                     />
                   </Routes>
