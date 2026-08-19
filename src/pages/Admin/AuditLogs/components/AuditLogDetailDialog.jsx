@@ -327,9 +327,9 @@ export default function AuditLogDetailDialog({ log, onClose }) {
                     <CopyButton text={log.userId} />
                   </Box>
                 </Box>
-                {log.userRole && (
+                {log.userRoleLabel && (
                   <Chip
-                    label={log.userRole}
+                    label={log.userRoleLabel}
                     size="small"
                     sx={{
                       height: 32,

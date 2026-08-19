@@ -55,11 +55,17 @@ function UserAvatar({ log }) {
   );
 }
 
-function RoleBadge({ role }) {
+function RoleBadge({ role, roleLabel }) {
   const style = getRoleStyle(role);
+  const displayLabel = roleLabel || role || "—";
+  
+  if (!role && !roleLabel) {
+    return null;
+  }
+  
   return (
     <Chip
-      label={role || "—"}
+      label={displayLabel}
       size="small"
       sx={{
         backgroundColor: style.bg,
@@ -96,7 +102,7 @@ function UserCell({ log }) {
         <Typography variant="body2" fontWeight={500} sx={{ fontSize: "0.8rem" }}>
           {displayName}
         </Typography>
-        <RoleBadge role={log.userRole} />
+        <RoleBadge role={log.userRole} roleLabel={log.userRoleLabel} />
       </Box>
     </Box>
   );
@@ -342,7 +348,6 @@ export default function AuditLogTable({ audit }) {
                 "&:hover": { bgcolor: "action.hover" },
                 "&:last-child": { borderBottom: 0 },
               }}
-              onClick={() => setSelectedLog(log)}
             >
               <Box sx={{ gridColumn: 1, overflow: "hidden" }}>
                 <UserCell log={log} />

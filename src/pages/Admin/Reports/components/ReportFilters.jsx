@@ -12,21 +12,42 @@ import RefreshOutlined from "@mui/icons-material/RefreshOutlined";
 import { getDateRangePresets } from "../../utils/admin-formatters.js";
 
 const GROUP_BY_OPTIONS = [
-  { value: "day", label: "Theo ngày" },
-  { value: "week", label: "Theo tuần" },
-  { value: "month", label: "Theo tháng" },
+  { value: "day", label: "Ngày" },
+  { value: "week", label: "Tuần" },
+  { value: "month", label: "Tháng" },
 ];
 
 const LIMIT_OPTIONS = [
-  { value: 5, label: "Top 5" },
-  { value: 10, label: "Top 10" },
-  { value: 15, label: "Top 15" },
-  { value: 20, label: "Top 20" },
+  { value: 5, label: "5" },
+  { value: 10, label: "10" },
+  { value: 15, label: "15" },
+  { value: 20, label: "20" },
+];
+
+const TARGET_OPTIONS = [
+  { value: "all", label: "Tất cả" },
+  { value: "upload", label: "Upload" },
+  { value: "downloaded", label: "Top tải" },
+  { value: "saved", label: "Top lưu" },
+  { value: "stats", label: "Phân bố gói" },
 ];
 
 export default function ReportFilters({ reports }) {
-  const { dateRange, groupBy, chartLimit } = reports;
+  const {
+    draftRange,
+    draftGroupBy,
+    draftLimit,
+    selectedTarget,
+    updateDraftRange,
+    setDraftPresetRange,
+    setDraftGroupBy,
+    setDraftLimit,
+    setSelectedTarget,
+    reloadAll,
+  } = reports;
+  
   const presets = getDateRangePresets();
+  const { from: draftFrom, to: draftTo } = draftRange;
 
   return (
     <Box
@@ -40,11 +61,11 @@ export default function ReportFilters({ reports }) {
         boxShadow: "none",
       }}
     >
-      {/* Header bar */}
+      {/* Main row */}
       <Box
         sx={{
           px: 2.5,
-          py: 2,
+          py: 1.5,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -54,98 +75,117 @@ export default function ReportFilters({ reports }) {
           gap: 2,
         }}
       >
+        {/* Left: Title + Target Selector */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <Box
             sx={{
-              width: 36,
-              height: 36,
-              borderRadius: "10px",
+              width: 32,
+              height: 32,
+              borderRadius: "8px",
               background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               color: "white",
-              boxShadow: "0 4px 12px rgba(249, 115, 22, 0.25)",
             }}
           >
-            <CalendarMonthOutlined sx={{ fontSize: 18 }} />
+            <CalendarMonthOutlined sx={{ fontSize: 16 }} />
           </Box>
-          <Typography variant="body1" fontWeight={600}>
-            Bộ lọc thời gian
-          </Typography>
-        </Box>
-
-        {/* Date presets */}
-        <ButtonGroup size="medium" variant="outlined" sx={{ borderRadius: "12px" }}>
-          {presets.map((preset) => {
-            const isActive = dateRange.from === preset.from && dateRange.to === preset.to;
-            return (
-              <Button
-                key={preset.label}
-                onClick={() => reports.setPresetRange(preset.from, preset.to)}
-                sx={{
-                  borderRadius: "12px",
-                  fontSize: "0.82rem",
-                  px: 2,
-                  fontWeight: isActive ? 600 : 500,
-                  color: isActive ? "#f97316" : "text.secondary",
-                  bgcolor: isActive ? "rgba(249, 115, 22, 0.08)" : "transparent",
-                  borderColor: isActive ? "#f97316" : "divider",
-                  "&:hover": {
-                    bgcolor: "rgba(249, 115, 22, 0.08)",
-                    borderColor: "#f97316",
-                  },
-                }}
-              >
-                {preset.label}
-              </Button>
-            );
-          })}
-        </ButtonGroup>
-
-        {/* Date pickers */}
-        <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
-          <TextField
-            type="date"
-            size="medium"
-            label="Từ ngày"
-            value={dateRange.from}
-            onChange={(e) => reports.updateDateRange("from", e.target.value)}
-            slotProps={{
-              inputLabel: { shrink: true },
-            }}
-            sx={{
-              width: 160,
-              "& .MuiOutlinedInput-root": { borderRadius: "12px" },
-            }}
-          />
-          <TextField
-            type="date"
-            size="medium"
-            label="Đến ngày"
-            value={dateRange.to}
-            onChange={(e) => reports.updateDateRange("to", e.target.value)}
-            slotProps={{
-              inputLabel: { shrink: true },
-            }}
-            sx={{
-              width: 160,
-              "& .MuiOutlinedInput-root": { borderRadius: "12px" },
-            }}
-          />
-        </Box>
-
-        {/* Selectors */}
-        <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+          
           <Select
-            size="medium"
-            value={groupBy}
-            onChange={(e) => reports.setGroupBy(e.target.value)}
+            size="small"
+            value={selectedTarget}
+            onChange={(e) => setSelectedTarget(e.target.value)}
             sx={{
-              minWidth: 130,
-              borderRadius: "12px",
+              minWidth: 120,
+              borderRadius: "10px",
               fontSize: "0.85rem",
-              "& .MuiOutlinedInput-root": { borderRadius: "12px" },
+              height: 36,
+              "& .MuiOutlinedInput-root": { borderRadius: "10px" },
+            }}
+          >
+            {TARGET_OPTIONS.map((opt) => (
+              <MenuItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </MenuItem>
+            ))}
+          </Select>
+
+          {/* Date pickers inline */}
+          <TextField
+            type="date"
+            size="small"
+            value={draftFrom}
+            onChange={(e) => updateDraftRange("from", e.target.value)}
+            slotProps={{
+              inputLabel: { shrink: true },
+            }}
+            sx={{
+              width: 130,
+              "& .MuiOutlinedInput-root": { borderRadius: "10px" },
+              "& .MuiInputBase-input": { fontSize: "0.82rem", py: 0.75 },
+            }}
+          />
+          <Typography variant="body2" color="text.secondary" sx={{ mx: -0.5 }}>
+            –
+          </Typography>
+          <TextField
+            type="date"
+            size="small"
+            value={draftTo}
+            onChange={(e) => updateDraftRange("to", e.target.value)}
+            slotProps={{
+              inputLabel: { shrink: true },
+            }}
+            sx={{
+              width: 130,
+              "& .MuiOutlinedInput-root": { borderRadius: "10px" },
+              "& .MuiInputBase-input": { fontSize: "0.82rem", py: 0.75 },
+            }}
+          />
+        </Box>
+
+        {/* Right: Presets + Options + Refresh */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          {/* Preset buttons */}
+          <ButtonGroup size="small" variant="outlined" sx={{ borderRadius: "10px" }}>
+            {presets.map((preset) => {
+              const isActive = draftFrom === preset.from && draftTo === preset.to;
+              return (
+                <Button
+                  key={preset.label}
+                  onClick={() => setDraftPresetRange(preset.from, preset.to)}
+                  sx={{
+                    borderRadius: "10px",
+                    fontSize: "0.78rem",
+                    px: 1.5,
+                    fontWeight: isActive ? 600 : 500,
+                    color: isActive ? "#f97316" : "text.secondary",
+                    bgcolor: isActive ? "rgba(249, 115, 22, 0.08)" : "transparent",
+                    borderColor: isActive ? "#f97316" : "divider",
+                    "&:hover": {
+                      bgcolor: "rgba(249, 115, 22, 0.08)",
+                      borderColor: "#f97316",
+                    },
+                  }}
+                >
+                  {preset.label}
+                </Button>
+              );
+            })}
+          </ButtonGroup>
+
+          {/* Options */}
+          <Select
+            size="small"
+            value={draftGroupBy}
+            onChange={(e) => setDraftGroupBy(e.target.value)}
+            sx={{
+              minWidth: 80,
+              borderRadius: "10px",
+              fontSize: "0.82rem",
+              height: 36,
+              "& .MuiOutlinedInput-root": { borderRadius: "10px" },
             }}
           >
             {GROUP_BY_OPTIONS.map((opt) => (
@@ -154,36 +194,41 @@ export default function ReportFilters({ reports }) {
               </MenuItem>
             ))}
           </Select>
+
           <Select
-            size="medium"
-            value={chartLimit}
-            onChange={(e) => reports.setChartLimit(Number(e.target.value))}
+            size="small"
+            value={draftLimit}
+            onChange={(e) => setDraftLimit(Number(e.target.value))}
             sx={{
-              minWidth: 110,
-              borderRadius: "12px",
-              fontSize: "0.85rem",
-              "& .MuiOutlinedInput-root": { borderRadius: "12px" },
+              minWidth: 65,
+              borderRadius: "10px",
+              fontSize: "0.82rem",
+              height: 36,
+              "& .MuiOutlinedInput-root": { borderRadius: "10px" },
             }}
           >
             {LIMIT_OPTIONS.map((opt) => (
               <MenuItem key={opt.value} value={opt.value}>
-                {opt.label}
+                Top {opt.label}
               </MenuItem>
             ))}
           </Select>
+
           <Button
-            size="medium"
+            size="small"
             variant="outlined"
-            startIcon={<RefreshOutlined sx={{ fontSize: 18 }} />}
-            onClick={reports.reload}
+            startIcon={<RefreshOutlined sx={{ fontSize: 16 }} />}
+            onClick={reloadAll}
             sx={{
-              borderRadius: "12px",
-              px: 2,
+              borderRadius: "10px",
+              px: 1.5,
               borderColor: "divider",
               color: "text.secondary",
+              height: 36,
+              fontSize: "0.82rem",
             }}
           >
-            Làm mới
+            Refresh
           </Button>
         </Box>
       </Box>
