@@ -5,6 +5,7 @@ import {
   saveCommunityDocument,
   unsaveCommunityDocument,
 } from "../../../../api/community.api.js";
+import { getDocumentDownload } from "../../../../api/documents.api.js";
 import { useToast } from "../../../../components/Toast/ToastProvider.jsx";
 
 export default function useCommunityLibrary() {
@@ -81,6 +82,42 @@ export default function useCommunityLibrary() {
     }
   }
 
+  async function downloadDocument(document) {
+    setActionId(`download-${document.id}`);
+    setError("");
+
+    try {
+      const response = await getDocumentDownload(document.id);
+      const downloadUrl = response?.url;
+
+      if (!downloadUrl) {
+        throw new Error("Backend không trả về đường dẫn tải xuống.");
+      }
+
+      const link = window.document.createElement("a");
+      link.href = downloadUrl;
+      link.rel = "noopener noreferrer";
+      link.download = document.fileName || "document";
+      window.document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setDocuments((current) =>
+        current.map((item) =>
+          item.id === document.id
+            ? { ...item, downloadCount: (item.downloadCount || 0) + 1 }
+            : item,
+        ),
+      );
+    } catch (requestError) {
+      const message = requestError.message || "Không thể tải tài liệu.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setActionId("");
+    }
+  }
+
   async function toggleSave(document) {
     setActionId(`save-${document.id}`);
     setError("");
@@ -131,6 +168,7 @@ export default function useCommunityLibrary() {
     search,
     load,
     openPreview,
+    downloadDocument,
     toggleSave,
     closePreview: () => setPreview(null),
   };

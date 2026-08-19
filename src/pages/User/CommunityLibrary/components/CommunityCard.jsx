@@ -7,12 +7,15 @@ import {
   CardContent,
   Chip,
   CircularProgress,
+  IconButton,
   Stack,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import {
   BookmarkBorderOutlined,
   BookmarkOutlined,
+  CloudDownloadOutlined,
   DescriptionOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
@@ -28,6 +31,7 @@ export default function CommunityCard({
   document,
   actionId,
   onPreview,
+  onDownload,
   onSave,
 }) {
   const tags = normalizeTags(document.tags);
@@ -138,6 +142,21 @@ export default function CommunityCard({
         >
           Xem
         </Button>
+        <Tooltip title="Tải xuống">
+          <span>
+            <IconButton
+              size="small"
+              disabled={Boolean(actionId)}
+              onClick={() => onDownload(document)}
+            >
+              {actionId === `download-${document.id}` ? (
+                <CircularProgress size={18} />
+              ) : (
+                <CloudDownloadOutlined />
+              )}
+            </IconButton>
+          </span>
+        </Tooltip>
         {!document.owned && (
           <Button
             size="small"
