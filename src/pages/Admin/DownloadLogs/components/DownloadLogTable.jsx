@@ -37,8 +37,6 @@ const ROLE_COLORS = {
   MODERATOR: { bg: "rgba(234, 179, 8, 0.1)", color: "#eab308" },
 };
 
-const ROLE_LABELS = { USER: "User", ADMIN: "Admin", MODERATOR: "Mod" };
-
 // ─── Empty State ──────────────────────────────────────────────────────────────
 
 function EmptyState() {
@@ -72,9 +70,11 @@ function EmptyState() {
 
 // ─── Cell Components ───────────────────────────────────────────────────────────
 
-function UserCell({ fullName, avatarUrl, role }) {
+function UserCell({ fullName, avatarUrl, role, roleLabel }) {
   const displayName = fullName || "Không xác định";
   const roleColors = ROLE_COLORS[role] || ROLE_COLORS.USER;
+  const displayRole = roleLabel || role;
+  const isSystemUser = !role && !roleLabel;
 
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
@@ -90,9 +90,9 @@ function UserCell({ fullName, avatarUrl, role }) {
             {displayName}
           </Typography>
         </Tooltip>
-        {role && (
+        {!isSystemUser && (
           <Chip
-            label={ROLE_LABELS[role] || role}
+            label={displayRole}
             size="small"
             sx={{
               height: 16,
@@ -229,7 +229,6 @@ function DetailDialog({ log, open, onClose }) {
 
   const fileColors = getFileTypeColors(log.fileType);
   const isPublic = log.visibility === "PUBLIC";
-  const roleLabels = { USER: "Người dùng", ADMIN: "Quản trị viên", MODERATOR: "Kiểm duyệt viên" };
 
   const infoItems = [
     {
@@ -243,13 +242,13 @@ function DetailDialog({ log, open, onClose }) {
       label: "Người tải",
       value: log.userFullName || "Không xác định",
       sub: log.userEmail,
-      tag: log.userRole ? roleLabels[log.userRole] : null,
+      tag: log.userRoleLabel,
       color: "#6366f1",
       bgColor: "rgba(99, 102, 241, 0.1)",
     },
     {
       label: "Vai trò",
-      value: log.userRole ? roleLabels[log.userRole] : "—",
+      value: log.userRoleLabel || "—",
       color: ROLE_COLORS[log.userRole]?.color || "#6366f1",
       bgColor: ROLE_COLORS[log.userRole]?.bg || "rgba(99, 102, 241, 0.1)",
     },
@@ -642,6 +641,7 @@ export default function DownloadLogTable({ download }) {
                   fullName={log.userFullName}
                   avatarUrl={log.userAvatarUrl}
                   role={log.userRole}
+                  roleLabel={log.userRoleLabel}
                 />
               </Box>
 

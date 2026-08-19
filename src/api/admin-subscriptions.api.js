@@ -13,8 +13,12 @@ function withQuery(path, params = {}) {
   return `${path}${search ? `?${search}` : ""}`;
 }
 
-export const getAdminSubscriptionStats = () =>
-  apiRequest("/admin/subscriptions/stats");
+/**
+ * Fetch subscription stats (for pie chart on Reports page).
+ * @param {{ from?: string, to?: string }} params - optional date range
+ */
+export const getAdminSubscriptionStats = (params = {}) =>
+  apiRequest(withQuery("/admin/subscriptions/stats", params));
 
 export const getAdminSubscriptionPurchases = (params) =>
   apiRequest(withQuery("/admin/subscriptions/purchases", params));

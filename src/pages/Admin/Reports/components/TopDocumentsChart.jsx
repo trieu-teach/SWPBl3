@@ -2,9 +2,9 @@ import {
   Box,
   Card,
   CardContent,
-  CircularProgress,
   Typography,
   Chip,
+  Skeleton,
 } from "@mui/material";
 import {
   BarChart,
@@ -12,16 +12,17 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
   Cell,
 } from "recharts";
 import { getFileTypeColors, displayFileType } from "../../utils/admin-formatters.js";
 
-const CustomTooltip = ({ active, payload }) => {
+const CustomTooltipContent = ({ active, payload, barColor }) => {
   if (!active || !payload?.length) return null;
-  const { title, downloadCount, saveCount, fileType } = payload[0].payload;
+  const { fullTitle, downloadCount, saveCount, fileType, ownerFullName, subjectName, visibility, metricValue } = payload[0].payload;
   const colors = getFileTypeColors(fileType);
+  
   return (
     <Box
       sx={{
@@ -29,118 +30,191 @@ const CustomTooltip = ({ active, payload }) => {
         border: "1px solid",
         borderColor: "divider",
         borderRadius: 2,
-        p: 1.5,
-        boxShadow: 3,
-        maxWidth: 220,
+        p: 2,
+        boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+        maxWidth: 320,
       }}
     >
       <Typography
-        variant="caption"
-        fontWeight={700}
+        variant="body2"
         sx={{
+          fontWeight: 700,
+          color: "text.primary",
           display: "block",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-          maxWidth: 200,
+          mb: 1,
+          wordBreak: "break-word",
+          whiteSpace: "normal",
+          lineHeight: 1.4,
         }}
       >
-        {title}
+        {fullTitle}
       </Typography>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mb: 1 }}>
         <Chip
           label={displayFileType({ fileType })}
           size="small"
-          sx={{ height: 16, fontSize: "0.6rem", bgcolor: colors.bg, color: colors.main }}
+          sx={{ height: 20, fontSize: "0.7rem", bgcolor: colors.bg, color: colors.main, fontWeight: 600 }}
         />
+        {visibility && (
+          <Chip
+            label={visibility}
+            size="small"
+            sx={{ height: 20, fontSize: "0.7rem", bgcolor: "#f3f4f6", color: "#6b7280" }}
+          />
+        )}
       </Box>
-      {downloadCount !== undefined && (
-        <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-          <strong style={{ color: "#6366f1" }}>{downloadCount}</strong> lượt tải
+      {ownerFullName && (
+        <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 0.25 }}>
+          Tác giả: {ownerFullName}
         </Typography>
       )}
-      {saveCount !== undefined && (
-        <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-          <strong style={{ color: "#10b981" }}>{saveCount}</strong> lượt lưu
+      {subjectName && (
+        <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 0.25 }}>
+          Môn: {subjectName}
         </Typography>
       )}
+      <Box sx={{ mt: 1, pt: 1, borderTop: "1px solid", borderColor: "divider" }}>
+        <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
+          <strong style={{ color: barColor, fontSize: "1rem" }}>{metricValue}</strong> lượt
+        </Typography>
+      </Box>
     </Box>
   );
 };
 
-const CustomLabel = (props) => {
-  const { x, y, width, height, value } = props;
-  if (!value) return null;
-  return (
-    <text
-      x={x + width / 2}
-      y={y + height / 2}
-      fill="white"
-      textAnchor="middle"
-      dominantBaseline="central"
-      fontSize={11}
-      fontWeight={700}
-    >
-      {value}
-    </text>
-  );
-};
+function formatXAxisTick(value) {
+  const num = Number(value);
+  if (Number.isInteger(num)) return num;
+  return Math.round(num);
+}
 
-export default function TopDocumentsChart({ data, loading, title, metricKey }) {
+function truncateText(text, maxLength) {
+  if (!text) return "Tài liệu không tên";
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength - 3) + "...";
+}
+
+function EmptyState({ message }) {
+  return (
+    <Card variant="outlined" sx={{ borderRadius: 3 }}>
+      <CardContent
+        sx={{
+          height: 400,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Typography color="text.secondary" variant="body1">
+          {message}
+        </Typography>
+        <Typography color="text.disabled" variant="body2" sx={{ mt: 0.5 }}>
+          Thử thay đổi khoảng thời gian lọc
+        </Typography>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function TopDocumentsChart({ 
+  data, 
+  loading, 
+  metricKey, 
+  metricLabel,
+  barColor = "#6366f1",
+}) {
   if (loading) {
     return (
       <Card variant="outlined" sx={{ borderRadius: 3 }}>
-        <CardContent sx={{ height: 300, display: "grid", placeItems: "center" }}>
-          <CircularProgress size={28} />
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ display: "flex", gap: 3, mb: 3 }}>
+            {[1, 2, 3].map((i) => (
+              <Box key={i}>
+                <Skeleton width={80} height={14} />
+                <Skeleton width={60} height={32} sx={{ mt: 0.5 }} />
+              </Box>
+            ))}
+          </Box>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton key={i} variant="rounded" width="100%" height={48} sx={{ mb: 1 }} />
+          ))}
         </CardContent>
       </Card>
     );
   }
 
   if (!data || data.length === 0) {
-    return (
-      <Card variant="outlined" sx={{ borderRadius: 3 }}>
-        <CardContent sx={{ height: 300, display: "grid", placeItems: "center" }}>
-          <Typography color="text.secondary" variant="body2">
-            Không có dữ liệu
-          </Typography>
-        </CardContent>
-      </Card>
-    );
+    return <EmptyState message="Không có dữ liệu tài liệu" />;
   }
 
-  const metricLabel = metricKey === "downloadCount" ? "lượt tải" : "lượt lưu";
-  const barColor = metricKey === "downloadCount" ? "#6366f1" : "#10b981";
-  const gradientId = metricKey === "downloadCount" ? "barGradient1" : "barGradient2";
+  const chartData = data.map((item, index) => {
+    const displayTitle = truncateText(item.title, 50);
+    return {
+      ...item,
+      shortTitle: displayTitle,
+      fullTitle: item.title || "Tài liệu không tên",
+      metricValue: Math.round(Number(item[metricKey] ?? 0)),
+      rank: index + 1,
+    };
+  });
 
-  const chartData = data.map((item, index) => ({
-    ...item,
-    shortTitle:
-      item.title?.length > 22
-        ? item.title.slice(0, 20) + "..."
-        : item.title || `Tài liệu #${index + 1}`,
-    rank: index + 1,
-  }));
-
-  const maxValue = Math.max(...chartData.map((d) => Number(d[metricKey] ?? 0)));
+  const totalValue = data.reduce((sum, item) => sum + Math.round(Number(item[metricKey] ?? 0)), 0);
+  const maxValue = Math.max(...chartData.map((d) => d.metricValue));
 
   return (
     <Card variant="outlined" sx={{ borderRadius: 3 }}>
-      <CardContent sx={{ pb: "16px !important" }}>
-        <Typography variant="body2" fontWeight={700} color="text.secondary" sx={{ mb: 0.5 }}>
-          {title}
-        </Typography>
-        <Typography variant="h4" fontWeight={800} sx={{ mb: 2, color: barColor }}>
-          {data.reduce((sum, item) => sum + Number(item[metricKey] ?? 0), 0).toLocaleString("vi-VN")}
-          <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-            {metricLabel}
-          </Typography>
-        </Typography>
-        <ResponsiveContainer width="100%" height={240}>
+      <CardContent sx={{ p: 3 }}>
+        {/* Summary Stats */}
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: { xs: 3, md: 5 },
+            mb: 3,
+            pb: 3,
+            borderBottom: "1px solid",
+            borderColor: "divider",
+          }}
+        >
+          <Box>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+              TỔNG {metricLabel.toUpperCase()}
+            </Typography>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 800,
+                color: barColor,
+                fontSize: { xs: "1.75rem", md: "2.25rem" },
+              }}
+            >
+              {totalValue.toLocaleString("vi-VN")}
+            </Typography>
+          </Box>
+          <Box>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+              TÀI LIỆU
+            </Typography>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 700,
+                color: "text.primary",
+                fontSize: { xs: "1.5rem", md: "2rem" },
+              }}
+            >
+              {data.length}
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Chart - Full Width with more height */}
+        <ResponsiveContainer width="100%" height={Math.max(400, chartData.length * 52)}>
           <BarChart
             data={chartData}
             layout="vertical"
-            margin={{ top: 0, right: 12, left: 4, bottom: 0 }}
+            margin={{ top: 8, right: 80, left: 8, bottom: 8 }}
           >
             <CartesianGrid
               strokeDasharray="3 3"
@@ -149,26 +223,42 @@ export default function TopDocumentsChart({ data, loading, title, metricKey }) {
             />
             <XAxis
               type="number"
-              tick={{ fontSize: 11, fill: "var(--mui-palette-text-secondary)" }}
+              tick={{ fontSize: 12, fill: "var(--mui-palette-text-secondary)" }}
               tickLine={false}
-              axisLine={false}
-              domain={[0, maxValue * 1.1]}
+              axisLine={{ stroke: "var(--mui-palette-divider)" }}
+              tickFormatter={formatXAxisTick}
+              domain={[0, Math.ceil(maxValue * 1.2)]}
+              allowDecimals={false}
             />
             <YAxis
               type="category"
               dataKey="shortTitle"
-              tick={{ fontSize: 11, fill: "var(--mui-palette-text-secondary)" }}
+              tick={{ fontSize: 12, fill: "var(--mui-palette-text.primary)" }}
               tickLine={false}
               axisLine={false}
-              width={130}
+              width={280}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--mui-palette-action-hover)" }} />
-            <Bar dataKey={metricKey} radius={[0, 6, 6, 0]} label={<CustomLabel />} maxBarSize={36}>
+            <RechartsTooltip
+              content={<CustomTooltipContent barColor={barColor} />}
+              contentStyle={{ background: "transparent", border: "none", padding: 0 }}
+              wrapperStyle={{ background: "transparent" }}
+              cursor={{
+                fill: "rgba(99, 102, 241, 0.08)",
+                stroke: barColor,
+                strokeWidth: 0.5,
+                strokeOpacity: 0.3,
+              }}
+            />
+            <Bar
+              dataKey="metricValue"
+              radius={[0, 6, 6, 0]}
+              maxBarSize={36}
+            >
               {chartData.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={barColor}
-                  fillOpacity={1 - index * 0.07}
+                  fillOpacity={1 - index * 0.05}
                 />
               ))}
             </Bar>
