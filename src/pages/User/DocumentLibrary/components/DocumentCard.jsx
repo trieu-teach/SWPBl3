@@ -24,12 +24,14 @@ import {
   displayFileType,
   formatBytes,
   formatDate,
+  getFileTypeColors,
   normalizeTags,
 } from "../utils/document-formatters.js";
 
 export default function DocumentCard({ document, actionId, onOpen }) {
   const status = AI_STATUS[document.aiStatus] || AI_STATUS.PENDING;
   const tags = normalizeTags(document.tags);
+  const fileColors = getFileTypeColors(document);
 
   return (
     <Card
@@ -49,8 +51,8 @@ export default function DocumentCard({ document, actionId, onOpen }) {
             display: "grid",
             placeItems: "center",
             borderRadius: 2,
-            bgcolor: "action.hover",
-            color: "primary.main",
+            bgcolor: fileColors.soft,
+            color: fileColors.main,
           }}
         >
           <DescriptionOutlined />
@@ -82,7 +84,11 @@ export default function DocumentCard({ document, actionId, onOpen }) {
           {document.fileName}
         </Typography>
         <Stack direction="row" spacing={1} sx={{ my: 2 }}>
-          <Chip size="small" label={displayFileType(document)} />
+          <Chip
+            size="small"
+            label={displayFileType(document)}
+            sx={{ bgcolor: fileColors.soft, color: fileColors.main, fontWeight: 700 }}
+          />
           <Chip
             size="small"
             label={status.label}

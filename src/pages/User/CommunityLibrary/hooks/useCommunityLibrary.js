@@ -5,8 +5,10 @@ import {
   saveCommunityDocument,
   unsaveCommunityDocument,
 } from "../../../../api/community.api.js";
+import { useToast } from "../../../../components/Toast/ToastProvider.jsx";
 
 export default function useCommunityLibrary() {
+  const toast = useToast();
   const [documents, setDocuments] = useState([]);
   const [searchInput, setSearchInput] = useState("");
   const [filters, setFilters] = useState({
@@ -91,8 +93,15 @@ export default function useCommunityLibrary() {
             : item,
         ),
       );
+      toast.success(
+        document.saved
+          ? "Đã bỏ tài liệu khỏi danh sách đã lưu."
+          : "Đã lưu tài liệu để xem lại sau.",
+      );
     } catch (requestError) {
-      setError(requestError.message || "Không thể cập nhật tài liệu đã lưu.");
+      const message = requestError.message || "Không thể cập nhật tài liệu đã lưu.";
+      setError(message);
+      toast.error(message);
     } finally {
       setActionId("");
     }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Button,
   Dialog,
@@ -16,12 +17,33 @@ import {
 import {
   CloudDownloadOutlined,
   DeleteOutlined,
+  SmartToyOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
 
 export default function DocumentActions({ details }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const navigate = useNavigate();
   const document = details.document;
+  const documentId =
+    typeof document?.id === "string" ? document.id.trim() : "";
+
+  function handleAskAI() {
+    if (!documentId) return;
+    const title =
+      typeof document?.title === "string" && document.title.trim()
+        ? document.title.trim()
+        : document?.fileName || "Tài liệu";
+
+    navigate("/ai-chat", {
+      state: {
+        libraryDocumentPreselection: {
+          id: documentId,
+          title,
+        },
+      },
+    });
+  }
 
   return (
     <>
@@ -30,6 +52,16 @@ export default function DocumentActions({ details }) {
           Thao tác
         </Typography>
         <Stack spacing={1.25} sx={{ mt: 2 }}>
+          <Button
+            fullWidth
+            variant="contained"
+            color="primary"
+            startIcon={<SmartToyOutlined />}
+            onClick={handleAskAI}
+            disabled={!documentId}
+          >
+            Hỏi AI
+          </Button>
           <Button
             variant="contained"
             startIcon={<VisibilityOutlined />}

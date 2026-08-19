@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
+  deleteCategory,
   deleteDocument,
+  deleteSubject,
   getCategories,
   getDocument,
   getDocumentDownload,
@@ -10,8 +12,10 @@ import {
   updateDocument,
   updateDocumentVisibility,
 } from "../../../../api/documents.api.js";
+import { useToast } from "../../../../components/Toast/ToastProvider.jsx";
 
 export default function useDocumentDetails() {
+  const toast = useToast();
   const { id } = useParams();
   const navigate = useNavigate();
   const [document, setDocument] = useState(null);
@@ -29,6 +33,9 @@ export default function useDocumentDetails() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [preview, setPreview] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deletingTaxonomy, setDeletingTaxonomy] = useState(false);
+  const [deleteTaxonomyError, setDeleteTaxonomyError] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -72,10 +79,57 @@ export default function useDocumentDetails() {
     }));
   }
 
+  function openDeleteDialog(type, item) {
+    setDeleteTaxonomyError(null);
+    setDeleteTarget({ type, item });
+  }
+
+  function closeDeleteDialog() {
+    if (deletingTaxonomy) return;
+    setDeleteTarget(null);
+    setDeleteTaxonomyError(null);
+  }
+
+  async function confirmDeleteTaxonomy() {
+    if (!deleteTarget) return;
+    setDeletingTaxonomy(true);
+    setDeleteTaxonomyError(null);
+    try {
+      if (deleteTarget.type === "subject") {
+        await deleteSubject(deleteTarget.item.id);
+        setSubjects((current) =>
+          current.filter((item) => item.id !== deleteTarget.item.id),
+        );
+        if (form.subjectId === deleteTarget.item.id) {
+          updateField("subjectId", "");
+        }
+      } else {
+        await deleteCategory(deleteTarget.item.id);
+        setCategories((current) =>
+          current.filter((item) => item.id !== deleteTarget.item.id),
+        );
+        if (form.categoryId === deleteTarget.item.id) {
+          updateField("categoryId", "");
+        }
+      }
+      toast.success(
+        `Đã xóa ${deleteTarget.type === "subject" ? "môn học" : "danh mục"}.`,
+      );
+      setDeleteTarget(null);
+    } catch (requestError) {
+      setDeleteTaxonomyError(requestError);
+    } finally {
+      setDeletingTaxonomy(false);
+    }
+  }
+
   async function save(event) {
     event.preventDefault();
     if (!form.title.trim() || !form.subjectId || !form.categoryId) {
-      return setError("Vui lòng nhập đủ tiêu đề, môn học và danh mục.");
+      const message = "Vui lòng nhập đủ tiêu đề, môn học và danh mục.";
+      setError(message);
+      toast.warning(message);
+      return;
     }
     setSaving(true);
     setError("");
@@ -88,8 +142,11 @@ export default function useDocumentDetails() {
       });
       setDocument(updated);
       setSuccess("Đã cập nhật thông tin tài liệu.");
+      toast.success("Đã cập nhật thông tin tài liệu.");
     } catch (saveError) {
-      setError(saveError.message || "Không thể cập nhật tài liệu.");
+      const message = saveError.message || "Không thể cập nhật tài liệu.";
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -107,8 +164,15 @@ export default function useDocumentDetails() {
           ? "Tài liệu đã được gửi duyệt công khai."
           : "Tài liệu đã chuyển sang riêng tư.",
       );
+      toast.success(
+        value === "PUBLIC"
+          ? "Đã gửi tài liệu để duyệt công khai."
+          : "Đã chuyển tài liệu sang riêng tư.",
+      );
     } catch (requestError) {
-      setError(requestError.message || "Không thể đổi quyền riêng tư.");
+      const message = requestError.message || "Không thể đổi quyền riêng tư.";
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -121,16 +185,24 @@ export default function useDocumentDetails() {
         mode === "preview"
           ? await getDocumentPreview(id)
           : await getDocumentDownload(id);
-      if (!response?.url) throw new Error("Không nhận được đường dẫn tệp.");
+      const fileUrl =
+        mode === "preview"
+          ? response?.previewUrl || response?.url
+          : response?.url;
+      if (!fileUrl) throw new Error("Không nhận được đường dẫn tệp.");
       if (mode === "preview") {
         setPreview({
           title: document.title,
           fileName: document.fileName,
-          url: response.url,
+          url: fileUrl,
+          contentType: response.contentType,
+          fallbackToOfficeViewer: response.fallbackToOfficeViewer,
         });
-      } else window.open(response.url, "_blank", "noopener,noreferrer");
+      } else window.open(fileUrl, "_blank", "noopener,noreferrer");
     } catch (requestError) {
-      setError(requestError.message || "Không thể mở tệp.");
+      const message = requestError.message || "Không thể mở tệp.";
+      setError(message);
+      toast.error(message);
     }
   }
 
@@ -139,9 +211,12 @@ export default function useDocumentDetails() {
     setError("");
     try {
       await deleteDocument(id);
+      toast.success("Đã xóa tài liệu khỏi thư viện.");
       navigate("/documents", { replace: true });
     } catch (requestError) {
-      setError(requestError.message || "Không thể xóa tài liệu.");
+      const message = requestError.message || "Không thể xóa tài liệu.";
+      setError(message);
+      toast.error(message);
       setDeleting(false);
     }
   }
@@ -157,11 +232,17 @@ export default function useDocumentDetails() {
     error,
     success,
     preview,
+    deleteTarget,
+    deletingTaxonomy,
+    deleteTaxonomyError,
     updateField,
     save,
     changeVisibility,
     openFile,
     remove,
+    openDeleteDialog,
+    closeDeleteDialog,
+    confirmDeleteTaxonomy,
     reload: load,
     closePreview: () => setPreview(null),
   };

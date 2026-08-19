@@ -27,6 +27,18 @@ export function displayFileType(document) {
   return document.fileName?.split(".").pop()?.toUpperCase() || "FILE";
 }
 
+export function getFileTypeColors(document) {
+  const extension = displayFileType(document).toLowerCase();
+  if (extension === "pdf") return { main: "#dc2626", soft: "rgba(220,38,38,.12)" };
+  if (["doc", "docx"].includes(extension))
+    return { main: "#2563eb", soft: "rgba(37,99,235,.12)" };
+  if (["xls", "xlsx"].includes(extension))
+    return { main: "#16803c", soft: "rgba(22,128,60,.12)" };
+  if (["ppt", "pptx"].includes(extension))
+    return { main: "#ea580c", soft: "rgba(234,88,12,.12)" };
+  return { main: "#64748b", soft: "rgba(100,116,139,.12)" };
+}
+
 export function normalizeTags(tags) {
   if (!Array.isArray(tags)) return [];
   return tags

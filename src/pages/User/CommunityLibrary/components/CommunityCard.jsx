@@ -20,6 +20,7 @@ import {
   displayFileType,
   formatBytes,
   formatDate,
+  getFileTypeColors,
   normalizeTags,
 } from "../../DocumentLibrary/utils/document-formatters.js";
 
@@ -30,6 +31,7 @@ export default function CommunityCard({
   onSave,
 }) {
   const tags = normalizeTags(document.tags);
+  const fileColors = getFileTypeColors(document);
   return (
     <Card
       variant="outlined"
@@ -50,8 +52,8 @@ export default function CommunityCard({
               display: "grid",
               placeItems: "center",
               borderRadius: 2,
-              bgcolor: "action.hover",
-              color: "primary.main",
+              bgcolor: fileColors.soft,
+              color: fileColors.main,
             }}
           >
             <DescriptionOutlined />
@@ -59,7 +61,13 @@ export default function CommunityCard({
           <Chip
             size="small"
             label={displayFileType(document)}
-            sx={{ flexShrink: 0, ml: "auto" }}
+            sx={{
+              flexShrink: 0,
+              ml: "auto",
+              bgcolor: fileColors.soft,
+              color: fileColors.main,
+              fontWeight: 700,
+            }}
           />
         </Stack>
         <Typography
@@ -73,14 +81,23 @@ export default function CommunityCard({
         <Typography variant="body2" color="text.secondary" noWrap>
           {document.subject?.name} · {document.category?.name}
         </Typography>
-        <Stack direction="row" alignItems="center" gap={1} sx={{ mt: 2 }}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          gap={1.5}
+          sx={{ mt: 2, minWidth: 0 }}
+        >
           <Avatar
             src={document.owner?.avatarUrl || undefined}
-            sx={{ width: 28, height: 28, fontSize: 12 }}
+            sx={{ width: 32, height: 32, fontSize: 12, flexShrink: 0 }}
           >
             {document.owner?.fullName?.[0]}
           </Avatar>
-          <Typography variant="body2" noWrap>
+          <Typography
+            variant="body2"
+            noWrap
+            sx={{ minWidth: 0, flex: 1, ml: 1 }}
+          >
             {document.owner?.fullName || "Người chia sẻ"}
           </Typography>
         </Stack>

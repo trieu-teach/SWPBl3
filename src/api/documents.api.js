@@ -4,9 +4,31 @@ export function getSubjects() {
   return apiRequest("/subjects");
 }
 
+export function createSubject(payload) {
+  return apiRequest("/subjects", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function deleteSubject(id) {
+  return apiRequest(`/subjects/${id}`, { method: "DELETE" });
+}
+
 export function getCategories(subjectId) {
   const query = subjectId ? `?subjectId=${encodeURIComponent(subjectId)}` : "";
   return apiRequest(`/categories${query}`);
+}
+
+export function createCategory(payload) {
+  return apiRequest("/categories", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function deleteCategory(id) {
+  return apiRequest(`/categories/${id}`, { method: "DELETE" });
 }
 
 export function uploadDocument(payload, onProgress) {

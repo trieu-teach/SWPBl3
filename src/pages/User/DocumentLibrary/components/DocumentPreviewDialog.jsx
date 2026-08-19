@@ -12,6 +12,10 @@ import {
 import { CloseOutlined, OpenInFullOutlined } from "@mui/icons-material";
 
 export default function DocumentPreviewDialog({ preview, onClose }) {
+  const viewerUrl = preview?.fallbackToOfficeViewer
+    ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(preview.url)}`
+    : preview?.url;
+
   return (
     <Dialog
       open={Boolean(preview)}
@@ -67,10 +71,10 @@ export default function DocumentPreviewDialog({ preview, onClose }) {
           bgcolor: "#e5e7eb",
         }}
       >
-        {preview?.url && (
+        {viewerUrl && (
           <Box
             component="iframe"
-            src={preview.url}
+            src={viewerUrl}
             title={preview.title}
             sx={{
               width: "100%",
@@ -87,7 +91,7 @@ export default function DocumentPreviewDialog({ preview, onClose }) {
         <Button onClick={onClose}>Đóng</Button>
         <Button
           component="a"
-          href={preview?.url || "#"}
+          href={viewerUrl || "#"}
           target="_blank"
           rel="noopener noreferrer"
           startIcon={<OpenInFullOutlined />}

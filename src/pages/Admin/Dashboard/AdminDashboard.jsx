@@ -1,60 +1,92 @@
-import { Box, Typography, Card, CardContent, Grid } from "@mui/material";
+import AssessmentOutlined from "@mui/icons-material/AssessmentOutlined";
+import RefreshOutlined from "@mui/icons-material/RefreshOutlined";
+import { Alert, Box, Button, Stack, Typography } from "@mui/material";
 import AdminLayout from "../Layout/AdminLayout.jsx";
-
-const STATS = [
-  { label: "Tổng người dùng", value: "—", color: "#818cf8" },
-  { label: "Tài liệu", value: "—", color: "#34d399" },
-  { label: "Yêu cầu chờ duyệt", value: "—", color: "#fbbf24" },
-  { label: "Báo cáo", value: "—", color: "#f87171" },
-];
+import ActivityCards from "./components/ActivityCards.jsx";
+import AttentionCards from "./components/AttentionCards.jsx";
+import StatisticsBreakdown from "./components/StatisticsBreakdown.jsx";
+import SummaryCards from "./components/SummaryCards.jsx";
+import UploadAndVisibilityCharts from "./components/UploadAndVisibilityCharts.jsx";
+import useAdminDashboard from "./hooks/useAdminDashboard.js";
 
 export default function AdminDashboard() {
+  const dashboard = useAdminDashboard();
+
   return (
     <AdminLayout>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5 }}>
-          Bảng điều khiển
-        </Typography>
-        <Typography sx={{ color: "var(--text-secondary)" }}>
-          Quản lý hệ thống DocuMind.
-        </Typography>
-      </Box>
-
-      <Grid container spacing={2} sx={{ mb: 4 }}>
-        {STATS.map((s) => (
-          <Grid item xs={6} sm={3} key={s.label}>
-            <Card
+      <Stack spacing={3.5}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 2,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box
               sx={{
-                background: "var(--bg-card)",
-                border: "1px solid var(--border-color)",
-                borderRadius: "var(--radius-md)",
+                width: 50,
+                height: 50,
+                borderRadius: 3,
+                display: "grid",
+                placeItems: "center",
+                color: "white",
+                background: "linear-gradient(135deg, #f97316, #ea580c)",
               }}
             >
-              <CardContent>
-                <Typography
-                  sx={{ color: s.color, fontWeight: 800, fontSize: "1.8rem", mb: 0.5 }}
-                >
-                  {s.value}
-                </Typography>
-                <Typography sx={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>
-                  {s.label}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+              <AssessmentOutlined />
+            </Box>
+            <Box>
+              <Typography variant="h4" fontWeight={800}>
+                Tổng quan hệ thống
+              </Typography>
+              <Typography color="text.secondary">
+                Theo dõi toàn bộ hoạt động của DocuMind.
+              </Typography>
+            </Box>
+          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<RefreshOutlined />}
+            onClick={dashboard.load}
+            disabled={dashboard.loading}
+          >
+            Làm mới
+          </Button>
+        </Box>
 
-      <Typography
-        sx={{
-          color: "var(--text-secondary)",
-          textAlign: "center",
-          py: 6,
-          fontSize: "0.95rem",
-        }}
-      >
-        Nội dung quản trị sẽ được phát triển trong các bước tiếp theo.
-      </Typography>
+        {dashboard.error && (
+          <Alert
+            severity="error"
+            action={
+              <Button color="inherit" onClick={dashboard.load}>
+                Thử lại
+              </Button>
+            }
+          >
+            {dashboard.error}
+          </Alert>
+        )}
+
+        <SummaryCards
+          pulse={dashboard.overview?.pulse}
+          loading={dashboard.loading}
+        />
+
+        {!dashboard.loading && !dashboard.error && (
+          <>
+            <AttentionCards attention={dashboard.overview?.attention} />
+            <ActivityCards activity={dashboard.overview?.activity} />
+            <UploadAndVisibilityCharts
+              uploads={dashboard.uploads}
+              visibility={dashboard.visibility}
+            />
+            <StatisticsBreakdown statistics={dashboard.statistics} />
+          </>
+        )}
+      </Stack>
     </AdminLayout>
   );
 }

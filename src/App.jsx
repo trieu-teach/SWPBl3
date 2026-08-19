@@ -3,7 +3,12 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ConfigProvider, App as AntApp, theme as antdThemeAlgo } from "antd";
 import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
 import { AuthProvider } from "./features/auth/AuthProvider.jsx";
-import { GuestGuard, RequireAuth } from "./features/auth/ProtectedRoute.jsx";
+import { ToastProvider } from "./components/Toast/ToastProvider.jsx";
+import {
+  GuestGuard,
+  GuestRoute,
+  RequireAuth,
+} from "./features/auth/ProtectedRoute.jsx";
 
 // Guest routes (login / register / forgot-password)
 import Login from "./pages/Auth/Login.jsx";
@@ -12,16 +17,30 @@ import ForgotPassword from "./pages/Auth/ForgotPassword.jsx";
 import ResetPassword from "./pages/Auth/ResetPassword.jsx";
 
 // Authenticated routes
-import Dashboard from "./pages/User/Dashboard/Dashboard.jsx";
 import Profile from "./pages/Profile/Profile.jsx";
 import UploadDocument from "./pages/User/UploadDocument/UploadDocument.jsx";
 import DocumentLibrary from "./pages/User/DocumentLibrary/DocumentLibrary.jsx";
 import DocumentDetails from "./pages/User/DocumentDetails/DocumentDetails.jsx";
+import DocumentAIWorkspace from "./pages/User/DocumentAIWorkspace/DocumentAIWorkspace.jsx";
 import CommunityLibrary from "./pages/User/CommunityLibrary/CommunityLibrary.jsx";
+import SavedDocuments from "./pages/User/SavedDocuments/SavedDocuments.jsx";
+import Subscription from "./pages/User/Subscription/Subscription.jsx";
+import PaymentCallback from "./pages/User/Subscription/PaymentCallback.jsx";
+import ChatPage from "./pages/User/AIChat/ChatPage.jsx";
 
 // Admin routes
 import AdminDashboard from "./pages/Admin/Dashboard/AdminDashboard.jsx";
+import AdminUsers from "./pages/Admin/Users/AdminUsers.jsx";
+import AdminDocuments from "./pages/Admin/Documents/AdminDocuments.jsx";
+import SubscriptionPlans from "./pages/Admin/SubscriptionPlans/SubscriptionPlans.jsx";
+import Subscriptions from "./pages/Admin/Subscriptions/Subscriptions.jsx";
+import AuditLogs from "./pages/Admin/AuditLogs/AuditLogs.jsx";
+import DownloadLogs from "./pages/Admin/DownloadLogs/DownloadLogs.jsx";
+import Reports from "./pages/Admin/Reports/Reports.jsx";
 import ComingSoon from "./pages/Shared/ComingSoon.jsx";
+
+// Moderator routes
+import ModeratorDashboard from "./pages/Moderator/Dashboard/ModeratorDashboard.jsx";
 
 // Public
 import Homepage from "./pages/Home/Homepage.jsx";
@@ -124,135 +143,230 @@ export default function App() {
         <CssBaseline />
         <ConfigProvider theme={antdThemeConfig}>
           <AntApp>
-            <BrowserRouter>
-              <AuthProvider>
-                <Routes>
-                  {/* ── Public ── */}
-                  <Route path="/" element={<Homepage />} />
+            <ToastProvider>
+              <BrowserRouter>
+                <AuthProvider>
+                  <Routes>
+                    {/* ── Public (chỉ Guest mới vào được) ── */}
+                    <Route
+                      path="/"
+                      element={
+                        <GuestRoute>
+                          <Homepage />
+                        </GuestRoute>
+                      }
+                    />
 
-                  {/* ── Guest-only (đã đăng nhập → redirect) ── */}
-                  <Route
-                    path="/login"
-                    element={
-                      <GuestGuard>
-                        <Login />
-                      </GuestGuard>
-                    }
-                  />
-                  <Route
-                    path="/register"
-                    element={
-                      <GuestGuard>
-                        <Register />
-                      </GuestGuard>
-                    }
-                  />
-                  <Route
-                    path="/forgot-password"
-                    element={
-                      <GuestGuard>
-                        <ForgotPassword />
-                      </GuestGuard>
-                    }
-                  />
-                  <Route
-                    path="/reset-password"
-                    element={
-                      <GuestGuard>
-                        <ResetPassword />
-                      </GuestGuard>
-                    }
-                  />
+                    {/* ── Guest-only (đã đăng nhập → redirect) ── */}
+                    <Route
+                      path="/login"
+                      element={
+                        <GuestGuard>
+                          <Login />
+                        </GuestGuard>
+                      }
+                    />
+                    <Route
+                      path="/register"
+                      element={
+                        <GuestGuard>
+                          <Register />
+                        </GuestGuard>
+                      }
+                    />
+                    <Route
+                      path="/forgot-password"
+                      element={
+                        <GuestGuard>
+                          <ForgotPassword />
+                        </GuestGuard>
+                      }
+                    />
+                    <Route
+                      path="/reset-password"
+                      element={
+                        <GuestGuard>
+                          <ResetPassword />
+                        </GuestGuard>
+                      }
+                    />
 
-                  {/* ── Authenticated (User) ── */}
-                  <Route
-                    path="/dashboard"
-                    element={
-                      <RequireAuth>
-                        <Dashboard />
-                      </RequireAuth>
-                    }
-                  />
-                  <Route
-                    path="/profile"
-                    element={
-                      <RequireAuth>
-                        <Profile />
-                      </RequireAuth>
-                    }
-                  />
-                  <Route
-                    path="/documents"
-                    element={
-                      <RequireAuth>
-                        <DocumentLibrary />
-                      </RequireAuth>
-                    }
-                  />
-                  <Route
-                    path="/documents/upload"
-                    element={
-                      <RequireAuth>
-                        <UploadDocument />
-                      </RequireAuth>
-                    }
-                  />
-                  <Route
-                    path="/documents/:id"
-                    element={
-                      <RequireAuth>
-                        <DocumentDetails />
-                      </RequireAuth>
-                    }
-                  />
-                  <Route
-                    path="/ai-chat"
-                    element={
-                      <RequireAuth>
-                        <ComingSoon title="Hỏi đáp với AI" />
-                      </RequireAuth>
-                    }
-                  />
-                  <Route
-                    path="/community"
-                    element={
-                      <RequireAuth>
-                        <CommunityLibrary />
-                      </RequireAuth>
-                    }
-                  />
+                    {/* ── Authenticated (User) ── */}
+                    <Route
+                      path="/profile"
+                      element={
+                        <RequireAuth>
+                          <Profile />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/documents"
+                      element={
+                        <RequireAuth>
+                          <DocumentLibrary />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/documents/upload"
+                      element={
+                        <RequireAuth>
+                          <UploadDocument />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/documents/:id"
+                      element={
+                        <RequireAuth>
+                          <DocumentDetails />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/documents/:documentId/ai"
+                      element={
+                        <RequireAuth>
+                          <DocumentAIWorkspace />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/ai-chat"
+                      element={
+                        <RequireAuth>
+                          <ChatPage />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/community"
+                      element={
+                        <RequireAuth>
+                          <CommunityLibrary />
+                        </RequireAuth>
+                      }
+                    />
 
-                  {/* ── Admin ── */}
-                  <Route
-                    path="/admin/dashboard"
-                    element={
-                      <RequireAuth allowedRoles={["ADMIN"]}>
-                        <AdminDashboard />
-                      </RequireAuth>
-                    }
-                  />
-                  <Route
-                    path="/admin/users"
-                    element={
-                      <RequireAuth allowedRoles={["ADMIN"]}>
-                        <ComingSoon title="Quản lý người dùng" />
-                      </RequireAuth>
-                    }
-                  />
-                  <Route
-                    path="/admin/documents"
-                    element={
-                      <RequireAuth allowedRoles={["ADMIN"]}>
-                        <ComingSoon title="Quản lý tài liệu" />
-                      </RequireAuth>
-                    }
-                  />
+                    {/* ── Admin ── */}
+                    <Route
+                      path="/saved-documents"
+                      element={
+                        <RequireAuth>
+                          <SavedDocuments />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/subscription"
+                      element={
+                        <RequireAuth>
+                          <Subscription />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/goi-dich-vu"
+                      element={<PaymentCallback />}
+                    />
+                    <Route
+                      path="/admin/dashboard"
+                      element={
+                        <RequireAuth allowedRoles={["ADMIN"]}>
+                          <AdminDashboard />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/admin/users"
+                      element={
+                        <RequireAuth allowedRoles={["ADMIN"]}>
+                          <AdminUsers />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/admin/documents"
+                      element={
+                        <RequireAuth allowedRoles={["ADMIN"]}>
+                          <AdminDocuments />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/admin/subscription-plans"
+                      element={
+                        <RequireAuth allowedRoles={["ADMIN"]}>
+                          <SubscriptionPlans />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/admin/subscriptions"
+                      element={
+                        <RequireAuth allowedRoles={["ADMIN"]}>
+                          <Subscriptions />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/admin/audit-logs"
+                      element={
+                        <RequireAuth allowedRoles={["ADMIN"]}>
+                          <AuditLogs />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/admin/download-logs"
+                      element={
+                        <RequireAuth allowedRoles={["ADMIN"]}>
+                          <DownloadLogs />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/admin/reports"
+                      element={
+                        <RequireAuth allowedRoles={["ADMIN"]}>
+                          <Reports />
+                        </RequireAuth>
+                      }
+                    />
 
-                  {/* ── Catch-all ── */}
-                  <Route path="*" element={<Homepage />} />
-                </Routes>
-              </AuthProvider>
-            </BrowserRouter>
+                    {/* ── Catch-all (Guest → homepage, User → dashboard) ── */}
+                    <Route
+                      path="*"
+                      element={
+                        <GuestRoute>
+                          <Homepage />
+                        </GuestRoute>
+                      }
+                    />
+                  </Routes>
+                  <Routes>
+                    {/* ── Moderator ── */}
+                    <Route
+                      path="/moderator/dashboard"
+                      element={
+                        <RequireAuth allowedRoles={["MODERATOR"]}>
+                          <ModeratorDashboard />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/moderator/moderation"
+                      element={
+                        <RequireAuth allowedRoles={["MODERATOR"]}>
+                          <ComingSoon title="Kiểm duyệt tài liệu" />
+                        </RequireAuth>
+                      }
+                    />
+                  </Routes>
+                </AuthProvider>
+              </BrowserRouter>
+            </ToastProvider>
           </AntApp>
         </ConfigProvider>
       </ThemeProvider>
