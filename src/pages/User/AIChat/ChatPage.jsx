@@ -10,6 +10,36 @@ import DocumentPickerDialog from "./components/DocumentPickerDialog.jsx";
 import ConversationSidebar from "./components/ConversationSidebar.jsx";
 import { useChat } from "./hooks/useChat.js";
 import { useSessions } from "./hooks/useSessions.js";
+import {
+  CHAT_MODE_DOCUMENT,
+  CHAT_MODE_LIBRARY,
+} from "./chatContext.js";
+
+function createSessionListScope(chatContext, locationState) {
+  if (chatContext?.mode === CHAT_MODE_LIBRARY) {
+    return { mode: CHAT_MODE_LIBRARY, enabled: true };
+  }
+
+  if (chatContext?.mode === CHAT_MODE_DOCUMENT) {
+    const documentId =
+      typeof chatContext.documentId === "string"
+        ? chatContext.documentId.trim()
+        : "";
+
+    return documentId
+      ? { mode: CHAT_MODE_DOCUMENT, documentId, enabled: true }
+      : { enabled: false };
+  }
+
+  const isPendingDocumentEntry =
+    locationState?.mode === CHAT_MODE_DOCUMENT;
+
+  if (chatContext === null && !isPendingDocumentEntry) {
+    return { mode: CHAT_MODE_LIBRARY, enabled: true };
+  }
+
+  return { enabled: false };
+}
 
 export default function ChatPage() {
   const location = useLocation();
@@ -46,7 +76,7 @@ export default function ChatPage() {
     hasMore: sessionsHasMore,
     loadMore: loadMoreSessions,
     refresh: refreshSessions,
-  } = useSessions();
+  } = useSessions(createSessionListScope(chatContext, location.state));
 
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -68,7 +98,7 @@ export default function ChatPage() {
     if (contextInitializedRef.current) return;
     const state = location.state;
     if (
-      state?.mode === "ASK_THIS_DOCUMENT" &&
+      state?.mode === CHAT_MODE_DOCUMENT &&
       state?.document?.id &&
       state?.document?.title
     ) {
