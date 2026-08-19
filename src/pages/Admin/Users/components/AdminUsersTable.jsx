@@ -25,6 +25,7 @@ import {
   RefreshOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
+import { formatFileSize } from "../../utils/admin-formatters.js";
 
 const STATUS = {
   ACTIVE: { label: "Hoạt động", color: "success" },
@@ -75,8 +76,8 @@ export default function AdminUsersTable({ adminUsers }) {
               <TableRow sx={{ bgcolor: "action.hover" }}>
                 <TableCell>Người dùng</TableCell>
                 <TableCell>Vai trò</TableCell>
+                <TableCell>Mức sử dụng</TableCell>
                 <TableCell>Trạng thái</TableCell>
-                <TableCell>Ngày tạo</TableCell>
                 <TableCell align="right">Thao tác</TableCell>
               </TableRow>
             </TableHead>
@@ -150,6 +151,18 @@ export default function AdminUsersTable({ adminUsers }) {
                           color={role.color}
                         />
                       </TableCell>
+                      <TableCell sx={{ minWidth: 170 }}>
+                        <Typography fontWeight={700} variant="body2">
+                          {Number(user.documentCount || 0).toLocaleString("vi-VN")} tài liệu
+                          {" · "}
+                          {formatFileSize(user.storageUsedBytes || 0)}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          AI: {user.planCode
+                            ? `${Number(user.aiChatsUsed || 0).toLocaleString("vi-VN")} / ${user.aiChatLimit == null ? "∞" : Number(user.aiChatLimit).toLocaleString("vi-VN")}`
+                            : "—"}
+                        </Typography>
+                      </TableCell>
                       <TableCell>
                         <Chip
                           size="small"
@@ -157,9 +170,6 @@ export default function AdminUsersTable({ adminUsers }) {
                           color={status.color}
                           variant="outlined"
                         />
-                      </TableCell>
-                      <TableCell>
-                        {new Date(user.createdAt).toLocaleDateString("vi-VN")}
                       </TableCell>
                       <TableCell align="right">
                         <Tooltip title="Xem chi tiết">

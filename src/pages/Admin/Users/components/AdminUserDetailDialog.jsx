@@ -11,6 +11,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { formatFileSize } from "../../utils/admin-formatters.js";
 
 function DetailRow({ label, value }) {
   return (
@@ -29,6 +30,13 @@ function roleLabel(role) {
   return "Người dùng";
 }
 
+function formatDate(value, includeTime = false) {
+  if (!value) return "—";
+  return includeTime
+    ? new Date(value).toLocaleString("vi-VN")
+    : new Date(value).toLocaleDateString("vi-VN");
+}
+
 export default function AdminUserDetailDialog({
   user,
   onClose,
@@ -37,7 +45,7 @@ export default function AdminUserDetailDialog({
 }) {
   if (!user) return null;
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>Chi tiết người dùng</DialogTitle>
       <DialogContent dividers>
         <Stack direction="row" gap={2} alignItems="center" sx={{ mb: 3 }}>
@@ -87,6 +95,64 @@ export default function AdminUserDetailDialog({
           </Box>
         </Stack>
         <Divider sx={{ mb: 3 }} />
+        <Typography fontWeight={750} sx={{ mb: 2 }}>
+          Mức sử dụng
+        </Typography>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(4, 1fr)" },
+            gap: 2,
+            p: 2,
+            mb: 3,
+            borderRadius: 3,
+            bgcolor: "action.hover",
+          }}
+        >
+          <DetailRow
+            label="Tài liệu"
+            value={`${Number(user.documentCount || 0).toLocaleString("vi-VN")} tệp`}
+          />
+          <DetailRow
+            label="Dung lượng đã dùng"
+            value={formatFileSize(user.storageUsedBytes || 0)}
+          />
+          <DetailRow
+            label="Lượt tải"
+            value={Number(user.downloadCount || 0).toLocaleString("vi-VN")}
+          />
+          <DetailRow
+            label="Lượt hỏi AI"
+            value={
+              user.planCode
+                ? `${Number(user.aiChatsUsed || 0).toLocaleString("vi-VN")} / ${user.aiChatLimit == null ? "∞" : Number(user.aiChatLimit).toLocaleString("vi-VN")}`
+                : "—"
+            }
+          />
+        </Box>
+
+        <Typography fontWeight={750} sx={{ mb: 2 }}>
+          Gói hiện tại
+        </Typography>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" },
+            gap: 2.5,
+            mb: 3,
+          }}
+        >
+          <DetailRow label="Mã gói" value={user.planCode} />
+          <DetailRow label="Tên gói" value={user.planName} />
+          <DetailRow
+            label="Ngày hết hạn"
+            value={user.expiresAt ? formatDate(user.expiresAt) : "Không giới hạn"}
+          />
+        </Box>
+        <Divider sx={{ mb: 3 }} />
+        <Typography fontWeight={750} sx={{ mb: 2 }}>
+          Thông tin tài khoản
+        </Typography>
         <Box
           sx={{
             display: "grid",
@@ -99,17 +165,17 @@ export default function AdminUserDetailDialog({
             label="Đăng nhập gần nhất"
             value={
               user.lastLogin
-                ? new Date(user.lastLogin).toLocaleString("vi-VN")
+                ? formatDate(user.lastLogin, true)
                 : "Chưa có dữ liệu"
             }
           />
           <DetailRow
             label="Ngày tạo"
-            value={new Date(user.createdAt).toLocaleString("vi-VN")}
+            value={formatDate(user.createdAt, true)}
           />
           <DetailRow
             label="Cập nhật gần nhất"
-            value={new Date(user.updatedAt).toLocaleString("vi-VN")}
+            value={formatDate(user.updatedAt, true)}
           />
           <Box sx={{ gridColumn: "1 / -1" }}>
             <DetailRow label="Firebase UID" value={user.firebaseUid} />
