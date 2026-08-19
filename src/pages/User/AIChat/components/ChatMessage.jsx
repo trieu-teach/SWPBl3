@@ -62,7 +62,13 @@ function renderContent(content) {
   });
 }
 
-export default function ChatMessage({ message, isSending, onRetry, onSend }) {
+export default function ChatMessage({
+  message,
+  isSending,
+  onRetry,
+  onSend,
+  onSourceSelect,
+}) {
   const isUser = message.role === "user";
   const isLoading = message.status === "loading";
   const isError = message.status === "error";
@@ -130,7 +136,12 @@ export default function ChatMessage({ message, isSending, onRetry, onSend }) {
               {message.content && message.content !== "Đang suy nghĩ..." && (
                 <Box>
                   {renderContent(message.content)}
-                  {hasSources && <ChatSources sources={message.sources} />}
+                  {hasSources && (
+                    <ChatSources
+                      sources={message.sources}
+                      onSourceSelect={onSourceSelect}
+                    />
+                  )}
                 </Box>
               )}
               <Alert
@@ -185,7 +196,12 @@ export default function ChatMessage({ message, isSending, onRetry, onSend }) {
                 </Stack>
               )}
 
-              {message.sources?.length > 0 && <ChatSources sources={message.sources} />}
+              {message.sources?.length > 0 && (
+                <ChatSources
+                  sources={message.sources}
+                  onSourceSelect={onSourceSelect}
+                />
+              )}
 
               {message.answerStatus === "FALLBACK_WITH_SOURCES" && (
                 <Typography variant="caption" sx={{ fontStyle: "italic", opacity: 0.8, display: "block", mt: 0.5 }}>

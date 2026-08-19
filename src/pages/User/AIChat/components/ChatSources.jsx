@@ -6,18 +6,38 @@ import { useState } from "react";
 
 const MAX_VISIBLE_SOURCES = 2;
 
-function SourceItem({ source }) {
+function SourceItem({ source, onSourceSelect }) {
+  const isSelectable = typeof onSourceSelect === "function";
+
   return (
     <Stack
+      component={isSelectable ? "button" : "div"}
+      type={isSelectable ? "button" : undefined}
       direction="row"
       spacing={1}
       alignItems="flex-start"
+      onClick={
+        isSelectable ? () => onSourceSelect(source) : undefined
+      }
       sx={{
         p: 1,
         borderRadius: 1.5,
         bgcolor: "action.hover",
         border: "1px solid",
         borderColor: "divider",
+        ...(isSelectable && {
+          width: "100%",
+          color: "inherit",
+          font: "inherit",
+          textAlign: "left",
+          cursor: "pointer",
+          "&:hover": { bgcolor: "action.selected" },
+          "&:focus-visible": {
+            outline: "2px solid",
+            outlineColor: "primary.main",
+            outlineOffset: 2,
+          },
+        }),
       }}
     >
       <DescriptionOutlined
@@ -61,7 +81,7 @@ function SourceItem({ source }) {
   );
 }
 
-export default function ChatSources({ sources = [] }) {
+export default function ChatSources({ sources = [], onSourceSelect }) {
   const [expanded, setExpanded] = useState(false);
 
   if (!sources || sources.length === 0) return null;
@@ -100,7 +120,11 @@ export default function ChatSources({ sources = [] }) {
 
       <Stack spacing={0.75}>
         {visibleSources.map((source, index) => (
-          <SourceItem key={source.citationId || `source-${index}`} source={source} />
+          <SourceItem
+            key={source.citationId || `source-${index}`}
+            source={source}
+            onSourceSelect={onSourceSelect}
+          />
         ))}
       </Stack>
 
