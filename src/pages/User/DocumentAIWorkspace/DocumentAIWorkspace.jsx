@@ -179,7 +179,13 @@ export default function DocumentAIWorkspace() {
             gap: { xs: 2, lg: 3 },
           }}
         >
-          <Box sx={{ minWidth: 0, minHeight: { xs: 480, lg: 0 } }}>
+          <Box
+            sx={{
+              width: "100%",
+              minWidth: 0,
+              minHeight: { xs: 400, sm: 440, lg: 0 },
+            }}
+          >
             <DocumentWorkspacePane
               document={workspaceDocument.document}
               loading={workspaceDocument.loading}
@@ -192,7 +198,13 @@ export default function DocumentAIWorkspace() {
             />
           </Box>
 
-          <Box sx={{ minWidth: 0, minHeight: { xs: 640, lg: 0 } }}>
+          <Box
+            sx={{
+              width: "100%",
+              minWidth: 0,
+              minHeight: { xs: 560, sm: 600, lg: 0 },
+            }}
+          >
             <DocumentAIAssistant
               documentId={normalizedDocumentId}
               documentTitle={documentTitle}
