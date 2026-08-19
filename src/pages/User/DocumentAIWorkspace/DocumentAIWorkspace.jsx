@@ -170,7 +170,7 @@ export default function DocumentAIWorkspace() {
             display: "grid",
             gridTemplateColumns: {
               xs: "minmax(0, 1fr)",
-              lg: "minmax(0, 5fr) minmax(0, 6fr)",
+              lg: "minmax(0, 5fr) minmax(0, 7fr)",
             },
             gridTemplateRows: {
               xs: "auto auto",
