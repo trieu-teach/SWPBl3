@@ -126,15 +126,6 @@ export function createLibraryContext(filters = null) {
 // ── Context helpers ────────────────────────────────────────────────────────────
 
 /**
- * True when context is set and has a valid mode.
- * @param {ChatContext | null | undefined} context
- * @returns {boolean}
- */
-export function hasActiveContext(context) {
-  return isDocumentContext(context) || isLibraryContext(context);
-}
-
-/**
  * True when context is ASK_THIS_DOCUMENT.
  * @param {ChatContext | null | undefined} context
  * @returns {boolean}
@@ -164,38 +155,6 @@ export function isLibraryContext(context) {
       (typeof context.libraryFilters === "object" &&
         !Array.isArray(context.libraryFilters)))
   );
-}
-
-// ── Session → Context mapper ───────────────────────────────────────────────────
-
-/**
- * Derive a ChatContext from a backend ChatSessionDto.
- *
- * Called when the user selects an existing session from the sidebar.
- * The session's mode and documentId are the authoritative source of context.
- *
- * Returns null if the session DTO is missing or has an unrecognised mode.
- *
- * @param {{ mode: string, documentId?: string | null, document?: { id: string, title: string } | null } | null | undefined} sessionDto
- * @returns {ChatContext | null}
- */
-export function deriveContextFromSession(sessionDto) {
-  if (!sessionDto) return null;
-
-  if (sessionDto.mode === CHAT_MODE_DOCUMENT) {
-    const doc = sessionDto.document ?? null;
-    const documentId = normalizeDocumentId(sessionDto.documentId);
-    if (!documentId) return null;
-    return createDocumentContext({ documentId, title: doc?.title ?? "" });
-  }
-
-  if (sessionDto.mode === CHAT_MODE_LIBRARY) {
-    // Library context: no document, no filters (filters are not persisted per-session in the contract).
-    return createLibraryContext(null);
-  }
-
-  // Unrecognised or COMMUNITY_SEARCH — return null; do not invent context.
-  return null;
 }
 
 // ── JSDoc types (runtime documentation only — project has no TypeScript) ───────
