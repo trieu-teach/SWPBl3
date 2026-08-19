@@ -48,6 +48,57 @@ function formatTime(date) {
   });
 }
 
+function prependUniqueMessages(olderMessages, currentMessages) {
+  const seenIds = new Set(currentMessages.map((message) => message.id));
+  const uniqueOlderMessages = olderMessages.filter((message) => {
+    if (seenIds.has(message.id)) return false;
+    seenIds.add(message.id);
+    return true;
+  });
+
+  return [...uniqueOlderMessages, ...currentMessages];
+}
+
+function snapshotChatContext(context) {
+  if (isDocumentContext(context)) {
+    return {
+      ...context,
+      document: context.document ? { ...context.document } : null,
+    };
+  }
+
+  if (isLibraryContext(context)) {
+    const filters = context.libraryFilters;
+    return {
+      ...context,
+      libraryFilters: filters
+        ? {
+            ...filters,
+            subjectIds: filters.subjectIds
+              ? [...filters.subjectIds]
+              : undefined,
+            documentIds: filters.documentIds
+              ? [...filters.documentIds]
+              : undefined,
+            _documentMeta: filters._documentMeta
+              ? filters._documentMeta.map((document) => ({ ...document }))
+              : undefined,
+          }
+        : null,
+    };
+  }
+
+  return context;
+}
+
+function createRequestSnapshot(question, context, sessionId) {
+  return {
+    question,
+    context: snapshotChatContext(context),
+    sessionId: sessionId || null,
+  };
+}
+
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
@@ -66,7 +117,8 @@ export function useChat() {
   const [historyPage, setHistoryPage] = useState(1);
   const [hasMoreHistory, setHasMoreHistory] = useState(false);
   const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
-  const historyLoadingRef = useRef(false);
+  const historyGenerationRef = useRef(0);
+  const historyRequestRef = useRef(null);
   const abortControllerRef = useRef(null);
   const activeSessionIdRef = useRef(null);
 
@@ -77,6 +129,8 @@ export function useChat() {
 
   useEffect(() => {
     return () => {
+      historyGenerationRef.current += 1;
+      historyRequestRef.current = null;
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -208,6 +262,9 @@ export function useChat() {
    * and initialises the Library context as the default mode.
    */
   const startNewChat = useCallback(() => {
+    historyGenerationRef.current += 1;
+    historyRequestRef.current = null;
+
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
@@ -223,12 +280,13 @@ export function useChat() {
     setSessionError(null);
     setHistoryPage(1);
     setHasMoreHistory(false);
+    setIsLoadingOlderMessages(false);
     // Default mode for a new chat is ASK_MY_LIBRARY.
     setChatContext(createLibraryContext(null));
   }, []);
 
   /**
-   * Load page 1 of a session's message history.
+   * Load the latest page of a session's message history.
    * Derives the chat context from the session metadata returned by the sidebar.
    *
    * @param {string} sessionId
@@ -236,7 +294,19 @@ export function useChat() {
    */
   const loadSession = useCallback(async (sessionId, sessionMeta = null) => {
     if (!sessionId) return;
-    if (historyLoadingRef.current) return;
+    if (historyRequestRef.current?.sessionId === sessionId) return;
+
+    const historyRequest = {
+      generation: ++historyGenerationRef.current,
+      sessionId,
+      type: "session",
+    };
+    historyRequestRef.current = historyRequest;
+    const ownsHistoryRequest = () =>
+      historyRequestRef.current === historyRequest &&
+      historyGenerationRef.current === historyRequest.generation;
+    const isValidHistoryRequest = () =>
+      ownsHistoryRequest() && activeSessionIdRef.current === sessionId;
 
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -252,7 +322,7 @@ export function useChat() {
     setSessionError(null);
     setHistoryPage(1);
     setHasMoreHistory(false);
-    historyLoadingRef.current = true;
+    setIsLoadingOlderMessages(false);
 
     // Restore context from session metadata when available.
     // This ensures the context banner / header shows correct info
@@ -263,79 +333,116 @@ export function useChat() {
     }
 
     try {
-      const response = await getChatMessages(sessionId, {
+      const firstPageResponse = await getChatMessages(sessionId, {
         page: 1,
         limit: HISTORY_PAGE_LIMIT,
       });
+      if (!isValidHistoryRequest()) return;
 
-      const items = Array.isArray(response?.items) ? response.items : [];
-      const meta = response?.meta || {};
+      const firstPageMeta = firstPageResponse?.meta || {};
+      const totalPages = firstPageMeta.totalPages ?? 1;
+      const latestPage = Math.max(1, totalPages);
+      const latestPageResponse =
+        latestPage === 1
+          ? firstPageResponse
+          : await getChatMessages(sessionId, {
+              page: latestPage,
+              limit: HISTORY_PAGE_LIMIT,
+            });
+
+      const items = Array.isArray(latestPageResponse?.items)
+        ? latestPageResponse.items
+        : [];
 
       const mapped = items.map(mapHistoryMessage);
 
-      // Prevent race condition if user started a new chat or switched again
-      if (activeSessionIdRef.current === sessionId) {
+      if (isValidHistoryRequest()) {
         setMessages(mapped);
-        setHistoryPage(1);
-        const totalPages = meta.totalPages ?? 1;
-        setHasMoreHistory(totalPages > 1);
+        setHistoryPage(latestPage);
+        setHasMoreHistory(latestPage > 1);
         setSessionStatus("success");
       }
     } catch (err) {
-      if (activeSessionIdRef.current === sessionId) {
+      if (isValidHistoryRequest()) {
         const message = getHistoryErrorMessage(err);
         setSessionError(message);
         setSessionStatus("error");
       }
     } finally {
-      if (activeSessionIdRef.current === sessionId) {
-        historyLoadingRef.current = false;
+      if (ownsHistoryRequest()) {
+        historyRequestRef.current = null;
       }
     }
   }, []);
 
   /**
-   * Load the next (older) page of messages and prepend to the list.
+   * Load the previous (older) page of messages and prepend to the list.
    */
   const loadOlderMessages = useCallback(async () => {
-    if (!currentSessionId || !hasMoreHistory || historyLoadingRef.current) return;
-    historyLoadingRef.current = true;
+    if (!currentSessionId || !hasMoreHistory || historyRequestRef.current) return;
+
+    const sessionId = currentSessionId;
+    const historyRequest = {
+      generation: ++historyGenerationRef.current,
+      sessionId,
+      type: "older",
+    };
+    historyRequestRef.current = historyRequest;
+    const ownsHistoryRequest = () =>
+      historyRequestRef.current === historyRequest &&
+      historyGenerationRef.current === historyRequest.generation;
+    const isValidHistoryRequest = () =>
+      ownsHistoryRequest() && activeSessionIdRef.current === sessionId;
+
     setIsLoadingOlderMessages(true);
 
-    const nextPage = historyPage + 1;
+    const nextPage = historyPage - 1;
+
+    if (nextPage < 1) {
+      if (ownsHistoryRequest()) {
+        setHasMoreHistory(false);
+        setIsLoadingOlderMessages(false);
+        historyRequestRef.current = null;
+      }
+      return;
+    }
 
     try {
-      const response = await getChatMessages(currentSessionId, {
+      const response = await getChatMessages(sessionId, {
         page: nextPage,
         limit: HISTORY_PAGE_LIMIT,
       });
 
       const items = Array.isArray(response?.items) ? response.items : [];
-      const meta = response?.meta || {};
       const mapped = items.map(mapHistoryMessage);
 
-      setMessages((current) => [...mapped, ...current]);
-      setHistoryPage(nextPage);
-
-      const totalPages = meta.totalPages ?? nextPage;
-      setHasMoreHistory(nextPage < totalPages);
+      if (isValidHistoryRequest()) {
+        setMessages((current) => prependUniqueMessages(mapped, current));
+        setHistoryPage(nextPage);
+        setHasMoreHistory(nextPage > 1);
+      }
     } catch {
       // silent — user can retry by clicking again
     } finally {
-      setIsLoadingOlderMessages(false);
-      historyLoadingRef.current = false;
+      if (ownsHistoryRequest()) {
+        setIsLoadingOlderMessages(false);
+        historyRequestRef.current = null;
+      }
     }
   }, [currentSessionId, hasMoreHistory, historyPage]);
 
   // ── Execute Request (Helper) ──────────────────────────────────────────────
 
   const performRequest = async (targetMessageId, questionText, effectiveContext, activeSessionId) => {
+    let requestController = null;
+
     try {
       if (isDocumentContext(effectiveContext) || isLibraryContext(effectiveContext)) {
         let stream;
-        
-        abortControllerRef.current = new AbortController();
-        const signal = abortControllerRef.current.signal;
+
+        requestController = new AbortController();
+        abortControllerRef.current = requestController;
+        const { signal } = requestController;
 
         if (isDocumentContext(effectiveContext)) {
           stream = askDocumentStream({
@@ -355,8 +462,47 @@ export function useChat() {
           });
         }
 
+        let receivedDone = false;
+
         for await (const event of stream) {
+          if (signal.aborted) return;
+
           const { type, data } = event;
+
+          if (type === "done") {
+            receivedDone = true;
+            setMessages((current) =>
+              current.map((message) =>
+                message.id === targetMessageId
+                  ? {
+                      ...message,
+                      content: data.answer,
+                      status: "complete",
+                      streamPhase: "COMPLETED",
+                      backendMessageId: data.messageId,
+                      sessionId: data.sessionId,
+                      ...(Array.isArray(data.sources)
+                        ? { sources: data.sources }
+                        : {}),
+                      ...(Array.isArray(data.suggestedPrompts)
+                        ? { suggestedPrompts: data.suggestedPrompts }
+                        : {}),
+                      ...(typeof data.answerStatus === "string"
+                        ? { answerStatus: data.answerStatus }
+                        : {}),
+                      createdAt: formatTime(new Date()),
+                    }
+                  : message,
+              ),
+            );
+
+            if (!activeSessionId) {
+              setCurrentSessionId(data.sessionId);
+              activeSessionIdRef.current = data.sessionId;
+            }
+            continue;
+          }
+
           setMessages((current) => {
             const message = current.find((m) => m.id === targetMessageId);
             if (!message) return current;
@@ -377,26 +523,17 @@ export function useChat() {
               nextMessage.status = "streaming";
               if (nextMessage.content === "Đang suy nghĩ...") nextMessage.content = "";
               nextMessage.content += data.text;
-            } else if (type === "done") {
-              nextMessage.content = data.answer;
-              nextMessage.status = "complete";
-              nextMessage.streamPhase = "COMPLETED";
-              nextMessage.backendMessageId = data.messageId;
-              nextMessage.sessionId = data.sessionId;
-              nextMessage.sources = data.sources;
-              nextMessage.suggestedPrompts = data.suggestedPrompts || [];
-              nextMessage.answerStatus = data.answerStatus;
-              nextMessage.createdAt = formatTime(new Date());
-
-              if (!activeSessionId && data.sessionId) {
-                setCurrentSessionId(data.sessionId);
-              }
-            } else if (type === "error") {
-              throw new Error(data.message || "Lỗi stream");
             }
-            
+
             return current.map((m) => (m.id === targetMessageId ? nextMessage : m));
           });
+        }
+
+        if (signal.aborted) return;
+        if (!receivedDone) {
+          throw new Error(
+            "Phản hồi AI bị gián đoạn trước khi hoàn tất. Vui lòng thử lại.",
+          );
         }
         setStatus("success");
       } else {
@@ -443,6 +580,12 @@ export function useChat() {
               content: hasPartial ? item.content : errorMessage,
               errorDetail: hasPartial ? errorMessage : undefined,
               status: "error",
+              ...(requestError.code !== undefined
+                ? { streamErrorCode: requestError.code }
+                : {}),
+              ...(typeof requestError.retryable === "boolean"
+                ? { streamRetryable: requestError.retryable }
+                : {}),
               createdAt: formatTime(new Date()),
             };
           }
@@ -452,6 +595,12 @@ export function useChat() {
       setError(errorMessage);
       setStatus("error");
     } finally {
+      if (
+        requestController &&
+        abortControllerRef.current === requestController
+      ) {
+        abortControllerRef.current = null;
+      }
       sendingRef.current = false;
     }
   };
@@ -462,6 +611,17 @@ export function useChat() {
     async (rawMessage = inputValue) => {
       const content = rawMessage.trim();
       if (!content || sendingRef.current) return;
+
+      const contextSnapshot = chatContext;
+      const sessionId = currentSessionId;
+      const effectiveContext = hasActiveContext(contextSnapshot)
+        ? contextSnapshot
+        : createLibraryContext(null);
+      const requestSnapshot = createRequestSnapshot(
+        content,
+        effectiveContext,
+        sessionId,
+      );
 
       const userMessage = createMessage({
         role: "user",
@@ -474,18 +634,13 @@ export function useChat() {
         status: "loading",
         retryOf: userMessage.id,
       });
+      pendingMessage.requestSnapshot = requestSnapshot;
 
       setMessages((current) => [...current, userMessage, pendingMessage]);
       setInputValue("");
       setError(null);
       setStatus("sending");
       sendingRef.current = true;
-
-      const contextSnapshot = chatContext;
-      const sessionId = currentSessionId;
-      const effectiveContext = hasActiveContext(contextSnapshot)
-        ? contextSnapshot
-        : createLibraryContext(null);
 
       await performRequest(pendingMessage.id, content, effectiveContext, sessionId);
     },
@@ -499,9 +654,15 @@ export function useChat() {
       if (sendingRef.current) return;
 
       const failedMsg = messages.find((m) => m.id === assistantMessageId);
-      const userMsg = messages.find((m) => m.id === failedMsg?.retryOf);
-      const content = userMsg?.content?.trim();
-      if (!failedMsg || !content) return;
+      const requestSnapshot = failedMsg?.requestSnapshot;
+      const content = requestSnapshot?.question?.trim();
+      if (
+        !failedMsg ||
+        !content ||
+        !hasActiveContext(requestSnapshot?.context)
+      ) {
+        return;
+      }
 
       setMessages((current) =>
         current.map((message) =>
@@ -510,6 +671,8 @@ export function useChat() {
                 ...message,
                 content: "Đang suy nghĩ...",
                 errorDetail: undefined,
+                streamErrorCode: undefined,
+                streamRetryable: undefined,
                 status: "loading",
                 createdAt: formatTime(new Date()),
               }
@@ -520,15 +683,14 @@ export function useChat() {
       setStatus("sending");
       sendingRef.current = true;
 
-      const contextSnapshot = chatContext;
-      const sessionId = currentSessionId;
-      const effectiveContext = hasActiveContext(contextSnapshot)
-        ? contextSnapshot
-        : createLibraryContext(null);
-
-      await performRequest(assistantMessageId, content, effectiveContext, sessionId);
+      await performRequest(
+        assistantMessageId,
+        content,
+        requestSnapshot.context,
+        requestSnapshot.sessionId,
+      );
     },
-    [messages, chatContext, currentSessionId], // eslint-disable-line react-hooks/exhaustive-deps
+    [messages], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   // ── Return value ──────────────────────────────────────────────────────────
