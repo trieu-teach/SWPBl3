@@ -24,6 +24,7 @@ import SmartToyOutlined from "@mui/icons-material/SmartToyOutlined";
 import ShoppingCartOutlined from "@mui/icons-material/ShoppingCartOutlined";
 import UploadFileOutlined from "@mui/icons-material/UploadFileOutlined";
 import NotificationsOutlined from "@mui/icons-material/NotificationsOutlined";
+import ReportProblemOutlined from "@mui/icons-material/ReportProblemOutlined";
 import ChevronLeftRounded from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRounded from "@mui/icons-material/ChevronRightRounded";
 import { useColorMode } from "../../App.jsx";
@@ -72,6 +73,14 @@ const ADMIN_NAVIGATION = [
     icon: DownloadOutlined,
   },
   { label: "Báo cáo", path: "/admin/reports", icon: AssessmentOutlined },
+];
+
+const MODERATOR_NAVIGATION = [
+  {
+    label: "Báo cáo vi phạm",
+    path: "/moderator/reports",
+    icon: ReportProblemOutlined,
+  },
 ];
 
 function getInitials(name, fallback) {
@@ -153,6 +162,7 @@ function NavItem({ item, active, onClick, accent, collapsed = false }) {
 
 function SidebarContent({
   isAdmin,
+  isModerator,
   navigation,
   location,
   setMobileOpen,
@@ -162,7 +172,27 @@ function SidebarContent({
   collapsed = false,
   onToggle,
 }) {
-  const accent = isAdmin ? "#f97316" : "#6366f1";
+  const accent = isAdmin ? "#f97316" : isModerator ? "#d97706" : "#6366f1";
+  const homePath = isAdmin
+    ? "/admin/dashboard"
+    : isModerator
+      ? "/moderator/reports"
+      : "/documents";
+  const workspaceLabel = isAdmin
+    ? "Hệ thống quản trị"
+    : isModerator
+      ? "Không gian kiểm duyệt"
+      : "Không gian học tập";
+  const navigationLabel = isAdmin
+    ? "Quản trị"
+    : isModerator
+      ? "Kiểm duyệt"
+      : "Chính";
+  const roleLabel = isAdmin
+    ? "Quản trị viên"
+    : isModerator
+      ? "Kiểm duyệt viên"
+      : "Sinh viên";
 
   return (
     <Box
@@ -179,7 +209,7 @@ function SidebarContent({
       {/* Logo Section */}
       <Box
         component={Link}
-        to={isAdmin ? "/admin/dashboard" : "/documents"}
+        to={homePath}
         onClick={() => setMobileOpen(false)}
         sx={{
           display: "flex",
@@ -214,7 +244,7 @@ function SidebarContent({
                 fontWeight: 500,
               }}
             >
-              {isAdmin ? "Hệ thống quản trị" : "Không gian học tập"}
+              {workspaceLabel}
             </Typography>
           </Box>
         )}
@@ -266,7 +296,7 @@ function SidebarContent({
               textTransform: "uppercase",
             }}
           >
-            {isAdmin ? "Quản trị" : "Chính"}
+            {navigationLabel}
           </Typography>
         )}
         {navigation.map((item) => (
@@ -341,7 +371,7 @@ function SidebarContent({
                 <Typography
                   sx={{ fontSize: "0.72rem", color: "text.secondary" }}
                 >
-                  {isAdmin ? "Quản trị viên" : "Sinh viên"}
+                  {roleLabel}
                 </Typography>
               </Box>
             )}
@@ -405,10 +435,15 @@ export default function AppShell({ children, role = "USER" }) {
   const location = useLocation();
   const navigate = useNavigate();
   const isAdmin = role === "ADMIN";
-  const navigation = isAdmin ? ADMIN_NAVIGATION : USER_NAVIGATION;
+  const isModerator = role === "MODERATOR";
+  const navigation = isAdmin
+    ? ADMIN_NAVIGATION
+    : isModerator
+      ? MODERATOR_NAVIGATION
+      : USER_NAVIGATION;
   const initials = useMemo(
-    () => getInitials(user?.fullName, isAdmin ? "AD" : "U"),
-    [isAdmin, user?.fullName],
+    () => getInitials(user?.fullName, isAdmin ? "AD" : isModerator ? "MD" : "U"),
+    [isAdmin, isModerator, user?.fullName],
   );
 
   async function handleLogout() {
@@ -447,6 +482,7 @@ export default function AppShell({ children, role = "USER" }) {
       >
         <SidebarContent
           isAdmin={isAdmin}
+          isModerator={isModerator}
           navigation={navigation}
           location={location}
           setMobileOpen={setMobileOpen}
@@ -473,6 +509,7 @@ export default function AppShell({ children, role = "USER" }) {
       >
         <SidebarContent
           isAdmin={isAdmin}
+          isModerator={isModerator}
           navigation={navigation}
           location={location}
           setMobileOpen={setMobileOpen}

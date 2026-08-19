@@ -4,6 +4,7 @@ import DocumentPreviewDialog from "../DocumentLibrary/components/DocumentPreview
 import CommunityDocumentGrid from "./components/CommunityDocumentGrid.jsx";
 import CommunityFilters from "./components/CommunityFilters.jsx";
 import CommunityHeader from "./components/CommunityHeader.jsx";
+import ReportDocumentDialog from "./components/ReportDocumentDialog.jsx";
 import useCommunityLibrary from "./hooks/useCommunityLibrary.js";
 
 export default function CommunityLibrary() {
@@ -50,6 +51,13 @@ export default function CommunityLibrary() {
       <DocumentPreviewDialog
         preview={community.preview}
         onClose={community.closePreview}
+      />
+      <ReportDocumentDialog
+        document={community.reportTarget}
+        loading={community.reporting}
+        error={community.reportError}
+        onClose={community.closeReport}
+        onSubmit={community.submitReport}
       />
     </UserLayout>
   );
