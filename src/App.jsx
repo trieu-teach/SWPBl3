@@ -21,6 +21,7 @@ import Profile from "./pages/Profile/Profile.jsx";
 import UploadDocument from "./pages/User/UploadDocument/UploadDocument.jsx";
 import DocumentLibrary from "./pages/User/DocumentLibrary/DocumentLibrary.jsx";
 import DocumentDetails from "./pages/User/DocumentDetails/DocumentDetails.jsx";
+import DocumentAIWorkspace from "./pages/User/DocumentAIWorkspace/DocumentAIWorkspace.jsx";
 import CommunityLibrary from "./pages/User/CommunityLibrary/CommunityLibrary.jsx";
 import SavedDocuments from "./pages/User/SavedDocuments/SavedDocuments.jsx";
 import Subscription from "./pages/User/Subscription/Subscription.jsx";
@@ -220,6 +221,14 @@ export default function App() {
                       element={
                         <RequireAuth>
                           <DocumentDetails />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/documents/:documentId/ai"
+                      element={
+                        <RequireAuth>
+                          <DocumentAIWorkspace />
                         </RequireAuth>
                       }
                     />
