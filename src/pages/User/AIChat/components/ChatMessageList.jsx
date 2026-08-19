@@ -16,6 +16,7 @@ export default function ChatMessageList({
   isSending,
   onRetry,
   onSend,
+  onSourceSelect,
   // History loader props
   hasMoreHistory,
   isLoadingOlderMessages,
@@ -115,6 +116,7 @@ export default function ChatMessageList({
             isSending={isSending}
             onRetry={onRetry}
             onSend={onSend}
+            onSourceSelect={onSourceSelect}
           />
         ))}
       </Stack>
