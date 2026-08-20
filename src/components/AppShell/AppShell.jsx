@@ -7,7 +7,6 @@ import {
   IconButton,
   Tooltip,
   Typography,
-  Badge,
 } from "@mui/material";
 import AssessmentOutlined from "@mui/icons-material/AssessmentOutlined";
 import BookmarkOutlined from "@mui/icons-material/BookmarkOutlined";
@@ -23,7 +22,6 @@ import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
 import SmartToyOutlined from "@mui/icons-material/SmartToyOutlined";
 import ShoppingCartOutlined from "@mui/icons-material/ShoppingCartOutlined";
 import UploadFileOutlined from "@mui/icons-material/UploadFileOutlined";
-import NotificationsOutlined from "@mui/icons-material/NotificationsOutlined";
 import ReportProblemOutlined from "@mui/icons-material/ReportProblemOutlined";
 import ChevronLeftRounded from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRounded from "@mui/icons-material/ChevronRightRounded";
@@ -31,6 +29,7 @@ import { useColorMode } from "../../App.jsx";
 import ColorModeToggle from "../ColorModeToggle/ColorModeToggle.jsx";
 import Logo from "../Logo/Logo.jsx";
 import { useAuth } from "../../features/auth/AuthProvider.jsx";
+import NotificationBell from "../../pages/User/Notifications/components/NotificationBell.jsx";
 
 const DRAWER_WIDTH = 280;
 const COLLAPSED_DRAWER_WIDTH = 88;
@@ -588,27 +587,11 @@ export default function AppShell({ children, role = "USER" }) {
           </Box>
 
           {/* Right: Actions */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, position: "relative" }}>
             <ColorModeToggle />
 
-            {/* Notification */}
-            <Tooltip title="Thông báo">
-              <IconButton>
-                <Badge
-                  badgeContent={0}
-                  color="error"
-                  sx={{
-                    "& .MuiBadge-badge": {
-                      fontSize: "0.6rem",
-                      height: 16,
-                      minWidth: 16,
-                    },
-                  }}
-                >
-                  <NotificationsOutlined sx={{ fontSize: 22 }} />
-                </Badge>
-              </IconButton>
-            </Tooltip>
+            {/* Notification Bell */}
+            <NotificationBell />
           </Box>
         </Box>
 
