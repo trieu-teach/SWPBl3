@@ -13,6 +13,7 @@ import {
   IconButton,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import {
   CloseOutlined,
   AccessTimeOutlined,
@@ -39,45 +40,57 @@ const ACTION_GROUP_COLORS = {
   OTHER: { bg: "#f3f4f6", color: "#475569", label: "Khác" },
 };
 
-const USER_ROLE_COLORS = {
-  ADMIN: { bg: "#fee2e2", color: "#dc2626" },
-  MODERATOR: { bg: "#fef3c7", color: "#d97706" },
-  USER: { bg: "#d1fae5", color: "#059669" },
+const USER_ROLE_TONES = {
+  ADMIN: "error",
+  MODERATOR: "warning",
+  USER: "success",
 };
 
-const RESULT_COLORS_MAP = {
-  "Đã đăng nhập": { bg: "#d1fae5", color: "#059669" },
-  "Đã kích hoạt": { bg: "#d1fae5", color: "#059669" },
-  "Đã tải lên": { bg: "#d1fae5", color: "#059669" },
-  "Đã xóa": { bg: "#d1fae5", color: "#059669" },
-  "Đã ẩn": { bg: "#d1fae5", color: "#059669" },
-  "Đã lưu": { bg: "#d1fae5", color: "#059669" },
-  "Đã bỏ lưu": { bg: "#f3f4f6", color: "#6b7280" },
-  "Đã kiểm duyệt": { bg: "#d1fae5", color: "#059669" },
-  "Đã xử lý": { bg: "#d1fae5", color: "#059669" },
-  "Đã bác bỏ": { bg: "#fee2e2", color: "#dc2626" },
-  "Đã cập nhật": { bg: "#e0f2fe", color: "#0891b2" },
-  "Đã tạo": { bg: "#e0f2fe", color: "#0891b2" },
-  "Đã thanh toán": { bg: "#d1fae5", color: "#059669" },
-  "Đã hoàn tiền": { bg: "#fef3c7", color: "#d97706" },
-  "Đã áp dụng hoàn tiền": { bg: "#fef3c7", color: "#d97706" },
-  "Đã duyệt": { bg: "#d1fae5", color: "#059669" },
-  "Đang hoạt động": { bg: "#d1fae5", color: "#059669" },
-  "Đã chặn": { bg: "#fee2e2", color: "#dc2626" },
-  "Đã từ chối": { bg: "#fee2e2", color: "#dc2626" },
-  "Đã hết hạn": { bg: "#f3f4f6", color: "#6b7280" },
-  "Chưa kích hoạt": { bg: "#f3f4f6", color: "#6b7280" },
-  "Đang chờ duyệt": { bg: "#fef3c7", color: "#d97706" },
-  "Công khai": { bg: "#d1fae5", color: "#059669" },
-  "Riêng tư": { bg: "#f3f4f6", color: "#6b7280" },
+const RESULT_TONES = {
+  "Đã đăng nhập": "success",
+  "Đã kích hoạt": "success",
+  "Đã tải lên": "success",
+  "Đã xóa": "success",
+  "Đã ẩn": "success",
+  "Đã lưu": "success",
+  "Đã bỏ lưu": "default",
+  "Đã kiểm duyệt": "success",
+  "Đã xử lý": "success",
+  "Đã bác bỏ": "error",
+  "Đã cập nhật": "info",
+  "Đã tạo": "info",
+  "Đã thanh toán": "success",
+  "Đã hoàn tiền": "warning",
+  "Đã áp dụng hoàn tiền": "warning",
+  "Đã duyệt": "success",
+  "Đang hoạt động": "success",
+  "Đã chặn": "error",
+  "Đã từ chối": "error",
+  "Đã hết hạn": "default",
+  "Chưa kích hoạt": "default",
+  "Đang chờ duyệt": "warning",
+  "Công khai": "success",
+  "Riêng tư": "default",
 };
 
 function getActionGroupConfig(actionGroup) {
   return ACTION_GROUP_COLORS[actionGroup?.toUpperCase()] || ACTION_GROUP_COLORS.OTHER;
 }
 
-function getUserRoleConfig(role) {
-  return USER_ROLE_COLORS[role?.toUpperCase()] || USER_ROLE_COLORS.USER;
+function getUserRoleTone(role) {
+  return USER_ROLE_TONES[role?.toUpperCase()] || "default";
+}
+
+function getToneStyles(theme, tone) {
+  if (!tone || !theme.palette[tone]) {
+    return {
+      bgcolor: theme.palette.action.hover,
+      color: theme.palette.text.secondary,
+    };
+  }
+
+  const color = theme.palette[tone].main;
+  return { bgcolor: alpha(color, 0.12), color };
 }
 
 function CopyButton({ text }) {
@@ -90,7 +103,7 @@ function CopyButton({ text }) {
   return (
     <IconButton size="small" onClick={handleCopy} sx={{ ml: 0.5, p: 0.5, borderRadius: "6px" }} aria-label="Sao chép">
       {copied ? (
-        <Box component="span" sx={{ fontSize: "0.7rem", color: "#059669", fontWeight: 600 }}>
+        <Box component="span" sx={{ fontSize: "0.7rem", color: "success.main", fontWeight: 600 }}>
           ✓ Đã copy
         </Box>
       ) : (
@@ -103,7 +116,7 @@ function CopyButton({ text }) {
 function SectionTitle({ icon, children }) {
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-      {icon && <Box sx={{ color: "#94a3b8", display: "flex" }}>{icon}</Box>}
+      {icon && <Box sx={{ color: "text.secondary", display: "flex" }}>{icon}</Box>}
       <Typography variant="subtitle2" sx={{ color: "text.secondary", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "0.75rem" }}>
         {children}
       </Typography>
@@ -132,9 +145,9 @@ export default function AuditLogDetailDialog({ log, onClose }) {
   const [expandedTech, setExpandedTech] = useState(false);
 
   const actionGroupConfig = log?.actionGroup ? getActionGroupConfig(log.actionGroup) : null;
-  const userRoleConfig = log?.userRole ? getUserRoleConfig(log.userRole) : null;
+  const userRoleTone = log?.userRole ? getUserRoleTone(log.userRole) : "default";
   const resultLabel = log?.resultLabel || log?.result || "—";
-  const resultConfig = RESULT_COLORS_MAP[resultLabel] || { bg: "#f3f4f6", color: "#6b7280" };
+  const resultTone = RESULT_TONES[resultLabel] || "default";
 
   return (
     <Dialog
@@ -188,7 +201,7 @@ export default function AuditLogDetailDialog({ log, onClose }) {
                 <HistoryOutlined sx={{ fontSize: 28 }} />
               </Box>
               <Box>
-                <Typography id="audit-dialog-title" variant="h5" fontWeight={700} sx={{ fontSize: "1.35rem", color: "#1e293b" }}>
+                <Typography id="audit-dialog-title" variant="h5" fontWeight={700} sx={{ fontSize: "1.35rem", color: "text.primary" }}>
                   Chi tiết nhật ký kiểm tra
                 </Typography>
                 <Box sx={{ display: "flex", alignItems: "center", mt: 0.5 }}>
@@ -227,7 +240,7 @@ export default function AuditLogDetailDialog({ log, onClose }) {
                         width: 52,
                         height: 52,
                         borderRadius: "14px",
-                        bgcolor: "#fff7ed",
+                        bgcolor: (theme) => alpha(theme.palette.warning.main, 0.12),
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -239,7 +252,7 @@ export default function AuditLogDetailDialog({ log, onClose }) {
                       <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.8rem", fontWeight: 600 }}>
                         Thời gian thực hiện
                       </Typography>
-                      <Typography variant="h6" fontWeight={700} sx={{ fontSize: "1.1rem", color: "#1e293b" }}>
+                      <Typography variant="h6" fontWeight={700} sx={{ fontSize: "1.1rem", color: "text.primary" }}>
                         {formatDate(log.createdAt)}
                       </Typography>
                     </Box>
@@ -253,7 +266,7 @@ export default function AuditLogDetailDialog({ log, onClose }) {
                   <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
                     <Box>
                       <SectionTitle icon={<BadgeOutlined sx={{ fontSize: 18 }} />}>Hành động</SectionTitle>
-                      <Typography variant="h6" fontWeight={700} sx={{ fontSize: "1.25rem", color: "#1e293b", mb: 0.5 }}>
+                      <Typography variant="h6" fontWeight={700} sx={{ fontSize: "1.25rem", color: "text.primary", mb: 0.5 }}>
                         {log.actionLabel || log.action}
                       </Typography>
                       {log.action && log.actionLabel && log.action !== log.actionLabel && (
@@ -264,22 +277,22 @@ export default function AuditLogDetailDialog({ log, onClose }) {
                     </Box>
                     {resultLabel && (
                       <Box
-                        sx={{
+                        sx={(theme) => ({
+                          ...getToneStyles(theme, resultTone),
                           display: "flex",
                           alignItems: "center",
                           gap: 1,
                           px: 2,
                           py: 1,
                           borderRadius: "12px",
-                          bgcolor: resultConfig.bg,
-                        }}
+                        })}
                       >
-                        {resultConfig.color === "#059669" || resultConfig.color === "#0891b2" ? (
-                          <CheckCircle sx={{ fontSize: 20, color: resultConfig.color }} />
+                        {resultTone === "success" || resultTone === "info" ? (
+                          <CheckCircle sx={{ fontSize: 20, color: "inherit" }} />
                         ) : (
-                          <Cancel sx={{ fontSize: 20, color: resultConfig.color }} />
+                          <Cancel sx={{ fontSize: 20, color: "inherit" }} />
                         )}
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: resultConfig.color, fontSize: "0.9rem" }}>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: "inherit", fontSize: "0.9rem" }}>
                           {resultLabel}
                         </Typography>
                       </Box>
@@ -301,7 +314,7 @@ export default function AuditLogDetailDialog({ log, onClose }) {
                       width: 64,
                       height: 64,
                       borderRadius: "14px",
-                      bgcolor: "#6366f1",
+                      bgcolor: "primary.main",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -312,7 +325,7 @@ export default function AuditLogDetailDialog({ log, onClose }) {
                   </Box>
                 )}
                 <Box sx={{ flex: 1 }}>
-                  <Typography variant="h6" fontWeight={700} sx={{ fontSize: "1.15rem", color: "#1e293b" }}>
+                  <Typography variant="h6" fontWeight={700} sx={{ fontSize: "1.15rem", color: "text.primary" }}>
                     {log.userFullName || log.userEmail || "Hệ thống"}
                   </Typography>
                   {log.userEmail && (
@@ -331,15 +344,14 @@ export default function AuditLogDetailDialog({ log, onClose }) {
                   <Chip
                     label={log.userRoleLabel}
                     size="small"
-                    sx={{
+                    sx={(theme) => ({
+                      ...getToneStyles(theme, userRoleTone),
                       height: 32,
                       fontSize: "0.85rem",
                       fontWeight: 700,
-                      bgcolor: userRoleConfig.bg,
-                      color: userRoleConfig.color,
                       borderRadius: "8px",
                       px: 1,
-                    }}
+                    })}
                   />
                 )}
               </Box>
@@ -353,7 +365,7 @@ export default function AuditLogDetailDialog({ log, onClose }) {
                   <BigCard>
                     <SectionTitle icon={<FolderOutlined sx={{ fontSize: 18 }} />}>Đối tượng</SectionTitle>
                     {log.targetName && (
-                      <Typography variant="body1" fontWeight={600} sx={{ fontSize: "1rem", color: "#1e293b", mb: 1.5 }}>
+                      <Typography variant="body1" fontWeight={600} sx={{ fontSize: "1rem", color: "text.primary", mb: 1.5 }}>
                         {log.targetName}
                       </Typography>
                     )}
@@ -362,14 +374,13 @@ export default function AuditLogDetailDialog({ log, onClose }) {
                         <Chip
                           label={`Loại: ${log.targetType}`}
                           size="small"
-                          sx={{
+                          sx={(theme) => ({
+                            ...getToneStyles(theme, "success"),
                             height: 28,
                             fontSize: "0.8rem",
                             fontWeight: 600,
-                            bgcolor: "#d1fae5",
-                            color: "#059669",
                             borderRadius: "8px",
-                          }}
+                          })}
                         />
                       )}
                       {log.targetId && (
@@ -382,8 +393,8 @@ export default function AuditLogDetailDialog({ log, onClose }) {
                               height: 28,
                               fontSize: "0.8rem",
                               fontWeight: 600,
-                              bgcolor: "#f1f5f9",
-                              color: "#475569",
+                              bgcolor: "action.hover",
+                              color: "text.secondary",
                               borderRadius: "8px",
                               cursor: "pointer",
                             }}
@@ -401,7 +412,7 @@ export default function AuditLogDetailDialog({ log, onClose }) {
                 <Grid item xs={12} md={log.targetType || log.targetId || log.targetName ? 6 : 12}>
                   <BigCard>
                     <SectionTitle icon={<DescriptionOutlined sx={{ fontSize: 18 }} />}>Tóm tắt</SectionTitle>
-                    <Typography variant="body1" sx={{ fontSize: "0.95rem", lineHeight: 1.7, color: "#475569" }}>
+                    <Typography variant="body1" sx={{ fontSize: "0.95rem", lineHeight: 1.7, color: "text.secondary" }}>
                       {log.summary}
                     </Typography>
                   </BigCard>
@@ -418,7 +429,7 @@ export default function AuditLogDetailDialog({ log, onClose }) {
                     <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.85rem", fontWeight: 600, mb: 0.5 }}>
                       Lý do
                     </Typography>
-                    <Typography variant="body1" sx={{ fontSize: "0.95rem", color: "#1e293b" }}>
+                    <Typography variant="body1" sx={{ fontSize: "0.95rem", color: "text.primary" }}>
                       {log.details.reason}
                     </Typography>
                   </Box>
@@ -434,14 +445,14 @@ export default function AuditLogDetailDialog({ log, onClose }) {
                           key={idx}
                           label={field}
                           size="small"
-                          sx={{
+                          sx={(theme) => ({
+                            bgcolor: alpha(theme.palette.primary.main, 0.12),
+                            color: "primary.main",
                             height: 28,
                             fontSize: "0.8rem",
                             fontWeight: 600,
-                            bgcolor: "#e0e7ff",
-                            color: "#4338ca",
                             borderRadius: "8px",
-                          }}
+                          })}
                         />
                       ))}
                     </Box>
@@ -505,7 +516,7 @@ export default function AuditLogDetailDialog({ log, onClose }) {
                           component="pre"
                           sx={{
                             p: 2,
-                            bgcolor: "#f8fafc",
+                            bgcolor: "action.hover",
                             borderRadius: "10px",
                             fontSize: "0.75rem",
                             fontFamily: "monospace",
@@ -528,7 +539,7 @@ export default function AuditLogDetailDialog({ log, onClose }) {
 
           {/* Footer */}
           <Box sx={{ display: "flex", justifyContent: "flex-end", px: 4, py: 2.5, borderTop: "2px solid", borderColor: "divider" }}>
-            <Button variant="contained" onClick={onClose} sx={{ borderRadius: "12px", textTransform: "none", fontWeight: 700, px: 4, py: 1.25, fontSize: "0.95rem", bgcolor: "#1e293b", "&:hover": { bgcolor: "#334155" } }}>
+            <Button variant="contained" onClick={onClose} sx={{ borderRadius: "12px", textTransform: "none", fontWeight: 700, px: 4, py: 1.25, fontSize: "0.95rem" }}>
               Đóng
             </Button>
           </Box>

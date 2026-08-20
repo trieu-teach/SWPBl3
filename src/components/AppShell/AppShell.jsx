@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Avatar,
   Box,
+  Button,
   Drawer,
   IconButton,
   Tooltip,
@@ -376,32 +377,34 @@ function SidebarContent({
               </Box>
             )}
           </Box>
-          <Box
+          <Button
+            type="button"
             onClick={handleLogout}
+            fullWidth
+            aria-label="Đăng xuất"
+            startIcon={<LogoutOutlined sx={{ fontSize: 18 }} />}
             sx={{
-              display: "flex",
-              alignItems: "center",
               justifyContent: "center",
               gap: 1,
               py: 1,
+              minWidth: 0,
               borderRadius: "10px",
-              cursor: "pointer",
+              fontSize: "0.8rem",
+              fontWeight: 500,
               color: "text.secondary",
               background: "transparent",
               transition: "all 0.2s",
+              "& .MuiButton-startIcon": {
+                m: collapsed ? 0 : undefined,
+              },
               "&:hover": {
                 background: "rgba(239,68,68,0.08)",
                 color: "error.main",
               },
             }}
           >
-            <LogoutOutlined sx={{ fontSize: 18 }} />
-            {!collapsed && (
-              <Typography sx={{ fontSize: "0.8rem", fontWeight: 500 }}>
-                Đăng xuất
-              </Typography>
-            )}
-          </Box>
+            {!collapsed && "Đăng xuất"}
+          </Button>
         </Box>
 
         {/* Version */}
@@ -557,6 +560,7 @@ export default function AppShell({ children, role = "USER" }) {
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <IconButton
               onClick={() => setMobileOpen(true)}
+              aria-label="Mở menu điều hướng"
               sx={{ display: { md: "none" } }}
             >
               <MenuRounded />
@@ -593,7 +597,7 @@ export default function AppShell({ children, role = "USER" }) {
 
             {/* Notification */}
             <Tooltip title="Thông báo">
-              <IconButton>
+              <IconButton aria-label="Thông báo">
                 <Badge
                   badgeContent={0}
                   color="error"

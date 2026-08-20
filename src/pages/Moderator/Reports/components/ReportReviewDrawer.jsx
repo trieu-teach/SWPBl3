@@ -72,7 +72,11 @@ export default function ReportReviewDrawer({ moderation }) {
                 Mã {report.id}
               </Typography>
             </Box>
-            <IconButton onClick={moderation.closeReport} disabled={moderation.acting}>
+            <IconButton
+              onClick={moderation.closeReport}
+              disabled={moderation.acting}
+              aria-label="Đóng xem xét báo cáo"
+            >
               <CloseOutlined />
             </IconButton>
           </Stack>

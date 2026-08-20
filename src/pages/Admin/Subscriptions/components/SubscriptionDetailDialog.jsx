@@ -116,7 +116,11 @@ export default function SubscriptionDetailDialog({ admin }) {
             </Typography>
           </Box>
         </Box>
-        <IconButton onClick={admin.closeDetail} disabled={admin.detailLoading}>
+        <IconButton
+          onClick={admin.closeDetail}
+          disabled={admin.detailLoading}
+          aria-label="Đóng chi tiết đăng ký"
+        >
           <CloseOutlined />
         </IconButton>
       </Box>

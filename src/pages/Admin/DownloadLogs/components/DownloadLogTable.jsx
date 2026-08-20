@@ -1,5 +1,6 @@
 import {
   Alert,
+  AlertTitle,
   Avatar,
   Box,
   Button,
@@ -10,9 +11,17 @@ import {
   DialogContent,
   IconButton,
   Pagination,
+  Skeleton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Tooltip,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import {
   AccessTimeOutlined,
   CloseOutlined,
@@ -32,9 +41,9 @@ import {
 } from "../../utils/admin-formatters.js";
 
 const ROLE_COLORS = {
-  USER: { bg: "rgba(34, 197, 94, 0.1)", color: "#22c55e" },
-  ADMIN: { bg: "rgba(239, 68, 68, 0.1)", color: "#ef4444" },
-  MODERATOR: { bg: "rgba(234, 179, 8, 0.1)", color: "#eab308" },
+  USER: "#22c55e",
+  ADMIN: "#ef4444",
+  MODERATOR: "#eab308",
 };
 
 // ─── Empty State ──────────────────────────────────────────────────────────────
@@ -72,7 +81,7 @@ function EmptyState() {
 
 function UserCell({ fullName, avatarUrl, role, roleLabel }) {
   const displayName = fullName || "Không xác định";
-  const roleColors = ROLE_COLORS[role] || ROLE_COLORS.USER;
+  const roleColor = ROLE_COLORS[role] || ROLE_COLORS.USER;
   const displayRole = roleLabel || role;
   const isSystemUser = !role && !roleLabel;
 
@@ -80,7 +89,7 @@ function UserCell({ fullName, avatarUrl, role, roleLabel }) {
     <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
       <Avatar
         src={avatarUrl || undefined}
-        sx={{ width: 34, height: 34, fontSize: "0.75rem", bgcolor: "#6366f1", flexShrink: 0 }}
+        sx={{ width: 34, height: 34, fontSize: "0.75rem", bgcolor: "primary.main", flexShrink: 0 }}
       >
         {displayName.charAt(0).toUpperCase()}
       </Avatar>
@@ -98,8 +107,8 @@ function UserCell({ fullName, avatarUrl, role, roleLabel }) {
               height: 16,
               fontSize: "0.65rem",
               fontWeight: 600,
-              bgcolor: roleColors.bg,
-              color: roleColors.color,
+              bgcolor: alpha(roleColor, 0.12),
+              color: roleColor,
               borderRadius: "4px",
               mt: 0.25,
               "& .MuiChip-label": { px: 0.5 },
@@ -123,7 +132,7 @@ function DocumentCell({ title, fileType, fileSize }) {
           width: 34,
           height: 34,
           borderRadius: "8px",
-          bgcolor: fileColors.bg,
+          bgcolor: (theme) => alpha(fileColors.main || theme.palette.primary.main, 0.12),
           color: fileColors.main,
           display: "flex",
           alignItems: "center",
@@ -169,14 +178,19 @@ function VisibilityChip({ visibility }) {
         icon={isPublic ? <PeopleOutlined sx={{ fontSize: "14px !important" }} /> : <LockOutlined sx={{ fontSize: "14px !important" }} />}
         label={isPublic ? "Cộng đồng" : "Riêng tư"}
         size="small"
-        sx={{
-          height: 26,
-          fontSize: "0.75rem",
-          fontWeight: 500,
-          bgcolor: isPublic ? "rgba(34, 197, 94, 0.1)" : "rgba(239, 68, 68, 0.1)",
-          color: isPublic ? "#22c55e" : "#ef4444",
-          borderRadius: "6px",
-          "& .MuiChip-icon": { color: "inherit" },
+        sx={(theme) => {
+          const color = isPublic
+            ? theme.palette.success.main
+            : theme.palette.text.secondary;
+          return {
+            height: 26,
+            fontSize: "0.75rem",
+            fontWeight: 500,
+            bgcolor: isPublic ? alpha(color, 0.12) : theme.palette.action.hover,
+            color,
+            borderRadius: "6px",
+            "& .MuiChip-icon": { color: "inherit" },
+          };
         }}
       />
     </Box>
@@ -249,8 +263,8 @@ function DetailDialog({ log, open, onClose }) {
     {
       label: "Vai trò",
       value: log.userRoleLabel || "—",
-      color: ROLE_COLORS[log.userRole]?.color || "#6366f1",
-      bgColor: ROLE_COLORS[log.userRole]?.bg || "rgba(99, 102, 241, 0.1)",
+      color: ROLE_COLORS[log.userRole] || "#6366f1",
+      bgColor: alpha(ROLE_COLORS[log.userRole] || "#6366f1", 0.1),
     },
     {
       label: "Tài liệu",
@@ -354,7 +368,12 @@ function DetailDialog({ log, open, onClose }) {
             </Typography>
           </Box>
         </Box>
-        <IconButton size="small" onClick={onClose} sx={{ color: "white" }}>
+        <IconButton
+          size="small"
+          onClick={onClose}
+          aria-label="Đóng chi tiết tải xuống"
+          sx={{ color: "white" }}
+        >
           <CloseOutlined />
         </IconButton>
       </Box>
@@ -364,7 +383,7 @@ function DetailDialog({ log, open, onClose }) {
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: "repeat(2, 1fr)",
+              gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
               gap: 2,
             }}
           >
@@ -476,8 +495,8 @@ export default function DownloadLogTable({ download }) {
               </Typography>
               <Box
                 sx={{
-                  bgcolor: "#f97316",
-                  color: "white",
+                  bgcolor: "secondary.main",
+                  color: "secondary.contrastText",
                   borderRadius: "6px",
                   px: 1,
                   py: 0.25,
@@ -498,212 +517,122 @@ export default function DownloadLogTable({ download }) {
         )}
       </Box>
 
-      {/* Table Card — full width */}
-      <Card
-        sx={{
-          borderRadius: "16px",
-          overflow: "hidden",
-          border: "1px solid",
-          borderColor: "divider",
-          boxShadow: "none",
-        }}
-      >
-        {/* Header — CSS Grid */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "1.6fr 2.4fr 1.2fr 1.4fr 0.7fr 1.2fr 0.5fr",
-            columnGap: 2,
-            alignItems: "center",
-            px: 2.5,
-            py: 1.5,
-            borderBottom: "2px solid",
-            borderColor: "divider",
-            bgcolor: "#fafafa",
-          }}
+      <Card variant="outlined" sx={{ borderRadius: 3, overflow: "hidden" }}>
+        <TableContainer
+          tabIndex={0}
+          aria-label="Bảng nhật ký tải xuống, có thể cuộn ngang"
+          sx={{ width: "100%", overflowX: "auto" }}
         >
-          {/* Người tải */}
-          <Box sx={{ gridColumn: 1 }}>
-            <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ letterSpacing: "0.06em", textTransform: "uppercase", fontSize: "0.68rem" }}>
-              Người tải
-            </Typography>
-          </Box>
+          <Table aria-label="Nhật ký tải xuống" size="small" sx={{ minWidth: 1180 }}>
+            <TableHead>
+              <TableRow
+                sx={{
+                  bgcolor: "action.hover",
+                  "& .MuiTableCell-root": {
+                    py: 1.5,
+                    color: "text.secondary",
+                    fontSize: "0.68rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                    whiteSpace: "nowrap",
+                  },
+                }}
+              >
+                <TableCell sx={{ minWidth: 180 }}>Người tải</TableCell>
+                <TableCell sx={{ minWidth: 250 }}>Tài liệu</TableCell>
+                <TableCell align="center" sx={{ minWidth: 130 }}>Phạm vi</TableCell>
+                <TableCell sx={{ minWidth: 190 }}>Môn / Danh mục</TableCell>
+                <TableCell align="center" sx={{ minWidth: 100 }}>Lượt tải</TableCell>
+                <TableCell sx={{ minWidth: 160 }}>Thời gian</TableCell>
+                <TableCell align="right" sx={{ minWidth: 90 }}>Thao tác</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading &&
+                Array.from({ length: 6 }).map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell><Skeleton height={38} /></TableCell>
+                    <TableCell><Skeleton height={38} /></TableCell>
+                    <TableCell align="center"><Skeleton width={80} height={28} sx={{ mx: "auto" }} /></TableCell>
+                    <TableCell><Skeleton height={28} /></TableCell>
+                    <TableCell align="center"><Skeleton width={36} height={24} sx={{ mx: "auto" }} /></TableCell>
+                    <TableCell><Skeleton height={24} /></TableCell>
+                    <TableCell align="right"><Skeleton width={34} height={34} sx={{ ml: "auto" }} /></TableCell>
+                  </TableRow>
+                ))}
 
-          {/* Tài liệu */}
-          <Box sx={{ gridColumn: 2 }}>
-            <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ letterSpacing: "0.06em", textTransform: "uppercase", fontSize: "0.68rem" }}>
-              Tài liệu
-            </Typography>
-          </Box>
+              {!loading && logs.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} sx={{ p: 0 }}>
+                    <EmptyState />
+                  </TableCell>
+                </TableRow>
+              )}
 
-          {/* Phạm vi */}
-          <Box sx={{ gridColumn: 3, display: "flex", justifyContent: "center" }}>
-            <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ letterSpacing: "0.06em", textTransform: "uppercase", fontSize: "0.68rem" }}>
-              Phạm vi
-            </Typography>
-          </Box>
-
-          {/* Môn / Danh mục */}
-          <Box sx={{ gridColumn: 4, pl: 0.25 }}>
-            <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ letterSpacing: "0.06em", textTransform: "uppercase", fontSize: "0.68rem" }}>
-              Môn / Danh mục
-            </Typography>
-          </Box>
-
-          {/* Lượt tải */}
-          <Box sx={{ gridColumn: 5, textAlign: "center" }}>
-            <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ letterSpacing: "0.06em", textTransform: "uppercase", fontSize: "0.68rem" }}>
-              Lượt tải
-            </Typography>
-          </Box>
-
-          {/* Thời gian */}
-          <Box sx={{ gridColumn: 6 }}>
-            <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ letterSpacing: "0.06em", textTransform: "uppercase", fontSize: "0.68rem" }}>
-              Thời gian
-            </Typography>
-          </Box>
-
-          {/* Tác vụ */}
-          <Box sx={{ gridColumn: 7, textAlign: "center" }}>
-            <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ letterSpacing: "0.06em", textTransform: "uppercase", fontSize: "0.68rem" }}>
-              Tác vụ
-            </Typography>
-          </Box>
-        </Box>
-
-        {/* Loading skeleton */}
-        {loading &&
-          Array.from({ length: 6 }).map((_, i) => (
-            <Box
-              key={i}
-              sx={{
-                display: "grid",
-                gridTemplateColumns: "1.6fr 2.4fr 1.2fr 1.4fr 0.7fr 1.2fr 0.5fr",
-                columnGap: 2,
-                alignItems: "center",
-                px: 2.5,
-                py: 1.75,
-                borderBottom: "1px solid",
-                borderColor: "divider",
-                "&:last-child": { borderBottom: 0 },
-              }}
-            >
-              <Box sx={{ gridColumn: 1 }}>
-                <Box sx={{ height: 12, width: "80%", borderRadius: 1, bgcolor: "action.hover" }} />
-              </Box>
-              <Box sx={{ gridColumn: 2 }}>
-                <Box sx={{ height: 12, width: "90%", borderRadius: 1, bgcolor: "action.hover" }} />
-              </Box>
-              <Box sx={{ gridColumn: 3, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Box sx={{ height: 12, width: 60, borderRadius: 1, bgcolor: "action.hover" }} />
-              </Box>
-              <Box sx={{ gridColumn: 4 }}>
-                <Box sx={{ height: 12, width: "90%", borderRadius: 1, bgcolor: "action.hover" }} />
-              </Box>
-              <Box sx={{ gridColumn: 5, display: "flex", justifyContent: "center" }}>
-                <Box sx={{ height: 12, width: 24, borderRadius: 1, bgcolor: "action.hover" }} />
-              </Box>
-              <Box sx={{ gridColumn: 6 }}>
-                <Box sx={{ height: 12, width: "80%", borderRadius: 1, bgcolor: "action.hover" }} />
-              </Box>
-              <Box sx={{ gridColumn: 7, display: "flex", justifyContent: "center" }}>
-                <Box sx={{ height: 12, width: 20, borderRadius: 1, bgcolor: "action.hover" }} />
-              </Box>
-            </Box>
-          ))}
-
-        {/* Empty state */}
-        {!loading && logs.length === 0 && <EmptyState />}
-
-        {/* Data rows — CSS Grid */}
-        {!loading &&
-          logs.map((log) => (
-            <Box
-              key={log.id}
-              sx={{
-                display: "grid",
-                gridTemplateColumns: "1.6fr 2.4fr 1.2fr 1.4fr 0.7fr 1.2fr 0.5fr",
-                columnGap: 2,
-                alignItems: "center",
-                px: 2.5,
-                py: 1.75,
-                borderBottom: "1px solid",
-                borderColor: "divider",
-                "&:hover": { bgcolor: "action.hover" },
-                "&:last-child": { borderBottom: 0 },
-                minHeight: 68,
-              }}
-            >
-              {/* Người tải */}
-              <Box sx={{ gridColumn: 1, overflow: "hidden" }}>
-                <UserCell
-                  fullName={log.userFullName}
-                  avatarUrl={log.userAvatarUrl}
-                  role={log.userRole}
-                  roleLabel={log.userRoleLabel}
-                />
-              </Box>
-
-              {/* Tài liệu */}
-              <Box sx={{ gridColumn: 2, overflow: "hidden" }}>
-                <DocumentCell
-                  title={log.documentTitle}
-                  fileType={log.fileType}
-                  fileSize={log.fileSize}
-                />
-              </Box>
-
-              {/* Phạm vi */}
-              <Box sx={{ gridColumn: 3, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <VisibilityChip visibility={log.visibility} />
-              </Box>
-
-              {/* Môn / Danh mục */}
-              <Box sx={{ gridColumn: 4, overflow: "hidden" }}>
-                <SubjectCategoryCell
-                  subjectName={log.subjectName}
-                  categoryName={log.categoryName}
-                />
-              </Box>
-
-              {/* Lượt tải */}
-              <Box sx={{ gridColumn: 5, display: "flex", justifyContent: "center" }}>
-                <DownloadCountCell count={log.documentDownloadCount} />
-              </Box>
-
-              {/* Thời gian */}
-              <Box sx={{ gridColumn: 6, overflow: "hidden" }}>
-                <Tooltip title={formatDate(log.downloadedAt)} placement="top">
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    <AccessTimeOutlined sx={{ fontSize: 15, color: "text.disabled", flexShrink: 0 }} />
-                    <Typography variant="body2" sx={{ fontSize: "0.82rem" }}>
-                      {formatRelativeTime(log.downloadedAt)}
-                    </Typography>
-                  </Box>
-                </Tooltip>
-              </Box>
-
-              {/* Tác vụ */}
-              <Box sx={{ gridColumn: 7, display: "flex", justifyContent: "center" }}>
-                <Tooltip title="Xem chi tiết">
-                  <IconButton
-                    size="small"
-                    onClick={() => setSelectedLog(log)}
-                    sx={{
-                      color: "#6366f1",
-                      bgcolor: "rgba(99, 102, 241, 0.08)",
-                      width: 34,
-                      height: 34,
-                      "&:hover": { bgcolor: "rgba(99, 102, 241, 0.15)" },
-                    }}
-                  >
-                    <VisibilityOutlined sx={{ fontSize: 17 }} />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            </Box>
-          ))}
+              {!loading &&
+                logs.map((log) => (
+                  <TableRow key={log.id} hover sx={{ height: 68 }}>
+                    <TableCell>
+                      <UserCell
+                        fullName={log.userFullName}
+                        avatarUrl={log.userAvatarUrl}
+                        role={log.userRole}
+                        roleLabel={log.userRoleLabel}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <DocumentCell
+                        title={log.documentTitle}
+                        fileType={log.fileType}
+                        fileSize={log.fileSize}
+                      />
+                    </TableCell>
+                    <TableCell align="center">
+                      <VisibilityChip visibility={log.visibility} />
+                    </TableCell>
+                    <TableCell>
+                      <SubjectCategoryCell
+                        subjectName={log.subjectName}
+                        categoryName={log.categoryName}
+                      />
+                    </TableCell>
+                    <TableCell align="center">
+                      <DownloadCountCell count={log.documentDownloadCount} />
+                    </TableCell>
+                    <TableCell>
+                      <Tooltip title={formatDate(log.downloadedAt)} placement="top">
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, whiteSpace: "nowrap" }}>
+                          <AccessTimeOutlined sx={{ fontSize: 15, color: "text.disabled", flexShrink: 0 }} />
+                          <Typography variant="body2" sx={{ fontSize: "0.82rem" }}>
+                            {formatRelativeTime(log.downloadedAt)}
+                          </Typography>
+                        </Box>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Tooltip title="Xem chi tiết">
+                        <IconButton
+                          size="small"
+                          aria-label={`Xem chi tiết lượt tải ${log.documentTitle || "tài liệu"}`}
+                          onClick={() => setSelectedLog(log)}
+                          sx={{
+                            color: "primary.main",
+                            bgcolor: "action.selected",
+                            width: 34,
+                            height: 34,
+                            "&:hover": { bgcolor: "action.hover" },
+                          }}
+                        >
+                          <VisibilityOutlined sx={{ fontSize: 17 }} />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Card>
 
       {/* Pagination */}
