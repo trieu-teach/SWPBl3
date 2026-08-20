@@ -19,6 +19,7 @@ export default function ChatContextBar({
       sx={{
         px: { xs: 2, sm: 3 },
         py: 0.8,
+        flexShrink: 0,
         borderBottom: "1px solid",
         borderColor: "divider",
         bgcolor: "background.paper",

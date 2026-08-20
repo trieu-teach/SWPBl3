@@ -86,6 +86,8 @@ export default function ChatMessageList({
           flex: 1,
           minHeight: 0,
           overflowY: "auto",
+          overflowX: "hidden",
+          overscrollBehaviorY: "contain",
           p: { xs: 2, sm: 3 },
           display: "flex",
           flexDirection: "column"
@@ -100,7 +102,14 @@ export default function ChatMessageList({
     <Box
       ref={listRef}
       onScroll={handleScroll}
-      sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: { xs: 1.5, sm: 3 } }}
+      sx={{
+        flex: 1,
+        minHeight: 0,
+        overflowY: "auto",
+        overflowX: "hidden",
+        overscrollBehaviorY: "contain",
+        p: { xs: 1.5, sm: 3 },
+      }}
     >
       <ChatHistoryLoader
         hasMore={hasMoreHistory}

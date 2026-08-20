@@ -24,6 +24,7 @@ export default function ChatHeader({
         px: { xs: 2, sm: 3 },
         py: 1.25,
         minHeight: { sm: 62 },
+        flexShrink: 0,
         borderBottom: "1px solid",
         borderColor: "divider",
       }}

@@ -265,6 +265,7 @@ function SidebarContent({
         maxWidth: "100vw",
         height: "100%",
         minHeight: 0,
+        overflow: "hidden",
         bgcolor: "background.paper",
       }}
     >
@@ -331,7 +332,15 @@ function SidebarContent({
 
       <Divider />
 
-      <Box sx={{ minHeight: 0, flex: 1, overflowY: "auto" }}>
+      <Box
+        sx={{
+          minHeight: 0,
+          flex: 1,
+          overflowY: "auto",
+          overflowX: "hidden",
+          overscrollBehaviorY: "contain",
+        }}
+      >
         <DocumentSection
           title="Tài liệu của tôi"
           source={library.owned}
