@@ -26,7 +26,7 @@ import {
 import { Link } from "react-router-dom";
 import { MAX_SELECTED_DOCUMENTS } from "../../../../api/chat.api.js";
 
-const SIDEBAR_WIDTH = 328;
+const SIDEBAR_WIDTH = 336;
 const SELECTABLE_AI_STATUSES = new Set(["COMPLETED", "MOCKED"]);
 
 function isSelectable(document) {
@@ -64,9 +64,9 @@ function DocumentRow({
       disableGutters
       sx={{
         mx: 1,
-        my: 0.25,
-        px: 0.75,
-        py: 0.65,
+        my: 0.3,
+        px: 0.8,
+        py: 0.75,
         width: "auto",
         alignItems: "flex-start",
         borderRadius: 1.5,
@@ -81,10 +81,10 @@ function DocumentRow({
         onChange={() => onToggle(document)}
         size="small"
         inputProps={{ "aria-label": `Chọn ${document.title}` }}
-        sx={{ mt: 0.15, mr: 0.25, p: 0.75 }}
+        sx={{ mt: 0.1, mr: 0.35, p: 0.75 }}
       />
       <DescriptionOutlined
-        sx={{ mt: 0.85, mr: 0.9, fontSize: 18, color: "text.secondary" }}
+        sx={{ mt: 0.75, mr: 1, fontSize: 19, color: "text.secondary" }}
       />
       <Box sx={{ minWidth: 0, flex: 1 }}>
         <Button
@@ -98,7 +98,7 @@ function DocumentRow({
             maxWidth: "100%",
             justifyContent: "flex-start",
             px: 0,
-            py: 0.25,
+            py: 0.15,
             fontSize: "0.82rem",
             fontWeight: 700,
             lineHeight: 1.35,
@@ -118,8 +118,8 @@ function DocumentRow({
         <Stack
           direction="row"
           alignItems="center"
-          gap={0.65}
-          sx={{ minWidth: 0, mt: 0.25 }}
+          gap={0.7}
+          sx={{ minWidth: 0, mt: 0.35 }}
         >
           <Typography variant="caption" color="text.secondary">
             {extension}
@@ -130,9 +130,9 @@ function DocumentRow({
             color={selectable ? "success" : "default"}
             variant="filled"
             sx={{
-              height: 19,
+              height: 21,
               maxWidth: 150,
-              fontSize: "0.64rem",
+              fontSize: "0.68rem",
               bgcolor: selectable
                 ? "rgba(46, 125, 50, 0.08)"
                 : "action.hover",
@@ -149,7 +149,7 @@ function DocumentRow({
             onClick={() => onPreview(document)}
             disabled={previewing}
             aria-label={`Xem ${document.title}`}
-            sx={{ ml: 0.25, mt: 0.15 }}
+            sx={{ ml: 0.35, mt: 0.1 }}
           >
             {previewing ? (
               <CircularProgress size={17} />
@@ -173,11 +173,19 @@ function DocumentSection({
   previewingDocumentId,
 }) {
   return (
-    <Box component="section" sx={{ py: 0.75 }}>
+    <Box component="section" sx={{ py: 1 }}>
       <Typography
         variant="overline"
         color="text.secondary"
-        sx={{ display: "block", px: 2, pb: 0.25, fontWeight: 800 }}
+        sx={{
+          display: "block",
+          px: 2,
+          pb: 0.35,
+          fontWeight: 800,
+          fontSize: "0.68rem",
+          lineHeight: 1.8,
+          letterSpacing: "0.07em",
+        }}
       >
         {title}
       </Typography>
@@ -272,18 +280,28 @@ function SidebarContent({
       <Stack
         direction="row"
         alignItems="center"
-        gap={0.85}
-        sx={{ px: 2, py: 1.1, flexShrink: 0 }}
+        gap={0.9}
+        sx={{ px: 2, pt: 1.4, pb: 1.05, flexShrink: 0 }}
       >
         <DescriptionOutlined color="action" />
-        <Box sx={{ minWidth: 0, flex: 1 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+        <Stack
+          direction="row"
+          alignItems="baseline"
+          justifyContent="space-between"
+          gap={1}
+          sx={{ minWidth: 0, flex: 1 }}
+        >
+          <Typography variant="subtitle1" sx={{ fontWeight: 800, lineHeight: 1.4 }}>
             Tài liệu
           </Typography>
-          <Typography variant="caption" color="text.secondary">
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ flexShrink: 0, fontWeight: 600 }}
+          >
             {selectedIds.size}/{MAX_SELECTED_DOCUMENTS} đã chọn
           </Typography>
-        </Box>
+        </Stack>
         {showCloseButton && (
           <IconButton onClick={onClose} aria-label="Đóng danh sách tài liệu">
             <CloseOutlined />
@@ -291,7 +309,11 @@ function SidebarContent({
         )}
       </Stack>
 
-      <Box component="form" onSubmit={library.applySearch} sx={{ px: 2, pb: 1.1 }}>
+      <Box
+        component="form"
+        onSubmit={library.applySearch}
+        sx={{ px: 2, pb: 1.35 }}
+      >
         <TextField
           fullWidth
           size="small"
@@ -304,6 +326,13 @@ function SidebarContent({
                 <SearchOutlined fontSize="small" />
               </InputAdornment>
             ),
+          }}
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              minHeight: 40,
+              borderRadius: 2,
+              bgcolor: "background.default",
+            },
           }}
         />
       </Box>
@@ -363,7 +392,7 @@ function SidebarContent({
       </Box>
 
       <Divider />
-      <Box sx={{ p: 1.25, flexShrink: 0 }}>
+      <Box sx={{ p: 1.5, flexShrink: 0 }}>
         <Button
           fullWidth
           component={Link}
@@ -371,6 +400,7 @@ function SidebarContent({
           variant="outlined"
           startIcon={<UploadFileOutlined />}
           onClick={onClose}
+          sx={{ minHeight: 40, fontWeight: 700 }}
         >
           Tải tài liệu
         </Button>

@@ -17,8 +17,8 @@ export default function ChatContextBar({
   return (
     <Box
       sx={{
-        px: { xs: 2, sm: 3 },
-        py: 0.8,
+        px: { xs: 2, sm: 2.5, md: 3 },
+        py: 0.7,
         flexShrink: 0,
         borderBottom: "1px solid",
         borderColor: "divider",
@@ -26,13 +26,15 @@ export default function ChatContextBar({
       }}
     >
       <Stack
-        direction={{ xs: "column", sm: "row" }}
-        alignItems={{ xs: "flex-start", sm: "center" }}
-        spacing={0.75}
-        sx={{ gap: 0.75 }}
+        direction="row"
+        alignItems="center"
+        flexWrap="wrap"
+        gap={0.75}
       >
         <Stack direction="row" spacing={0.75} alignItems="center">
-          <LibraryBooksOutlined sx={{ fontSize: "1rem", color: "text.secondary" }} />
+          <LibraryBooksOutlined
+            sx={{ fontSize: "1rem", color: "text.secondary" }}
+          />
           <Typography
             variant="caption"
             color="text.secondary"
@@ -45,9 +47,18 @@ export default function ChatContextBar({
         </Stack>
 
         <Typography
+          component="span"
+          aria-hidden="true"
+          color="text.disabled"
+          sx={{ fontSize: "0.72rem", lineHeight: 1 }}
+        >
+          ·
+        </Typography>
+
+        <Typography
           variant="caption"
           color="text.secondary"
-          sx={{ opacity: 0.85 }}
+          sx={{ opacity: 0.8 }}
         >
           Áp dụng cho câu hỏi tiếp theo.
         </Typography>
@@ -57,7 +68,10 @@ export default function ChatContextBar({
             direction="row"
             gap={0.75}
             flexWrap="wrap"
-            sx={{ display: { xs: "flex", lg: "none" } }}
+            sx={{
+              display: { xs: "flex", lg: "none" },
+              flexBasis: { xs: "100%", sm: "auto" },
+            }}
           >
             {selectedDocuments.map((doc) => (
               <Tooltip key={doc.id} title={doc.title}>

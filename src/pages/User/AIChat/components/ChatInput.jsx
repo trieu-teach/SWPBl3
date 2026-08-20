@@ -19,6 +19,7 @@ export default function ChatInput({
   error,
 }) {
   const isDisabled = !value.trim() || isSending;
+  const inLibraryMode = isLibraryContext(chatContext);
 
   function handleKeyDown(event) {
     if (event.key === "Enter" && !event.shiftKey) {
@@ -27,7 +28,7 @@ export default function ChatInput({
     }
   }
 
-  const placeholder = isLibraryContext(chatContext)
+  const placeholder = inLibraryMode
     ? "Hỏi về tài liệu trong thư viện của bạn..."
     : "Nhập câu hỏi học tập của bạn...";
 
@@ -36,7 +37,9 @@ export default function ChatInput({
       elevation={0}
       sx={{
         px: { xs: 1.25, sm: 2 },
-        py: { xs: 1.15, sm: 1.5 },
+        py: inLibraryMode
+          ? { xs: 1.25, sm: 1.65 }
+          : { xs: 1.15, sm: 1.5 },
         borderTop: "1px solid",
         borderColor: "divider",
         borderRadius: 0,
@@ -56,13 +59,14 @@ export default function ChatInput({
           width: "100%",
           maxWidth: 960,
           minWidth: 0,
+          minHeight: inLibraryMode ? 52 : undefined,
           mx: "auto",
-          py: 0.55,
+          py: inLibraryMode ? 0.65 : 0.55,
           pl: 1.5,
-          pr: 0.65,
+          pr: inLibraryMode ? 0.7 : 0.65,
           border: "1px solid",
           borderColor: "divider",
-          borderRadius: 3,
+          borderRadius: inLibraryMode ? 2.5 : 3,
           bgcolor: "background.paper",
           transition: "border-color 120ms ease, box-shadow 120ms ease",
           "&:focus-within": {
@@ -103,8 +107,8 @@ export default function ChatInput({
               disabled={isDisabled}
               aria-label={isSending ? "Đang gửi câu hỏi" : "Gửi câu hỏi"}
               sx={{
-                width: 38,
-                height: 38,
+                width: inLibraryMode ? 40 : 38,
+                height: inLibraryMode ? 40 : 38,
                 flexShrink: 0,
                 bgcolor: "primary.main",
                 color: "primary.contrastText",

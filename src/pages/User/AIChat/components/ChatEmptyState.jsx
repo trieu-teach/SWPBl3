@@ -32,7 +32,8 @@ export default function ChatEmptyState({ chatContext }) {
         justifyContent: "center",
         height: "100%",
         width: "100%",
-        py: { xs: 4, sm: 6 },
+        pt: isLibrary ? { xs: 3, sm: 5 } : { xs: 4, sm: 6 },
+        pb: isLibrary ? { xs: 7, sm: 10 } : { xs: 4, sm: 6 },
         px: 2,
       }}
     >
@@ -47,29 +48,67 @@ export default function ChatEmptyState({ chatContext }) {
       >
         <Box
           sx={{
-            width: 44,
-            height: 44,
+            width: isLibrary ? 48 : 44,
+            height: isLibrary ? 48 : 44,
             display: "grid",
             placeItems: "center",
             mx: "auto",
-            mb: 1.5,
+            mb: isLibrary ? 1.75 : 1.5,
             borderRadius: 2,
             bgcolor: "action.hover",
             color: "primary.main",
           }}
         >
-          <AutoAwesomeOutlined sx={{ fontSize: 22 }} />
+          <AutoAwesomeOutlined sx={{ fontSize: isLibrary ? 24 : 22 }} />
         </Box>
-        <Typography variant="h6" sx={{ fontWeight: 800, mb: 0.75 }}>
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 800,
+            fontSize: isLibrary ? "1.25rem" : undefined,
+            mb: 0.75,
+          }}
+        >
           {title}
         </Typography>
-        <Typography color="text.secondary" sx={{ maxWidth: 520, mx: "auto", mb: 2.5, fontSize: "0.9rem" }}>
+        <Typography
+          color="text.secondary"
+          sx={{
+            maxWidth: isLibrary ? 540 : 520,
+            mx: "auto",
+            mb: isLibrary ? 2.75 : 2.5,
+            fontSize: isLibrary ? "0.92rem" : "0.9rem",
+            lineHeight: isLibrary ? 1.6 : undefined,
+          }}
+        >
           {description}
         </Typography>
 
-        <Stack direction="row" gap={1} justifyContent="center" flexWrap="wrap">
+        <Stack
+          direction="row"
+          gap={isLibrary ? 1.1 : 1}
+          justifyContent="center"
+          flexWrap="wrap"
+        >
           {suggestions.map((suggestion) => (
-            <Chip key={suggestion} label={suggestion} variant="outlined" size="small" />
+            <Chip
+              key={suggestion}
+              label={suggestion}
+              variant="outlined"
+              size="small"
+              sx={
+                isLibrary
+                  ? {
+                      height: 34,
+                      borderRadius: 1.75,
+                      color: "text.secondary",
+                      bgcolor: "background.paper",
+                      "& .MuiChip-label": { px: 1.4 },
+                      "&:hover": { bgcolor: "action.hover" },
+                    }
+                  : undefined
+              }
+            />
           ))}
         </Stack>
       </Stack>

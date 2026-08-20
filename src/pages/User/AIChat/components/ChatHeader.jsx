@@ -19,18 +19,22 @@ export default function ChatHeader({
       direction={{ xs: "column", sm: "row" }}
       alignItems={{ xs: "flex-start", sm: "center" }}
       justifyContent="space-between"
-      gap={1}
+      gap={1.5}
       sx={{
-        px: { xs: 2, sm: 3 },
-        py: 1.25,
-        minHeight: { sm: 62 },
+        width: "100%",
+        px: { xs: 2, sm: 2.5, md: 3 },
+        py: { xs: 1.25, sm: 1.5 },
+        minHeight: { sm: 68 },
         flexShrink: 0,
         borderBottom: "1px solid",
         borderColor: "divider",
+        bgcolor: "background.paper",
       }}
     >
-      <Stack spacing={0.2} sx={{ minWidth: 0 }}>
-        <Typography sx={{ fontWeight: 800, fontSize: "1rem", lineHeight: 1.3 }}>
+      <Stack spacing={0.35} sx={{ minWidth: 0, flex: "1 1 360px" }}>
+        <Typography
+          sx={{ fontWeight: 800, fontSize: "1.05rem", lineHeight: 1.3 }}
+        >
           {inLibraryMode ? "Thư viện của bạn" : "Trợ lý tài liệu"}
         </Typography>
         {inDocumentMode && chatContext.document?.title && (
@@ -55,7 +59,7 @@ export default function ChatHeader({
         {inLibraryMode && (
           <Typography
             color="text.secondary"
-            sx={{ fontSize: "0.76rem", display: { xs: "none", sm: "block" } }}
+            sx={{ fontSize: "0.78rem", lineHeight: 1.45 }}
           >
             Chọn tài liệu bên trái để thu hẹp phạm vi câu hỏi tiếp theo.
           </Typography>
@@ -70,12 +74,22 @@ export default function ChatHeader({
         )}
       </Stack>
       {inLibraryMode && (
-        <Stack direction="row" spacing={0.75} flexWrap="wrap">
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent={{ xs: "flex-start", sm: "flex-end" }}
+          flexWrap="wrap"
+          gap={0.75}
+          sx={{ flexShrink: 0, ml: { sm: "auto" } }}
+        >
           <Button
             size="small"
             startIcon={<FolderOpenOutlined />}
             onClick={onOpenDocuments}
-            sx={{ display: { xs: "inline-flex", lg: "none" }, minHeight: 36 }}
+            sx={{
+              display: { xs: "inline-flex", lg: "none" },
+              minHeight: 36,
+            }}
           >
             Tài liệu
           </Button>
@@ -84,6 +98,7 @@ export default function ChatHeader({
             variant="outlined"
             startIcon={<AddCommentOutlined />}
             onClick={onNewChat}
+            sx={{ minHeight: 36, px: 1.5, fontWeight: 700 }}
           >
             Chat mới
           </Button>
@@ -91,6 +106,7 @@ export default function ChatHeader({
             size="small"
             startIcon={<HistoryOutlined />}
             onClick={onOpenHistory}
+            sx={{ minHeight: 36, color: "text.secondary", px: 1.25 }}
           >
             Lịch sử
           </Button>
