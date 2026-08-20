@@ -332,6 +332,14 @@ export default function App() {
                         </RequireAuth>
                       }
                     />
+                    <Route
+                      path="/admin/moderation-reports"
+                      element={
+                        <RequireAuth allowedRoles={["ADMIN"]}>
+                          <ModeratorReports role="ADMIN" />
+                        </RequireAuth>
+                      }
+                    />
 
                     {/* ── Moderator ── */}
                     <Route
@@ -346,7 +354,7 @@ export default function App() {
                       path="/moderator/dashboard"
                       element={
                         <RequireAuth allowedRoles={["ADMIN", "MODERATOR"]}>
-                          <Navigate to="/moderator/reports" replace />
+                          <Navigate to="/moderator/moderation" replace />
                         </RequireAuth>
                       }
                     />
@@ -354,7 +362,7 @@ export default function App() {
                       path="/moderator/moderation"
                       element={
                         <RequireAuth allowedRoles={["ADMIN", "MODERATOR"]}>
-                          <Navigate to="/moderator/reports" replace />
+                          <AdminDocuments role="MODERATOR" />
                         </RequireAuth>
                       }
                     />

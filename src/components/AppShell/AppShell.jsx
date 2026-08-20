@@ -51,7 +51,11 @@ const USER_NAVIGATION = [
 const ADMIN_NAVIGATION = [
   { label: "Tổng quan", path: "/admin/dashboard", icon: DashboardOutlined },
   { label: "Người dùng", path: "/admin/users", icon: PeopleAltOutlined },
-  { label: "Tài liệu", path: "/admin/documents", icon: DescriptionOutlined },
+  {
+    label: "Kiểm duyệt tài liệu",
+    path: "/admin/documents",
+    icon: DescriptionOutlined,
+  },
   {
     label: "Gói dịch vụ",
     path: "/admin/subscription-plans",
@@ -72,10 +76,20 @@ const ADMIN_NAVIGATION = [
     path: "/admin/download-logs",
     icon: DownloadOutlined,
   },
-  { label: "Báo cáo", path: "/admin/reports", icon: AssessmentOutlined },
+  { label: "Thống kê", path: "/admin/reports", icon: AssessmentOutlined },
+  {
+    label: "Báo cáo vi phạm",
+    path: "/admin/moderation-reports",
+    icon: ReportProblemOutlined,
+  },
 ];
 
 const MODERATOR_NAVIGATION = [
+  {
+    label: "Kiểm duyệt tài liệu",
+    path: "/moderator/moderation",
+    icon: DescriptionOutlined,
+  },
   {
     label: "Báo cáo vi phạm",
     path: "/moderator/reports",
@@ -176,7 +190,7 @@ function SidebarContent({
   const homePath = isAdmin
     ? "/admin/dashboard"
     : isModerator
-      ? "/moderator/reports"
+      ? "/moderator/moderation"
       : "/documents";
   const workspaceLabel = isAdmin
     ? "Hệ thống quản trị"

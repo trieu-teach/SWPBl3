@@ -56,6 +56,11 @@ export default function CommunityLibrary() {
         document={community.reportTarget}
         loading={community.reporting}
         error={community.reportError}
+        reported={
+          community.reportTarget
+            ? community.reportedDocumentIds.has(community.reportTarget.id)
+            : false
+        }
         onClose={community.closeReport}
         onSubmit={community.submitReport}
       />

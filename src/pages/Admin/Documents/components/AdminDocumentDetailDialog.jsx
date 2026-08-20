@@ -30,8 +30,9 @@ export default function AdminDocumentDetailDialog({
   if (!document) return null;
 
   const isPendingPublicDocument =
-    document.visibility === "PUBLIC" && document.moderationStatus === "PENDING";
-  const canToggleHidden = document.moderationStatus === "APPROVED";
+    document.visibility === "PUBLIC" &&
+    document.status === "ACTIVE" &&
+    document.moderationStatus === "PENDING";
 
   return (
     <Dialog open onClose={onClose} fullWidth maxWidth="md">
@@ -128,19 +129,6 @@ export default function AdminDocumentDetailDialog({
               Từ chối
             </Button>
           </>
-        )}
-        {canToggleHidden && (
-          <Button
-            color={document.status === "HIDDEN" ? "success" : "error"}
-            onClick={() =>
-              onAction({
-                type: document.status === "HIDDEN" ? "unhide" : "hide",
-                document,
-              })
-            }
-          >
-            {document.status === "HIDDEN" ? "Khôi phục" : "Ẩn"}
-          </Button>
         )}
         <Button onClick={onClose}>Đóng</Button>
       </DialogActions>

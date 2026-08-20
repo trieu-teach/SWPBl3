@@ -4,9 +4,8 @@ import { Box, Paper } from "@mui/material";
 import UserLayout from "../Layout/UserLayout.jsx";
 import DocumentPreviewDialog from "../DocumentLibrary/components/DocumentPreviewDialog.jsx";
 import ChatHeader from "./components/ChatHeader.jsx";
-import ChatContextBar from "./components/ChatContextBar.jsx";
 import ChatConversation from "./components/ChatConversation.jsx";
-import ChatSessionDrawer from "./components/ChatSessionDrawer.jsx";
+import ChatSidebar from "./components/ChatSidebar.jsx";
 import LibraryDocumentSidebar from "./components/LibraryDocumentSidebar.jsx";
 import { MAX_SELECTED_DOCUMENTS } from "../../../api/chat.api.js";
 import { useChatConversation } from "./hooks/useChatConversation.js";
@@ -124,9 +123,7 @@ function updateDocumentInContext(currentContext, document, shouldSelect) {
 }
 
 function ChatPageLayout({
-  chatContext,
   selectedDocuments,
-  onRemoveDocument,
   onToggleDocument,
   libraryDocuments,
   previewController,
@@ -164,6 +161,20 @@ function ChatPageLayout({
           bgcolor: "background.default",
         }}
       >
+        <ChatSidebar
+          sessions={sessions}
+          activeSessionId={currentSessionId}
+          loading={sessionsLoading}
+          loadingMore={sessionsLoadingMore}
+          error={sessionsError}
+          hasMore={sessionsHasMore}
+          onSelectSession={onSelectSession}
+          onNewChat={onNewChat}
+          onLoadMore={onLoadMoreSessions}
+          mobileOpen={historyOpen}
+          onMobileClose={() => setHistoryOpen(false)}
+        />
+
         <LibraryDocumentSidebar
           library={libraryDocuments}
           selectedDocuments={selectedDocuments}
@@ -173,6 +184,7 @@ function ChatPageLayout({
           previewError={previewController.error}
           mobileOpen={documentsOpen}
           onMobileClose={() => setDocumentsOpen(false)}
+          drawerOnly
         />
 
         <Box
@@ -187,36 +199,17 @@ function ChatPageLayout({
           }}
         >
           <ChatHeader
-            chatContext={chatContext}
             onOpenDocuments={() => setDocumentsOpen(true)}
             onNewChat={onNewChat}
             onOpenHistory={() => setHistoryOpen(true)}
+            selectedDocumentCount={selectedDocuments.length}
           />
 
-          <ChatContextBar
-            chatContext={chatContext}
-            selectedDocuments={selectedDocuments}
-            onRemove={onRemoveDocument}
-          />
-
-          {children}
+          {typeof children === "function"
+            ? children({ onOpenDocuments: () => setDocumentsOpen(true) })
+            : children}
         </Box>
       </Paper>
-
-      <ChatSessionDrawer
-        open={historyOpen}
-        onClose={() => setHistoryOpen(false)}
-        emptyText="Chưa có cuộc trò chuyện nào trong thư viện."
-        sessions={sessions}
-        activeSessionId={currentSessionId}
-        loading={sessionsLoading}
-        loadingMore={sessionsLoadingMore}
-        error={sessionsError}
-        hasMore={sessionsHasMore}
-        onSelectSession={onSelectSession}
-        onNewChat={onNewChat}
-        onLoadMore={onLoadMoreSessions}
-      />
 
       <DocumentPreviewDialog
         preview={previewController.preview}
@@ -321,9 +314,7 @@ function LibraryChatRuntime({ preselectedDocument }) {
 
   return (
     <ChatPageLayout
-      chatContext={libraryContext}
       selectedDocuments={selectedDocuments}
-      onRemoveDocument={removeDocument}
       onToggleDocument={toggleDocument}
       libraryDocuments={libraryDocuments}
       previewController={previewController}
@@ -337,23 +328,29 @@ function LibraryChatRuntime({ preselectedDocument }) {
       onLoadMoreSessions={loadMoreSessions}
       onNewChat={handleNewChat}
     >
-      <ChatConversation
-        chatContext={libraryContext}
-        messages={conversation.messages}
-        inputValue={conversation.inputValue}
-        onInputChange={conversation.setInputValue}
-        onSend={conversation.sendMessage}
-        onRetry={conversation.retryMessage}
-        isSending={conversation.isSending}
-        error={conversationError}
-        isLoadingHistory={
-          isValidating || conversation.isLoadingHistory
-        }
-        isLoadingOlderMessages={conversation.isLoadingOlderMessages}
-        hasMoreHistory={conversation.hasMoreHistory}
-        onLoadOlder={conversation.loadOlderMessages}
-        disabled={!conversationEnabled}
-      />
+      {({ onOpenDocuments }) => (
+        <ChatConversation
+          chatContext={libraryContext}
+          messages={conversation.messages}
+          inputValue={conversation.inputValue}
+          onInputChange={conversation.setInputValue}
+          onSend={conversation.sendMessage}
+          onRetry={conversation.retryMessage}
+          onAbort={conversation.abort}
+          selectedDocuments={selectedDocuments}
+          onRemoveDocument={removeDocument}
+          onOpenDocuments={onOpenDocuments}
+          isSending={conversation.isSending}
+          error={conversationError}
+          isLoadingHistory={
+            isValidating || conversation.isLoadingHistory
+          }
+          isLoadingOlderMessages={conversation.isLoadingOlderMessages}
+          hasMoreHistory={conversation.hasMoreHistory}
+          onLoadOlder={conversation.loadOlderMessages}
+          disabled={!conversationEnabled}
+        />
+      )}
     </ChatPageLayout>
   );
 }
