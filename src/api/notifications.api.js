@@ -1,4 +1,4 @@
-import { apiClient } from "../lib/http";
+import { API_BASE_URL, apiClient } from "../lib/http";
 
 /**
  * @typedef {Object} NotificationDto
@@ -53,78 +53,79 @@ export async function markAllAsRead() {
  * Create SSE connection for real-time notifications
  * Requires Firebase ID token in Authorization header
  *
- * @param {string} token - Firebase ID token
+ * @param {() => Promise<string|undefined>} getToken - Returns a current Firebase ID token
  * @param {(notification: NotificationDto) => void} onNotification
  * @param {() => void} [onError]
  * @param {() => void} [onConnect]
  * @returns {() => void} cleanup function
  */
-export function createNotificationStream(token, onNotification, onError, onConnect) {
+export function createNotificationStream(getToken, onNotification, onError, onConnect) {
   let aborted = false;
   let retryTimeout;
+  let controller;
 
-  function connect() {
+  async function connect() {
     if (aborted) return;
 
-    const es = new EventSource(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:3001"}/api/notifications/stream`, {
-      withCredentials: true,
-    });
+    try {
+      const token = await getToken();
+      if (!token || aborted) return;
 
-    // Use fetch-based approach for custom headers
-    // EventSource doesn't support custom headers, so we use a workaround
-    // The token is passed via query param for SSE (exception to the rule for SSE)
-    const streamUrl = `${import.meta.env.VITE_API_BASE_URL || "http://localhost:3001"}/api/notifications/stream`;
-    
-    fetch(streamUrl, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((response) => {
-        if (!response.ok) throw new Error("Stream connection failed");
-        onConnect?.();
-        
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-
-        function read() {
-          reader.read().then(({ done, value }) => {
-            if (done || aborted) return;
-
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split("\n");
-            buffer = lines.pop() || "";
-
-            for (const line of lines) {
-              if (line.startsWith(":")) continue; // heartbeat
-              if (line.startsWith("data: ")) {
-                try {
-                  const data = JSON.parse(line.slice(6));
-                  onNotification(data);
-                } catch (e) {
-                  console.warn("Failed to parse SSE data:", line);
-                }
-              }
-            }
-
-            read();
-          });
-        }
-
-        read();
-      })
-      .catch((err) => {
-        if (!aborted) {
-          onError?.();
-          // Reconnect after 5 seconds
-          retryTimeout = setTimeout(connect, 5000);
-        }
+      const apiBase = API_BASE_URL.endsWith("/api")
+        ? API_BASE_URL
+        : `${API_BASE_URL}/api`;
+      controller = new AbortController();
+      const response = await fetch(`${apiBase}/notifications/stream`, {
+        headers: {
+          Accept: "text/event-stream",
+          Authorization: `Bearer ${token}`,
+        },
+        signal: controller.signal,
       });
+
+      if (!response.ok || !response.body) {
+        throw new Error("Stream connection failed");
+      }
+
+      onConnect?.();
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (!aborted) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split(/\r?\n/);
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            onNotification(JSON.parse(line.slice(6)));
+          } catch {
+            // Ignore malformed events and keep the stream alive.
+          }
+        }
+      }
+
+      if (!aborted) {
+        retryTimeout = setTimeout(connect, 5000);
+      }
+    } catch {
+      if (!aborted) {
+        onError?.();
+        retryTimeout = setTimeout(connect, 5000);
+      }
+    }
   }
 
   connect();
 
   return () => {
     aborted = true;
+    controller?.abort();
     if (retryTimeout) clearTimeout(retryTimeout);
   };
 }
