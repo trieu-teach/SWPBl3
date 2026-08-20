@@ -31,6 +31,8 @@ export default function ChatConversation({
         minHeight: 0,
         display: "flex",
         flexDirection: "column",
+        overflow: "hidden",
+        bgcolor: "background.default",
       }}
     >
       {isLoadingHistory ? (

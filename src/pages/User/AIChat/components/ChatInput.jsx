@@ -1,8 +1,23 @@
-import { Alert, Button, Paper, Stack, TextField } from "@mui/material";
+import {
+  Alert,
+  Box,
+  CircularProgress,
+  IconButton,
+  Paper,
+  TextField,
+  Tooltip,
+} from "@mui/material";
 import SendRounded from "@mui/icons-material/SendRounded";
 import { isLibraryContext } from "../chatContext.js";
 
-export default function ChatInput({ chatContext, value, onChange, onSend, isSending, error }) {
+export default function ChatInput({
+  chatContext,
+  value,
+  onChange,
+  onSend,
+  isSending,
+  error,
+}) {
   const isDisabled = !value.trim() || isSending;
 
   function handleKeyDown(event) {
@@ -20,7 +35,8 @@ export default function ChatInput({ chatContext, value, onChange, onSend, isSend
     <Paper
       elevation={0}
       sx={{
-        p: { xs: 1.5, sm: 2 },
+        px: { xs: 1.25, sm: 2 },
+        py: { xs: 1.15, sm: 1.5 },
         borderTop: "1px solid",
         borderColor: "divider",
         borderRadius: 0,
@@ -32,7 +48,29 @@ export default function ChatInput({ chatContext, value, onChange, onSend, isSend
           {error}
         </Alert>
       )}
-      <Stack direction="row" spacing={1.5} alignItems="flex-end">
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "flex-end",
+          gap: 0.75,
+          width: "100%",
+          maxWidth: 960,
+          minWidth: 0,
+          mx: "auto",
+          py: 0.55,
+          pl: 1.5,
+          pr: 0.65,
+          border: "1px solid",
+          borderColor: "divider",
+          borderRadius: 3,
+          bgcolor: "background.paper",
+          transition: "border-color 120ms ease, box-shadow 120ms ease",
+          "&:focus-within": {
+            borderColor: "primary.main",
+            boxShadow: (theme) => `0 0 0 2px ${theme.palette.primary.main}18`,
+          },
+        }}
+      >
         <TextField
           value={value}
           onChange={(event) => onChange(event.target.value)}
@@ -43,31 +81,49 @@ export default function ChatInput({ chatContext, value, onChange, onSend, isSend
           maxRows={5}
           fullWidth
           size="small"
-          variant="outlined"
+          variant="standard"
           disabled={isSending}
           inputProps={{ "aria-label": "Nhập câu hỏi cho AI" }}
           sx={{
             "& .MuiInputBase-root": {
-              borderRadius: 2,
               alignItems: "flex-end",
+              py: 0.45,
+            },
+            "& .MuiInputBase-root::before, & .MuiInputBase-root::after": {
+              display: "none",
             },
           }}
         />
-        <Button
-          type="button"
-          variant="contained"
-          onClick={onSend}
-          disabled={isDisabled}
-          endIcon={<SendRounded />}
-          sx={{
-            minHeight: 40,
-            px: { xs: 1.5, sm: 2.5 },
-            flexShrink: 0,
-          }}
-        >
-          {isSending ? "Đang gửi" : "Gửi"}
-        </Button>
-      </Stack>
+        <Tooltip title={isSending ? "Đang gửi" : "Gửi"}>
+          <span>
+            <IconButton
+              type="button"
+              color="primary"
+              onClick={onSend}
+              disabled={isDisabled}
+              aria-label={isSending ? "Đang gửi câu hỏi" : "Gửi câu hỏi"}
+              sx={{
+                width: 38,
+                height: 38,
+                flexShrink: 0,
+                bgcolor: "primary.main",
+                color: "primary.contrastText",
+                "&:hover": { bgcolor: "primary.dark" },
+                "&.Mui-disabled": {
+                  bgcolor: "action.disabledBackground",
+                  color: "action.disabled",
+                },
+              }}
+            >
+              {isSending ? (
+                <CircularProgress size={18} color="inherit" />
+              ) : (
+                <SendRounded sx={{ fontSize: 19 }} />
+              )}
+            </IconButton>
+          </span>
+        </Tooltip>
+      </Box>
     </Paper>
   );
 }

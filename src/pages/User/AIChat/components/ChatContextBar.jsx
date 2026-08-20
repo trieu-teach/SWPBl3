@@ -18,16 +18,16 @@ export default function ChatContextBar({
     <Box
       sx={{
         px: { xs: 2, sm: 3 },
-        py: 1.25,
+        py: 0.8,
         borderBottom: "1px solid",
         borderColor: "divider",
-        bgcolor: "action.hover",
+        bgcolor: "background.paper",
       }}
     >
       <Stack
         direction={{ xs: "column", sm: "row" }}
         alignItems={{ xs: "flex-start", sm: "center" }}
-        spacing={1}
+        spacing={0.75}
         sx={{ gap: 0.75 }}
       >
         <Stack direction="row" spacing={0.75} alignItems="center">
@@ -35,7 +35,7 @@ export default function ChatContextBar({
           <Typography
             variant="caption"
             color="text.secondary"
-            sx={{ fontWeight: 700, flexShrink: 0 }}
+            sx={{ fontWeight: 750, flexShrink: 0 }}
           >
             {selectedDocuments.length === 0
               ? "Toàn bộ thư viện"
@@ -43,8 +43,12 @@ export default function ChatContextBar({
           </Typography>
         </Stack>
 
-        <Typography variant="caption" color="text.secondary">
-          Phạm vi áp dụng cho câu hỏi tiếp theo.
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ opacity: 0.85 }}
+        >
+          Áp dụng cho câu hỏi tiếp theo.
         </Typography>
 
         {selectedDocuments.length > 0 && (

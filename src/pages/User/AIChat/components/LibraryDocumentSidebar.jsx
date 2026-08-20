@@ -62,7 +62,18 @@ function DocumentRow({
   return (
     <ListItem
       disableGutters
-      sx={{ px: 1.5, py: 0.75, alignItems: "flex-start" }}
+      sx={{
+        mx: 1,
+        my: 0.25,
+        px: 0.75,
+        py: 0.65,
+        width: "auto",
+        alignItems: "flex-start",
+        borderRadius: 1.5,
+        bgcolor: selected ? "action.selected" : "transparent",
+        transition: "background-color 120ms ease",
+        "&:hover": { bgcolor: selected ? "action.selected" : "action.hover" },
+      }}
     >
       <Checkbox
         checked={selected}
@@ -70,13 +81,14 @@ function DocumentRow({
         onChange={() => onToggle(document)}
         size="small"
         inputProps={{ "aria-label": `Chọn ${document.title}` }}
-        sx={{ mt: 0.25, mr: 0.5 }}
+        sx={{ mt: 0.15, mr: 0.25, p: 0.75 }}
       />
       <DescriptionOutlined
-        sx={{ mt: 1, mr: 1, fontSize: 19, color: "text.secondary" }}
+        sx={{ mt: 0.85, mr: 0.9, fontSize: 18, color: "text.secondary" }}
       />
       <Box sx={{ minWidth: 0, flex: 1 }}>
         <Button
+          fullWidth
           variant="text"
           color="inherit"
           onClick={() => onPreview(document)}
@@ -89,18 +101,24 @@ function DocumentRow({
             py: 0.25,
             fontSize: "0.82rem",
             fontWeight: 700,
+            lineHeight: 1.35,
             textAlign: "left",
             textTransform: "none",
           }}
         >
-          <Typography component="span" variant="body2" noWrap>
+          <Typography
+            component="span"
+            variant="body2"
+            noWrap
+            sx={{ display: "block", minWidth: 0, width: "100%" }}
+          >
             {document.title || document.fileName || "Tài liệu"}
           </Typography>
         </Button>
         <Stack
           direction="row"
           alignItems="center"
-          gap={0.75}
+          gap={0.65}
           sx={{ minWidth: 0, mt: 0.25 }}
         >
           <Typography variant="caption" color="text.secondary">
@@ -110,8 +128,17 @@ function DocumentRow({
             label={statusLabel(document)}
             size="small"
             color={selectable ? "success" : "default"}
-            variant="outlined"
-            sx={{ height: 20, maxWidth: 150, fontSize: "0.66rem" }}
+            variant="filled"
+            sx={{
+              height: 19,
+              maxWidth: 150,
+              fontSize: "0.64rem",
+              bgcolor: selectable
+                ? "rgba(46, 125, 50, 0.08)"
+                : "action.hover",
+              color: selectable ? "success.dark" : "text.secondary",
+              "& .MuiChip-label": { px: 0.75 },
+            }}
           />
         </Stack>
       </Box>
@@ -122,7 +149,7 @@ function DocumentRow({
             onClick={() => onPreview(document)}
             disabled={previewing}
             aria-label={`Xem ${document.title}`}
-            sx={{ ml: 0.5 }}
+            sx={{ ml: 0.25, mt: 0.15 }}
           >
             {previewing ? (
               <CircularProgress size={17} />
@@ -146,11 +173,11 @@ function DocumentSection({
   previewingDocumentId,
 }) {
   return (
-    <Box component="section" sx={{ py: 1 }}>
+    <Box component="section" sx={{ py: 0.75 }}>
       <Typography
         variant="overline"
         color="text.secondary"
-        sx={{ display: "block", px: 2, fontWeight: 800 }}
+        sx={{ display: "block", px: 2, pb: 0.25, fontWeight: 800 }}
       >
         {title}
       </Typography>
@@ -244,8 +271,8 @@ function SidebarContent({
       <Stack
         direction="row"
         alignItems="center"
-        gap={1}
-        sx={{ px: 2, py: 1.5, flexShrink: 0 }}
+        gap={0.85}
+        sx={{ px: 2, py: 1.1, flexShrink: 0 }}
       >
         <DescriptionOutlined color="action" />
         <Box sx={{ minWidth: 0, flex: 1 }}>
@@ -253,9 +280,7 @@ function SidebarContent({
             Tài liệu
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            {selectedIds.size === 0
-              ? "Toàn bộ thư viện"
-              : `${selectedIds.size} tài liệu đã chọn`}
+            {selectedIds.size}/{MAX_SELECTED_DOCUMENTS} đã chọn
           </Typography>
         </Box>
         {showCloseButton && (
@@ -265,7 +290,7 @@ function SidebarContent({
         )}
       </Stack>
 
-      <Box component="form" onSubmit={library.applySearch} sx={{ px: 2, pb: 1.5 }}>
+      <Box component="form" onSubmit={library.applySearch} sx={{ px: 2, pb: 1.1 }}>
         <TextField
           fullWidth
           size="small"
@@ -282,21 +307,27 @@ function SidebarContent({
         />
       </Box>
 
-      <Box sx={{ px: 2, pb: 1.5 }}>
-        <Typography variant="caption" color="text.secondary">
-          Phạm vi áp dụng cho câu hỏi tiếp theo.
-        </Typography>
-        {selectionLimitReached && (
-          <Alert severity="info" sx={{ mt: 1, py: 0, fontSize: "0.72rem" }}>
-            Đã chọn tối đa {MAX_SELECTED_DOCUMENTS} tài liệu.
-          </Alert>
-        )}
-        {previewError && (
-          <Alert severity="error" sx={{ mt: 1, py: 0, fontSize: "0.72rem" }}>
-            {previewError}
-          </Alert>
-        )}
-      </Box>
+      {(selectionLimitReached || previewError) && (
+        <Box sx={{ px: 2, pb: 1.1 }}>
+          {selectionLimitReached && (
+            <Alert severity="info" sx={{ py: 0, fontSize: "0.72rem" }}>
+              Đã chọn tối đa {MAX_SELECTED_DOCUMENTS} tài liệu.
+            </Alert>
+          )}
+          {previewError && (
+            <Alert
+              severity="error"
+              sx={{
+                mt: selectionLimitReached ? 0.75 : 0,
+                py: 0,
+                fontSize: "0.72rem",
+              }}
+            >
+              {previewError}
+            </Alert>
+          )}
+        </Box>
+      )}
 
       <Divider />
 
@@ -323,7 +354,7 @@ function SidebarContent({
       </Box>
 
       <Divider />
-      <Box sx={{ p: 1.5, flexShrink: 0 }}>
+      <Box sx={{ p: 1.25, flexShrink: 0 }}>
         <Button
           fullWidth
           component={Link}
