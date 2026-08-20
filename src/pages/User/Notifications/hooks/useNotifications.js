@@ -1,11 +1,12 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { getAuth } from "firebase/auth";
+import { useState, useEffect, useCallback } from "react";
 import {
+  createNotificationStream,
   getNotifications,
   getUnreadCount,
   markAsRead,
   markAllAsRead,
 } from "../../../../api/notifications.api";
+import { auth } from "../../../../lib/firebase.js";
 
 export function useNotifications() {
   const [notifications, setNotifications] = useState([]);
@@ -15,9 +16,6 @@ export function useNotifications() {
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(1);
   const [error, setError] = useState(null);
-  const eventSourceRef = useRef(null);
-  const reconnectTimeoutRef = useRef(null);
-
   // Initial load
   useEffect(() => {
     let cancelled = false;
@@ -54,61 +52,39 @@ export function useNotifications() {
 
   // SSE real-time connection
   useEffect(() => {
-    let cleanup = null;
+    let cancelled = false;
+    let stopStream = () => {};
 
     async function startStream() {
       try {
-        const firebaseAuth = getAuth();
-        const user = firebaseAuth.currentUser;
-        if (!user) return;
+        await auth.authStateReady();
+        if (cancelled || !auth.currentUser) return;
 
-        const token = await user.getIdToken(true);
-
-        // Using EventSource as fallback since we can't set custom headers
-        // For production, use @microsoft/fetch-event-source or similar
-        const url = `${import.meta.env.VITE_API_BASE_URL || "http://localhost:3001"}/api/notifications/stream`;
-        
-        const es = new EventSource(url, { withCredentials: true });
-
-        es.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            if (data && data.id) {
-              // Prepend new notification to the list
-              setNotifications((prev) => [data, ...prev]);
-              setUnreadCount((prev) => prev + 1);
-            }
-          } catch (e) {
-            // Ignore parse errors for heartbeat messages
-          }
-        };
-
-        es.onerror = () => {
-          es.close();
-          // Reconnect after 5 seconds
-          reconnectTimeoutRef.current = setTimeout(startStream, 5000);
-        };
-
-        es.onopen = () => {
-          // Connection established
-        };
-
-        eventSourceRef.current = es;
-        cleanup = () => {
-          es.close();
-          if (reconnectTimeoutRef.current) {
-            clearTimeout(reconnectTimeoutRef.current);
-          }
-        };
-      } catch (err) {
-        console.warn("Failed to start notification stream:", err);
+        stopStream = createNotificationStream(
+          async () => auth.currentUser?.getIdToken(false),
+          (notification) => {
+            if (!notification?.id) return;
+            setNotifications((current) => {
+              if (current.some((item) => item.id === notification.id)) {
+                return current;
+              }
+              if (!notification.isRead) {
+                setUnreadCount((count) => count + 1);
+              }
+              return [notification, ...current];
+            });
+          },
+        );
+      } catch {
+        // The REST list remains available if the live stream cannot start.
       }
     }
 
     startStream();
 
     return () => {
-      cleanup?.();
+      cancelled = true;
+      stopStream();
     };
   }, []);
 
@@ -119,7 +95,13 @@ export function useNotifications() {
     try {
       const nextPage = page + 1;
       const res = await getNotifications({ page: nextPage, limit: 20 });
-      setNotifications((prev) => [...prev, ...(res.items || res)]);
+      setNotifications((current) => {
+        const existingIds = new Set(current.map((item) => item.id));
+        const newItems = (res.items || res).filter(
+          (item) => !existingIds.has(item.id),
+        );
+        return [...current, ...newItems];
+      });
       setHasMore(res.meta?.hasNext ?? false);
       setPage(nextPage);
     } catch (err) {
