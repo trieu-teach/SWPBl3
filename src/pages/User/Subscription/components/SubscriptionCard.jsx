@@ -34,6 +34,10 @@ export default function SubscriptionCard({
   onPaymentMethodChange,
   showPaymentSelector = true,
 }) {
+  const displayPrice = plan.checkoutAmount ?? plan.amount ?? 0;
+  const originalPrice = plan.amount ?? displayPrice;
+  const hasDiscount = originalPrice > displayPrice;
+
   const features = [
     { key: "storageLimitMb", label: FEATURE_LABELS.storageLimitMb },
     { key: "uploadLimit", label: FEATURE_LABELS.uploadLimit },
@@ -109,11 +113,23 @@ export default function SubscriptionCard({
             component="span"
             sx={{ fontSize: "2rem", fontWeight: 800, color: "primary.main" }}
           >
-            {plan.amount?.toLocaleString("vi-VN") || 0}
+            {displayPrice.toLocaleString("vi-VN")}
           </Typography>
           <Typography component="span" sx={{ color: "var(--text-secondary)", ml: 0.5 }}>
             đ
           </Typography>
+          {hasDiscount && (
+            <Typography
+              sx={{
+                mt: 0.5,
+                color: "text.secondary",
+                fontSize: "0.9rem",
+                textDecoration: "line-through",
+              }}
+            >
+              {originalPrice.toLocaleString("vi-VN")} đ
+            </Typography>
+          )}
         </Box>
 
         <Box sx={{ flex: 1, mb: 3 }}>

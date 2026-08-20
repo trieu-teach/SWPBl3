@@ -5,6 +5,7 @@ import {
   Typography,
   Chip,
   Skeleton,
+  useTheme,
 } from "@mui/material";
 import {
   BarChart,
@@ -59,7 +60,12 @@ const CustomTooltipContent = ({ active, payload, barColor }) => {
           <Chip
             label={visibility}
             size="small"
-            sx={{ height: 20, fontSize: "0.7rem", bgcolor: "#f3f4f6", color: "#6b7280" }}
+            sx={{
+              height: 20,
+              fontSize: "0.7rem",
+              bgcolor: "action.hover",
+              color: "text.secondary",
+            }}
           />
         )}
       </Box>
@@ -124,6 +130,8 @@ export default function TopDocumentsChart({
   metricLabel,
   barColor = "#6366f1",
 }) {
+  const theme = useTheme();
+
   if (loading) {
     return (
       <Card variant="outlined" sx={{ borderRadius: 3 }}>
@@ -218,14 +226,14 @@ export default function TopDocumentsChart({
           >
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke="var(--mui-palette-divider)"
+              stroke={theme.palette.divider}
               horizontal={false}
             />
             <XAxis
               type="number"
-              tick={{ fontSize: 12, fill: "var(--mui-palette-text-secondary)" }}
+              tick={{ fontSize: 12, fill: theme.palette.text.secondary }}
               tickLine={false}
-              axisLine={{ stroke: "var(--mui-palette-divider)" }}
+              axisLine={{ stroke: theme.palette.divider }}
               tickFormatter={formatXAxisTick}
               domain={[0, Math.ceil(maxValue * 1.2)]}
               allowDecimals={false}
@@ -233,7 +241,7 @@ export default function TopDocumentsChart({
             <YAxis
               type="category"
               dataKey="shortTitle"
-              tick={{ fontSize: 12, fill: "var(--mui-palette-text.primary)" }}
+              tick={{ fontSize: 12, fill: theme.palette.text.primary }}
               tickLine={false}
               axisLine={false}
               width={280}

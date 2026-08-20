@@ -149,7 +149,7 @@ function EmptyState() {
             width: 80,
             height: 80,
             borderRadius: "50%",
-            bgcolor: "grey.100",
+            bgcolor: "action.hover",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -298,12 +298,12 @@ export default function SubscriptionPieChart({ data, loading }) {
                       justifyContent: "space-between",
                       p: 1.5,
                       borderRadius: 2,
-                      bgcolor: "grey.50",
+                      bgcolor: "action.hover",
                       border: "1px solid",
                       borderColor: "divider",
                       transition: "all 0.2s",
                       "&:hover": {
-                        bgcolor: "grey.100",
+                        bgcolor: "action.selected",
                       },
                     }}
                   >

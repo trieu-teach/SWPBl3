@@ -39,7 +39,7 @@ export default function ChatEmptyState({ chatContext }) {
       <Stack
         alignItems="center"
         sx={{
-          maxWidth: 620,
+          maxWidth: 760,
           width: "100%",
           mx: "auto",
           textAlign: "center",
@@ -67,11 +67,25 @@ export default function ChatEmptyState({ chatContext }) {
           {description}
         </Typography>
 
-        <Stack direction="row" gap={1} justifyContent="center" flexWrap="wrap">
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            flexWrap: "wrap",
+            gap: 1.25,
+            width: "100%",
+          }}
+        >
           {suggestions.map((suggestion) => (
-            <Chip key={suggestion} label={suggestion} variant="outlined" size="small" />
+            <Chip
+              key={suggestion}
+              label={suggestion}
+              variant="outlined"
+              size="small"
+              sx={{ px: 0.5 }}
+            />
           ))}
-        </Stack>
+        </Box>
       </Stack>
     </Box>
   );

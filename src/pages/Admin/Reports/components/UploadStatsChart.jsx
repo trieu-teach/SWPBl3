@@ -1,4 +1,11 @@
-import { Box, Card, CardContent, Typography, Skeleton } from "@mui/material";
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Skeleton,
+  useTheme,
+} from "@mui/material";
 import {
   AreaChart,
   Area,
@@ -63,6 +70,8 @@ function calculateStats(data) {
 }
 
 export default function UploadStatsChart({ data, loading }) {
+  const theme = useTheme();
+
   if (loading) {
     return (
       <Card variant="outlined" sx={{ borderRadius: 3 }}>
@@ -193,19 +202,19 @@ export default function UploadStatsChart({ data, loading }) {
             </defs>
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke="var(--mui-palette-divider)"
+              stroke={theme.palette.divider}
               vertical={false}
             />
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 12, fill: "var(--mui-palette-text-secondary)" }}
+              tick={{ fontSize: 12, fill: theme.palette.text.secondary }}
               tickLine={false}
-              axisLine={{ stroke: "var(--mui-palette-divider)" }}
+              axisLine={{ stroke: theme.palette.divider }}
               interval={tickInterval}
               tickMargin={10}
             />
             <YAxis
-              tick={{ fontSize: 12, fill: "var(--mui-palette-text-secondary)" }}
+              tick={{ fontSize: 12, fill: theme.palette.text.secondary }}
               tickLine={false}
               axisLine={false}
               tickFormatter={(value) => Math.round(value)}
@@ -231,7 +240,12 @@ export default function UploadStatsChart({ data, loading }) {
               strokeWidth={2.5}
               fill="url(#uploadGradient)"
               dot={{ fill: "#6366f1", strokeWidth: 0, r: 3 }}
-              activeDot={{ r: 6, fill: "#6366f1", stroke: "var(--mui-palette-background-paper)", strokeWidth: 3 }}
+              activeDot={{
+                r: 6,
+                fill: "#6366f1",
+                stroke: theme.palette.background.paper,
+                strokeWidth: 3,
+              }}
             />
           </AreaChart>
         </ResponsiveContainer>

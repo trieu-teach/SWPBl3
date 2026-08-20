@@ -87,7 +87,7 @@ function DateCaption({ label, dateRange, getDateCaption }) {
       label={`${label}: ${caption}`}
       size="small"
       sx={{
-        bgcolor: "grey.100",
+        bgcolor: "action.hover",
         color: "text.secondary",
         fontWeight: 500,
         fontSize: "0.75rem",
