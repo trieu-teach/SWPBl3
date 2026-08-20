@@ -35,6 +35,8 @@ import { useAuth } from "../../features/auth/AuthProvider.jsx";
 
 const DRAWER_WIDTH = 280;
 const COLLAPSED_DRAWER_WIDTH = 88;
+const SHELL_HEADER_HEIGHT = 84;
+const SIDEBAR_TOGGLE_SIZE = 30;
 
 const USER_NAVIGATION = [
   { label: "Thư viện", path: "/documents", icon: FolderOpenOutlined },
@@ -216,9 +218,11 @@ function SidebarContent({
           display: "flex",
           alignItems: "center",
           justifyContent: collapsed ? "center" : "flex-start",
+          height: SHELL_HEADER_HEIGHT,
+          minHeight: SHELL_HEADER_HEIGHT,
+          flexShrink: 0,
           gap: collapsed ? 0 : 1.5,
           px: collapsed ? 1 : 2.5,
-          py: 2.5,
           textDecoration: "none",
           color: "inherit",
           borderBottom: "1px solid",
@@ -259,11 +263,11 @@ function SidebarContent({
             aria-label={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
             sx={{
               position: "absolute",
-              top: 28,
+              top: (SHELL_HEADER_HEIGHT - SIDEBAR_TOGGLE_SIZE) / 2,
               right: -15,
               zIndex: 2,
-              width: 30,
-              height: 30,
+              width: SIDEBAR_TOGGLE_SIZE,
+              height: SIDEBAR_TOGGLE_SIZE,
               bgcolor: "background.paper",
               border: "1px solid",
               borderColor: "divider",
@@ -324,10 +328,10 @@ function SidebarContent({
         {/* User Card */}
         <Box
           sx={{
-            p: collapsed ? 1 : 2,
+            p: collapsed ? 1 : 1.5,
             borderRadius: "16px",
             backgroundColor: "action.hover",
-            mb: 1.5,
+            mb: collapsed ? 0 : 1,
           }}
         >
           <Box
@@ -341,7 +345,7 @@ function SidebarContent({
               gap: collapsed ? 0 : 1.5,
               textDecoration: "none",
               color: "inherit",
-              mb: 1.5,
+              mb: 0.75,
             }}
           >
             <Avatar
@@ -386,7 +390,8 @@ function SidebarContent({
             sx={{
               justifyContent: "center",
               gap: 1,
-              py: 1,
+              py: 0.5,
+              minHeight: 32,
               minWidth: 0,
               borderRadius: "10px",
               fontSize: "0.8rem",
@@ -545,7 +550,9 @@ export default function AppShell({ children, role = "USER" }) {
             top: 0,
             zIndex: 1100,
             px: { xs: 2, sm: 3, lg: 4 },
-            py: 2,
+            height: SHELL_HEADER_HEIGHT,
+            minHeight: SHELL_HEADER_HEIGHT,
+            flexShrink: 0,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
