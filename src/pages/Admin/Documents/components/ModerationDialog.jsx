@@ -23,8 +23,6 @@ export default function ModerationDialog({
   const labels = {
     approve: "Duyệt tài liệu",
     reject: "Từ chối tài liệu",
-    hide: "Ẩn tài liệu",
-    unhide: "Khôi phục tài liệu",
   };
   return (
     <Dialog
@@ -60,11 +58,7 @@ export default function ModerationDialog({
         </Button>
         <Button
           variant="contained"
-          color={
-            action.type === "reject" || action.type === "hide"
-              ? "error"
-              : "success"
-          }
+          color={action.type === "reject" ? "error" : "success"}
           disabled={loading || (required && !reason.trim())}
           onClick={() => onConfirm(reason)}
         >

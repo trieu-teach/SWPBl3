@@ -37,8 +37,6 @@ export default function ReportReviewDrawer({ moderation }) {
   const reportStatus = getReportStatusPresentation(report?.status);
   const documentTitle = document?.title || report?.document?.title || "Tài liệu";
   const isPending = report?.status === "PENDING";
-  const canHide = document?.status === "ACTIVE";
-  const canUnhide = document?.status === "HIDDEN";
 
   function requestAction(type) {
     moderation.setAction({ type, documentTitle });
@@ -130,6 +128,34 @@ export default function ReportReviewDrawer({ moderation }) {
             <Typography variant="overline" color="text.secondary">
               Tài liệu
             </Typography>
+            <Typography variant="h6" fontWeight={750} sx={{ mb: 1.5 }}>
+              {documentTitle}
+            </Typography>
+            <Stack direction="row" gap={1} flexWrap="wrap" sx={{ mb: 2 }}>
+              <Chip
+                size="small"
+                label={document?.status || report.document?.status || "—"}
+                color={
+                  (document?.status || report.document?.status) === "ACTIVE"
+                    ? "success"
+                    : "default"
+                }
+              />
+              <Chip
+                size="small"
+                variant="outlined"
+                label={document?.visibility || report.document?.visibility || "—"}
+              />
+              <Chip
+                size="small"
+                variant="outlined"
+                label={
+                  document?.moderationStatus ||
+                  report.document?.moderationStatus ||
+                  "—"
+                }
+              />
+            </Stack>
 
             {moderation.detailLoading && (
               <Stack direction="row" alignItems="center" gap={1.5} sx={{ py: 4 }}>
@@ -154,22 +180,6 @@ export default function ReportReviewDrawer({ moderation }) {
 
             {document && (
               <>
-                <Typography variant="h6" fontWeight={750} sx={{ mb: 1.5 }}>
-                  {document.title}
-                </Typography>
-                <Stack direction="row" gap={1} flexWrap="wrap" sx={{ mb: 2 }}>
-                  <Chip
-                    size="small"
-                    label={document.status === "HIDDEN" ? "Đã ẩn" : document.status}
-                    color={document.status === "HIDDEN" ? "error" : "success"}
-                  />
-                  <Chip size="small" variant="outlined" label={document.visibility} />
-                  <Chip
-                    size="small"
-                    variant="outlined"
-                    label={document.moderationStatus}
-                  />
-                </Stack>
                 <Box
                   sx={{
                     display: "grid",
@@ -218,25 +228,22 @@ export default function ReportReviewDrawer({ moderation }) {
             direction={{ xs: "column", sm: "row" }}
             gap={1}
             justifyContent="flex-end"
+            flexWrap="wrap"
             sx={{ p: 2, borderTop: "1px solid", borderColor: "divider" }}
           >
-            {canHide && (
-              <Button color="error" onClick={() => requestAction("hide")}>
-                Ẩn tài liệu
-              </Button>
-            )}
-            {canUnhide && (
-              <Button color="success" onClick={() => requestAction("unhide")}>
-                Khôi phục tài liệu
-              </Button>
-            )}
             {isPending && (
               <>
-                <Button color="warning" onClick={() => requestAction("dismiss")}>
+                <Button onClick={() => requestAction("dismiss")}>
                   Bỏ qua báo cáo
                 </Button>
-                <Button variant="contained" onClick={() => requestAction("resolve")}>
-                  Đánh dấu đã xử lý
+                <Button variant="outlined" onClick={() => requestAction("resolve")}>
+                  Xử lý · Không đổi tài liệu
+                </Button>
+                <Button color="warning" onClick={() => requestAction("hide")}>
+                  Xử lý và ẩn
+                </Button>
+                <Button color="error" onClick={() => requestAction("delete")}>
+                  Xử lý và xóa
                 </Button>
               </>
             )}

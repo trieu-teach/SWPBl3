@@ -1,4 +1,4 @@
-import { Box, Chip, Stack, Typography } from "@mui/material";
+import { Box, ButtonBase, Chip, Stack, Typography } from "@mui/material";
 import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
 import { isLibraryContext } from "../chatContext.js";
 
@@ -9,19 +9,24 @@ const DOC_SUGGESTIONS = [
 ];
 
 const LIBRARY_SUGGESTIONS = [
-  "Tóm tắt các tài liệu gần đây",
-  "Tìm các khái niệm chính",
-  "Gợi ý lộ trình học tập",
+  "Tóm tắt tài liệu học tập của tôi",
+  "Giải thích một khái niệm khó",
+  "Tạo câu hỏi luyện tập",
+  "Gợi ý lộ trình ôn tập",
 ];
 
-export default function ChatEmptyState({ chatContext }) {
+export default function ChatEmptyState({
+  chatContext,
+  onSend,
+  isSending = false,
+}) {
   const isLibrary = isLibraryContext(chatContext);
-  
-  const title = isLibrary ? "Thư viện của bạn" : "Bắt đầu hỏi AI";
+  const title = isLibrary
+    ? "Hôm nay mình có thể giúp bạn học gì?"
+    : "Bắt đầu hỏi AI";
   const description = isLibrary
-    ? "Hỏi AI về các tài liệu trong thư viện của bạn."
+    ? "Đặt câu hỏi, khám phá tài liệu hoặc cùng AI làm rõ những khái niệm khó."
     : "Nhập câu hỏi để nhận gợi ý học tập, tóm tắt nội dung hoặc giải thích khái niệm theo cách dễ hiểu hơn.";
-  
   const suggestions = isLibrary ? LIBRARY_SUGGESTIONS : DOC_SUGGESTIONS;
 
   return (
@@ -32,15 +37,15 @@ export default function ChatEmptyState({ chatContext }) {
         justifyContent: "center",
         height: "100%",
         width: "100%",
-        pt: isLibrary ? { xs: 3, sm: 5 } : { xs: 4, sm: 6 },
+        pt: isLibrary ? { xs: 3, sm: 4 } : { xs: 4, sm: 6 },
         pb: isLibrary ? { xs: 7, sm: 10 } : { xs: 4, sm: 6 },
         px: 2,
       }}
     >
       <Stack
-        alignItems="center"
         sx={{
-          maxWidth: 620,
+          alignItems: "center",
+          maxWidth: isLibrary ? 640 : 620,
           width: "100%",
           mx: "auto",
           textAlign: "center",
@@ -48,25 +53,28 @@ export default function ChatEmptyState({ chatContext }) {
       >
         <Box
           sx={{
-            width: isLibrary ? 48 : 44,
-            height: isLibrary ? 48 : 44,
+            width: isLibrary ? 52 : 44,
+            height: isLibrary ? 52 : 44,
             display: "grid",
             placeItems: "center",
             mx: "auto",
-            mb: isLibrary ? 1.75 : 1.5,
-            borderRadius: 2,
-            bgcolor: "action.hover",
+            mb: isLibrary ? 2 : 1.5,
+            borderRadius: 2.5,
+            bgcolor: "action.selected",
             color: "primary.main",
           }}
         >
-          <AutoAwesomeOutlined sx={{ fontSize: isLibrary ? 24 : 22 }} />
+          <AutoAwesomeOutlined sx={{ fontSize: isLibrary ? 25 : 22 }} />
         </Box>
+
         <Typography
-          variant="h6"
+          component="h1"
+          variant="h5"
           sx={{
             fontWeight: 800,
-            fontSize: isLibrary ? "1.25rem" : undefined,
-            mb: 0.75,
+            fontSize: isLibrary ? { xs: "1.35rem", sm: "1.65rem" } : undefined,
+            letterSpacing: "-0.02em",
+            mb: 1,
           }}
         >
           {title}
@@ -74,43 +82,69 @@ export default function ChatEmptyState({ chatContext }) {
         <Typography
           color="text.secondary"
           sx={{
-            maxWidth: isLibrary ? 540 : 520,
+            maxWidth: isLibrary ? 560 : 520,
             mx: "auto",
-            mb: isLibrary ? 2.75 : 2.5,
-            fontSize: isLibrary ? "0.92rem" : "0.9rem",
-            lineHeight: isLibrary ? 1.6 : undefined,
+            mb: isLibrary ? 3 : 2.5,
+            fontSize: isLibrary ? "0.94rem" : "0.9rem",
+            lineHeight: 1.65,
           }}
         >
           {description}
         </Typography>
 
-        <Stack
-          direction="row"
-          gap={isLibrary ? 1.1 : 1}
-          justifyContent="center"
-          flexWrap="wrap"
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: isLibrary
+              ? { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" }
+              : "1fr",
+            gap: 1.25,
+            width: "100%",
+            maxWidth: isLibrary ? 580 : 360,
+          }}
         >
-          {suggestions.map((suggestion) => (
-            <Chip
-              key={suggestion}
-              label={suggestion}
-              variant="outlined"
-              size="small"
-              sx={
-                isLibrary
-                  ? {
-                      height: 34,
-                      borderRadius: 1.75,
-                      color: "text.secondary",
-                      bgcolor: "background.paper",
-                      "& .MuiChip-label": { px: 1.4 },
-                      "&:hover": { bgcolor: "action.hover" },
-                    }
-                  : undefined
-              }
-            />
-          ))}
-        </Stack>
+          {suggestions.map((suggestion) =>
+            isLibrary ? (
+              <ButtonBase
+                key={suggestion}
+                onClick={() => onSend?.(suggestion)}
+                disabled={isSending || typeof onSend !== "function"}
+                sx={{
+                  minHeight: 54,
+                  px: 1.75,
+                  py: 1.25,
+                  justifyContent: "flex-start",
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 2.5,
+                  bgcolor: "background.paper",
+                  color: "text.primary",
+                  textAlign: "left",
+                  fontSize: "0.84rem",
+                  fontWeight: 600,
+                  lineHeight: 1.4,
+                  transition: "border-color 150ms ease, background-color 150ms ease",
+                  "&:hover": {
+                    borderColor: "primary.main",
+                    bgcolor: "action.hover",
+                  },
+                  "&:focus-visible": {
+                    outline: "2px solid",
+                    outlineColor: "primary.main",
+                    outlineOffset: 2,
+                  },
+                  "@media (prefers-reduced-motion: reduce)": {
+                    transition: "none",
+                  },
+                }}
+              >
+                {suggestion}
+              </ButtonBase>
+            ) : (
+              <Chip key={suggestion} label={suggestion} variant="outlined" size="small" />
+            ),
+          )}
+        </Box>
       </Stack>
     </Box>
   );

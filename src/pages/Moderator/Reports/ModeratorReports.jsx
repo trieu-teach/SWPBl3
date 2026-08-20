@@ -27,16 +27,18 @@ import {
   getReportStatusPresentation,
   REPORT_STATUS_OPTIONS,
 } from "../../../lib/moderation.js";
+import AdminLayout from "../../Admin/Layout/AdminLayout.jsx";
 import ModeratorLayout from "../Layout/ModeratorLayout.jsx";
 import ModerationActionDialog from "./components/ModerationActionDialog.jsx";
 import ReportReviewDrawer from "./components/ReportReviewDrawer.jsx";
 import useModerationReports from "./hooks/useModerationReports.js";
 
-export default function ModeratorReports() {
+export default function ModeratorReports({ role = "MODERATOR" }) {
   const moderation = useModerationReports();
+  const Layout = role === "ADMIN" ? AdminLayout : ModeratorLayout;
 
   return (
-    <ModeratorLayout>
+    <Layout>
       <Stack
         direction={{ xs: "column", sm: "row" }}
         justifyContent="space-between"
@@ -120,7 +122,9 @@ export default function ModeratorReports() {
                           {report.document?.title || "Tài liệu không còn tồn tại"}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {report.document?.status || "—"} · {report.document?.visibility || "—"}
+                          {report.document?.status || "—"} ·{" "}
+                          {report.document?.visibility || "—"} ·{" "}
+                          {report.document?.moderationStatus || "—"}
                         </Typography>
                       </TableCell>
                       <TableCell>{getReportReasonLabel(report.reason)}</TableCell>
@@ -132,7 +136,28 @@ export default function ModeratorReports() {
                           {report.reporter?.email || "—"}
                         </Typography>
                       </TableCell>
-                      <TableCell>{formatModerationDate(report.createdAt)}</TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {formatModerationDate(report.createdAt)}
+                        </Typography>
+                        {report.resolvedAt && (
+                          <>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{ display: "block" }}
+                            >
+                              Đóng: {formatModerationDate(report.resolvedAt)}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              Bởi: {report.resolver?.fullName || report.resolver?.email || "—"}
+                            </Typography>
+                          </>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <Chip size="small" label={status.label} color={status.color} />
                       </TableCell>
@@ -172,6 +197,6 @@ export default function ModeratorReports() {
         preview={moderation.preview}
         onClose={() => moderation.setPreview(null)}
       />
-    </ModeratorLayout>
+    </Layout>
   );
 }

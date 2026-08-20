@@ -22,6 +22,21 @@ import {
   RefreshOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
+import { formatModerationDate } from "../../../../lib/moderation.js";
+
+const AI_STATUS_LABELS = {
+  PENDING: "Chờ xử lý",
+  PROCESSING: "Đang xử lý",
+  COMPLETED: "Hoàn tất",
+  FAILED: "Lỗi",
+  MOCKED: "Mô phỏng",
+};
+
+const MODERATION_FLAG_LABELS = {
+  NORMAL: "Bình thường",
+  FLAGGED: "Có cảnh báo",
+  SCAN_FAILED: "Quét thất bại",
+};
 
 export default function AdminDocumentsTable({ admin }) {
   if (admin.error)
@@ -47,7 +62,7 @@ export default function AdminDocumentsTable({ admin }) {
         <Typography color="text.secondary">
           {admin.loading
             ? "Đang tải..."
-            : `${admin.meta.totalItems || 0} tài liệu`}
+            : `${admin.meta.total || 0} tài liệu đang chờ`}
         </Typography>
         {admin.loading && <CircularProgress size={20} />}
       </Box>
@@ -58,9 +73,9 @@ export default function AdminDocumentsTable({ admin }) {
               <TableRow sx={{ bgcolor: "action.hover" }}>
                 <TableCell>Tài liệu</TableCell>
                 <TableCell>Người đăng</TableCell>
-                <TableCell>Quyền</TableCell>
-                <TableCell>Kiểm duyệt</TableCell>
-                <TableCell>Trạng thái</TableCell>
+                <TableCell>Xử lý AI</TableCell>
+                <TableCell>Cờ kiểm duyệt</TableCell>
+                <TableCell>Đã gửi lúc</TableCell>
                 <TableCell align="right">Thao tác</TableCell>
               </TableRow>
             </TableHead>
@@ -109,16 +124,14 @@ export default function AdminDocumentsTable({ admin }) {
                     <TableCell>
                       <Chip
                         size="small"
-                        color={
-                          document.visibility === "PUBLIC"
-                            ? "success"
-                            : "secondary"
-                        }
                         variant="outlined"
+                        color={
+                          document.aiStatus === "FAILED" ? "error" : "default"
+                        }
                         label={
-                          document.visibility === "PUBLIC"
-                            ? "Công khai"
-                            : "Riêng tư"
+                          AI_STATUS_LABELS[document.aiStatus] ||
+                          document.aiStatus ||
+                          "—"
                         }
                       />
                     </TableCell>
@@ -126,32 +139,24 @@ export default function AdminDocumentsTable({ admin }) {
                       <Chip
                         size="small"
                         label={
-                          document.moderationStatus === "APPROVED"
-                            ? "Đã duyệt"
-                            : document.moderationStatus === "REJECTED"
-                              ? "Từ chối"
-                              : "Chờ duyệt"
+                          MODERATION_FLAG_LABELS[document.moderationFlag] ||
+                          document.moderationFlag ||
+                          "—"
                         }
                         color={
-                          document.moderationStatus === "APPROVED"
-                            ? "success"
-                            : document.moderationStatus === "REJECTED"
-                              ? "error"
-                              : "warning"
+                          document.moderationFlag === "NORMAL"
+                            ? "default"
+                            : "warning"
                         }
                         variant="outlined"
                       />
                     </TableCell>
                     <TableCell>
-                      <Chip
-                        size="small"
-                        label={
-                          document.status === "HIDDEN" ? "Đã ẩn" : "Hoạt động"
-                        }
-                        color={
-                          document.status === "HIDDEN" ? "error" : "success"
-                        }
-                      />
+                      <Typography variant="body2">
+                        {formatModerationDate(
+                          document.submittedAt || document.createdAt,
+                        )}
+                      </Typography>
                     </TableCell>
                     <TableCell align="right">
                       <Tooltip title="Xem file">
@@ -159,13 +164,7 @@ export default function AdminDocumentsTable({ admin }) {
                           <VisibilityOutlined />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip
-                        title={
-                          document.moderationStatus === "PENDING"
-                            ? "Chi tiết và kiểm duyệt"
-                            : "Xem chi tiết"
-                        }
-                      >
+                      <Tooltip title="Chi tiết và kiểm duyệt">
                         <IconButton
                           color="primary"
                           onClick={() => admin.openDetail(document)}

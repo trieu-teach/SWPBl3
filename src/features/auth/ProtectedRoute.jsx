@@ -6,7 +6,7 @@ function getRoleBasedRoute(role) {
     case "ADMIN":
       return "/admin/dashboard";
     case "MODERATOR":
-      return "/moderator/reports";
+      return "/moderator/moderation";
     default:
       return "/documents";
   }

@@ -117,9 +117,8 @@ function DocumentRow({
         </Button>
         <Stack
           direction="row"
-          alignItems="center"
           gap={0.7}
-          sx={{ minWidth: 0, mt: 0.35 }}
+          sx={{ minWidth: 0, mt: 0.35, alignItems: "center" }}
         >
           <Typography variant="caption" color="text.secondary">
             {extension}
@@ -191,7 +190,11 @@ function DocumentSection({
       </Typography>
 
       {source.loading && source.documents.length === 0 && (
-        <Stack direction="row" alignItems="center" gap={1} sx={{ px: 2, py: 2 }}>
+        <Stack
+          direction="row"
+          gap={1}
+          sx={{ px: 2, py: 2, alignItems: "center" }}
+        >
           <CircularProgress size={17} />
           <Typography variant="caption" color="text.secondary">
             Đang tải tài liệu...
@@ -279,17 +282,25 @@ function SidebarContent({
     >
       <Stack
         direction="row"
-        alignItems="center"
         gap={0.9}
-        sx={{ px: 2, pt: 1.4, pb: 1.05, flexShrink: 0 }}
+        sx={{
+          px: 2,
+          pt: 1.4,
+          pb: 1.05,
+          flexShrink: 0,
+          alignItems: "center",
+        }}
       >
         <DescriptionOutlined color="action" />
         <Stack
           direction="row"
-          alignItems="baseline"
-          justifyContent="space-between"
           gap={1}
-          sx={{ minWidth: 0, flex: 1 }}
+          sx={{
+            minWidth: 0,
+            flex: 1,
+            alignItems: "baseline",
+            justifyContent: "space-between",
+          }}
         >
           <Typography variant="subtitle1" sx={{ fontWeight: 800, lineHeight: 1.4 }}>
             Tài liệu
@@ -320,12 +331,14 @@ function SidebarContent({
           value={library.searchInput}
           onChange={(event) => library.setSearchInput(event.target.value)}
           placeholder="Tìm tài liệu..."
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchOutlined fontSize="small" />
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchOutlined fontSize="small" />
+                </InputAdornment>
+              ),
+            },
           }}
           sx={{
             "& .MuiOutlinedInput-root": {
@@ -418,6 +431,7 @@ export default function LibraryDocumentSidebar({
   previewError = "",
   mobileOpen = false,
   onMobileClose,
+  drawerOnly = false,
 }) {
   const commonProps = {
     library,
@@ -433,7 +447,7 @@ export default function LibraryDocumentSidebar({
       <Box
         component="aside"
         sx={{
-          display: { xs: "none", lg: "block" },
+          display: drawerOnly ? "none" : { xs: "none", lg: "block" },
           width: SIDEBAR_WIDTH,
           flexShrink: 0,
           minHeight: 0,
@@ -452,7 +466,7 @@ export default function LibraryDocumentSidebar({
         onClose={onMobileClose}
         ModalProps={{ keepMounted: true }}
         sx={{
-          display: { xs: "block", lg: "none" },
+          display: drawerOnly ? "block" : { xs: "block", lg: "none" },
           "& .MuiDrawer-paper": {
             width: { xs: "100vw", sm: SIDEBAR_WIDTH },
             maxWidth: "100vw",

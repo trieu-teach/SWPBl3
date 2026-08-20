@@ -95,7 +95,11 @@ export default function ChatMessageList({
           flexDirection: "column",
         }}
       >
-        <ChatEmptyState chatContext={chatContext} />
+        <ChatEmptyState
+          chatContext={chatContext}
+          onSend={onSend}
+          isSending={isSending}
+        />
       </Box>
     );
   }
@@ -123,7 +127,7 @@ export default function ChatMessageList({
         spacing={2.25}
         sx={{
           width: "100%",
-          maxWidth: inLibraryMode ? 960 : 980,
+          maxWidth: inLibraryMode ? 880 : 980,
           minWidth: 0,
           mx: "auto",
         }}
