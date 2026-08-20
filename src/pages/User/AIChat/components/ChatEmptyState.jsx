@@ -44,8 +44,7 @@ export default function ChatEmptyState({
     >
       <Stack
         sx={{
-          alignItems: "center",
-          maxWidth: isLibrary ? 640 : 620,
+          maxWidth: 760,
           width: "100%",
           mx: "auto",
           textAlign: "center",
@@ -94,56 +93,22 @@ export default function ChatEmptyState({
 
         <Box
           sx={{
-            display: "grid",
-            gridTemplateColumns: isLibrary
-              ? { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" }
-              : "1fr",
+            display: "flex",
+            justifyContent: "center",
+            flexWrap: "wrap",
             gap: 1.25,
             width: "100%",
-            maxWidth: isLibrary ? 580 : 360,
           }}
         >
-          {suggestions.map((suggestion) =>
-            isLibrary ? (
-              <ButtonBase
-                key={suggestion}
-                onClick={() => onSend?.(suggestion)}
-                disabled={isSending || typeof onSend !== "function"}
-                sx={{
-                  minHeight: 54,
-                  px: 1.75,
-                  py: 1.25,
-                  justifyContent: "flex-start",
-                  border: "1px solid",
-                  borderColor: "divider",
-                  borderRadius: 2.5,
-                  bgcolor: "background.paper",
-                  color: "text.primary",
-                  textAlign: "left",
-                  fontSize: "0.84rem",
-                  fontWeight: 600,
-                  lineHeight: 1.4,
-                  transition: "border-color 150ms ease, background-color 150ms ease",
-                  "&:hover": {
-                    borderColor: "primary.main",
-                    bgcolor: "action.hover",
-                  },
-                  "&:focus-visible": {
-                    outline: "2px solid",
-                    outlineColor: "primary.main",
-                    outlineOffset: 2,
-                  },
-                  "@media (prefers-reduced-motion: reduce)": {
-                    transition: "none",
-                  },
-                }}
-              >
-                {suggestion}
-              </ButtonBase>
-            ) : (
-              <Chip key={suggestion} label={suggestion} variant="outlined" size="small" />
-            ),
-          )}
+          {suggestions.map((suggestion) => (
+            <Chip
+              key={suggestion}
+              label={suggestion}
+              variant="outlined"
+              size="small"
+              sx={{ px: 0.5 }}
+            />
+          ))}
         </Box>
       </Stack>
     </Box>

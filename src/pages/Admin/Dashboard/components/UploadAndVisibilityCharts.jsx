@@ -43,8 +43,22 @@ export default function UploadAndVisibilityCharts({ uploads, visibility }) {
                   dataKey="date"
                   tick={{ fontSize: 11, fill: theme.palette.text.secondary }}
                 />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
+                <YAxis
+                  allowDecimals={false}
+                  tick={{ fontSize: 11, fill: theme.palette.text.secondary }}
+                  axisLine={{ stroke: theme.palette.divider }}
+                  tickLine={{ stroke: theme.palette.divider }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: theme.palette.background.paper,
+                    borderColor: theme.palette.divider,
+                    borderRadius: 8,
+                    color: theme.palette.text.primary,
+                  }}
+                  labelStyle={{ color: theme.palette.text.secondary }}
+                  itemStyle={{ color: theme.palette.text.primary }}
+                />
                 <Area
                   type="monotone"
                   dataKey="count"
@@ -83,7 +97,15 @@ export default function UploadAndVisibilityCharts({ uploads, visibility }) {
                     />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: theme.palette.background.paper,
+                    borderColor: theme.palette.divider,
+                    borderRadius: 8,
+                    color: theme.palette.text.primary,
+                  }}
+                  itemStyle={{ color: theme.palette.text.primary }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </Box>

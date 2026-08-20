@@ -149,9 +149,11 @@ export default function NotificationBell() {
     isLoading,
     isLoadingMore,
     hasMore,
+    error,
     loadMore,
     markNotificationAsRead,
     markAllNotificationsAsRead,
+    refresh,
   } = useNotifications();
   const open = Boolean(anchorEl);
 
@@ -272,6 +274,15 @@ export default function NotificationBell() {
                 }}
               >
                 <CircularProgress size={24} />
+              </Box>
+            ) : error ? (
+              <Box sx={{ py: 5, px: 3, textAlign: "center" }}>
+                <Typography color="error" sx={{ fontSize: "0.85rem", mb: 1.5 }}>
+                  Không thể tải thông báo.
+                </Typography>
+                <Button size="small" onClick={refresh}>
+                  Thử lại
+                </Button>
               </Box>
             ) : notifications.length === 0 ? (
               <Box

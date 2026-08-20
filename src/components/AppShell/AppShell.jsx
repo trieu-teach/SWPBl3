@@ -33,6 +33,7 @@ import NotificationBell from "../../pages/User/Notifications/components/Notifica
 
 const DRAWER_WIDTH = 280;
 const COLLAPSED_DRAWER_WIDTH = 88;
+const APP_HEADER_HEIGHT = 84;
 
 const USER_NAVIGATION = [
   { label: "Thư viện", path: "/documents", icon: FolderOpenOutlined },
@@ -230,7 +231,8 @@ function SidebarContent({
           justifyContent: collapsed ? "center" : "flex-start",
           gap: collapsed ? 0 : 1.5,
           px: collapsed ? 1 : 2.5,
-          py: 2.5,
+          height: APP_HEADER_HEIGHT,
+          boxSizing: "border-box",
           textDecoration: "none",
           color: "inherit",
           borderBottom: "1px solid",
@@ -556,6 +558,8 @@ export default function AppShell({ children, role = "USER" }) {
             zIndex: 1100,
             px: { xs: 2, sm: 3, lg: 4 },
             py: 2,
+            minHeight: APP_HEADER_HEIGHT,
+            boxSizing: "border-box",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",

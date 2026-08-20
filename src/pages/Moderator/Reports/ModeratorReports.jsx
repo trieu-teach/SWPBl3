@@ -41,12 +41,14 @@ export default function ModeratorReports({ role = "MODERATOR" }) {
     <Layout>
       <Stack
         direction={{ xs: "column", sm: "row" }}
-        justifyContent="space-between"
-        alignItems={{ sm: "flex-end" }}
-        gap={2}
-        sx={{ mb: 3 }}
+        sx={{
+          justifyContent: "space-between",
+          alignItems: { xs: "stretch", sm: "center" },
+          gap: 2,
+          mb: 3,
+        }}
       >
-        <Box>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography variant="h4" fontWeight={800}>
             Báo cáo vi phạm
           </Typography>
@@ -54,7 +56,13 @@ export default function ModeratorReports({ role = "MODERATOR" }) {
             Xem xét báo cáo và áp dụng hành động kiểm duyệt rõ ràng, độc lập.
           </Typography>
         </Box>
-        <FormControl size="small" sx={{ minWidth: 190 }}>
+        <FormControl
+          size="small"
+          sx={{
+            width: { xs: "100%", sm: 220 },
+            flexShrink: 0,
+          }}
+        >
           <InputLabel id="moderation-report-status-label">Trạng thái</InputLabel>
           <Select
             labelId="moderation-report-status-label"
@@ -87,12 +95,20 @@ export default function ModeratorReports({ role = "MODERATOR" }) {
 
       <Paper variant="outlined" sx={{ borderRadius: 3, overflow: "hidden" }}>
         {moderation.loading ? (
-          <Stack alignItems="center" gap={1.5} sx={{ py: 8 }}>
+          <Stack sx={{ alignItems: "center", gap: 1.5, py: 8 }}>
             <CircularProgress size={30} />
             <Typography color="text.secondary">Đang tải báo cáo...</Typography>
           </Stack>
         ) : moderation.reports.length === 0 ? (
-          <Stack alignItems="center" gap={1} sx={{ py: 8, px: 2, textAlign: "center" }}>
+          <Stack
+            sx={{
+              alignItems: "center",
+              gap: 1,
+              py: 8,
+              px: 2,
+              textAlign: "center",
+            }}
+          >
             <ReportProblemOutlined color="disabled" sx={{ fontSize: 46 }} />
             <Typography fontWeight={750}>Không có báo cáo ở trạng thái này</Typography>
             <Typography color="text.secondary">

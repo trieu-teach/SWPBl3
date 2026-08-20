@@ -25,7 +25,13 @@ export default function DocumentFilters({ library }) {
         <Box
           component="form"
           onSubmit={library.applySearch}
-          sx={{ display: "flex", gap: 1, mb: 2 }}
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            alignItems: "center",
+            gap: 1,
+            mb: 2,
+          }}
         >
           <TextField
             fullWidth
@@ -41,7 +47,17 @@ export default function DocumentFilters({ library }) {
               ),
             }}
           />
-          <Button type="submit" variant="contained">
+          <Button
+            type="submit"
+            variant="contained"
+            sx={{
+              minWidth: { sm: 120 },
+              width: { xs: "100%", sm: "auto" },
+              height: 40,
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+            }}
+          >
             Tìm kiếm
           </Button>
         </Box>
