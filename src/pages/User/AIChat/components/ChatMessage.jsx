@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   CircularProgress,
+  Link,
   Paper,
   Stack,
   Typography,
@@ -11,55 +12,126 @@ import {
 import SmartToyOutlined from "@mui/icons-material/SmartToyOutlined";
 import PersonOutlineOutlined from "@mui/icons-material/PersonOutlineOutlined";
 import ReplayRounded from "@mui/icons-material/ReplayRounded";
+import ReactMarkdown from "react-markdown";
 import ChatSources from "./ChatSources.jsx";
 
-function renderContent(content) {
-  const blocks = [];
+const markdownComponents = {
+  p: ({ children }) => (
+    <Typography component="p" sx={{ m: 0, mb: 1.1, fontSize: "0.95rem", lineHeight: 1.72 }}>
+      {children}
+    </Typography>
+  ),
+  strong: ({ children }) => (
+    <Box component="strong" sx={{ fontWeight: 750 }}>
+      {children}
+    </Box>
+  ),
+  em: ({ children }) => <Box component="em">{children}</Box>,
+  h1: ({ children }) => (
+    <Typography component="h1" variant="h6" sx={{ mt: 1.5, mb: 0.75, fontWeight: 800 }}>
+      {children}
+    </Typography>
+  ),
+  h2: ({ children }) => (
+    <Typography component="h2" sx={{ mt: 1.4, mb: 0.65, fontSize: "1.02rem", fontWeight: 800 }}>
+      {children}
+    </Typography>
+  ),
+  h3: ({ children }) => (
+    <Typography component="h3" sx={{ mt: 1.25, mb: 0.5, fontSize: "0.96rem", fontWeight: 750 }}>
+      {children}
+    </Typography>
+  ),
+  ul: ({ children }) => (
+    <Box component="ul" sx={{ my: 0.75, pl: 2.75 }}>
+      {children}
+    </Box>
+  ),
+  ol: ({ children }) => (
+    <Box component="ol" sx={{ my: 0.75, pl: 2.75 }}>
+      {children}
+    </Box>
+  ),
+  li: ({ children }) => (
+    <Box component="li" sx={{ mb: 0.45, pl: 0.25, fontSize: "0.95rem", lineHeight: 1.68 }}>
+      {children}
+    </Box>
+  ),
+  code: ({ children, className }) => (
+    <Box
+      component="code"
+      className={className}
+      sx={{
+        px: 0.55,
+        py: 0.15,
+        borderRadius: 0.75,
+        bgcolor: "action.selected",
+        fontFamily: '"SFMono-Regular", Consolas, "Liberation Mono", monospace',
+        fontSize: "0.86em",
+        overflowWrap: "anywhere",
+      }}
+    >
+      {children}
+    </Box>
+  ),
+  pre: ({ children }) => (
+    <Box
+      component="pre"
+      sx={{
+        m: 0,
+        my: 1.25,
+        p: 1.5,
+        overflowX: "auto",
+        borderRadius: 2,
+        bgcolor: "action.hover",
+        border: "1px solid",
+        borderColor: "divider",
+        fontSize: "0.84rem",
+        lineHeight: 1.6,
+        "& code": { p: 0, bgcolor: "transparent", borderRadius: 0, overflowWrap: "normal" },
+      }}
+    >
+      {children}
+    </Box>
+  ),
+  a: ({ children, href }) => (
+    <Link href={href} target="_blank" rel="noopener noreferrer" sx={{ overflowWrap: "anywhere" }}>
+      {children}
+    </Link>
+  ),
+  blockquote: ({ children }) => (
+    <Box
+      component="blockquote"
+      sx={{ m: 0, my: 1.25, pl: 1.5, borderLeft: "3px solid", borderColor: "divider", color: "text.secondary" }}
+    >
+      {children}
+    </Box>
+  ),
+};
 
-  content.split("\n").forEach((line) => {
-    const trimmed = line.trim();
+function MarkdownContent({ content }) {
+  return (
+    <Box
+      sx={{
+        minWidth: 0,
+        overflowWrap: "anywhere",
+        "& > :first-of-type": { mt: 0 },
+        "& > :last-child": { mb: 0 },
+      }}
+    >
+      <ReactMarkdown skipHtml components={markdownComponents}>
+        {content}
+      </ReactMarkdown>
+    </Box>
+  );
+}
 
-    if (!trimmed) return;
-
-    if (trimmed.startsWith("- ")) {
-      const lastBlock = blocks.at(-1);
-      if (lastBlock?.type === "list") {
-        lastBlock.items.push(trimmed.replace(/^- /, ""));
-      } else {
-        blocks.push({ type: "list", items: [trimmed.replace(/^- /, "")] });
-      }
-      return;
-    }
-
-    blocks.push({ type: "paragraph", text: trimmed });
-  });
-
-  return blocks.map((block, index) => {
-    if (block.type === "list") {
-      return (
-        <Box component="ul" key={`list-${index}`} sx={{ pl: 2.5, my: 0 }}>
-          {block.items.map((item) => (
-            <Typography
-              component="li"
-              key={item}
-              sx={{ fontSize: "0.95rem", lineHeight: 1.7, mb: 0.5 }}
-            >
-              {item}
-            </Typography>
-          ))}
-        </Box>
-      );
-    }
-
-    return (
-      <Typography
-        key={`${block.text}-${index}`}
-        sx={{ fontSize: "0.95rem", lineHeight: 1.75, whiteSpace: "pre-wrap" }}
-      >
-        {block.text}
-      </Typography>
-    );
-  });
+function PlainContent({ content }) {
+  return (
+    <Typography component="div" sx={{ fontSize: "0.95rem", lineHeight: 1.68, whiteSpace: "pre-wrap" }}>
+      {content}
+    </Typography>
+  );
 }
 
 export default function ChatMessage({
@@ -80,16 +152,16 @@ export default function ChatMessage({
       direction="row"
       spacing={1.5}
       justifyContent={isUser ? "flex-end" : "flex-start"}
-      alignItems="flex-end"
+      alignItems="flex-start"
       sx={{ width: "100%" }}
     >
       {!isUser && (
         <Avatar
           sx={{
-            width: 34,
-            height: 34,
-            bgcolor: "primary.main",
-            color: "primary.contrastText",
+            width: 30,
+            height: 30,
+            bgcolor: "action.selected",
+            color: "primary.main",
           }}
         >
           <SmartToyOutlined sx={{ fontSize: 19 }} />
@@ -98,7 +170,8 @@ export default function ChatMessage({
 
       <Box
         sx={{
-          maxWidth: { xs: "82%", sm: "72%", lg: "64%" },
+          width: isUser ? "fit-content" : "100%",
+          maxWidth: isUser ? { xs: "86%", sm: 680 } : 900,
           minWidth: 0,
           display: "flex",
           flexDirection: "column",
@@ -109,17 +182,21 @@ export default function ChatMessage({
         <Paper
           elevation={0}
           sx={{
-            px: { xs: 1.75, sm: 2 },
-            py: 1.5,
+            px: { xs: 1.5, sm: 1.75 },
+            py: { xs: 1.15, sm: 1.35 },
             borderRadius: isUser ? "18px 18px 6px 18px" : "18px 18px 18px 6px",
             bgcolor: isUser
-              ? "primary.main"
+              ? "rgba(99, 102, 241, 0.12)"
               : isError
                 ? "error.light"
-                : "background.paper",
-            color: isUser ? "primary.contrastText" : "text.primary",
+                : "action.hover",
+            color: "text.primary",
             border: "1px solid",
-            borderColor: isUser ? "primary.main" : isError ? "error.main" : "divider",
+            borderColor: isUser
+              ? "rgba(99, 102, 241, 0.18)"
+              : isError
+                ? "error.main"
+                : "transparent",
             overflowWrap: "anywhere",
             width: "100%",
           }}
@@ -135,7 +212,11 @@ export default function ChatMessage({
             <Stack spacing={1.25}>
               {message.content && message.content !== "Đang suy nghĩ..." && (
                 <Box>
-                  {renderContent(message.content)}
+                  {isUser ? (
+                    <PlainContent content={message.content} />
+                  ) : (
+                    <MarkdownContent content={message.content} />
+                  )}
                   {hasSources && (
                     <ChatSources
                       sources={message.sources}
@@ -170,7 +251,11 @@ export default function ChatMessage({
             </Stack>
           ) : (
             <Stack spacing={1.25}>
-              {renderContent(message.content)}
+              {isUser ? (
+                <PlainContent content={message.content} />
+              ) : (
+                <MarkdownContent content={message.content} />
+              )}
               
               {/* If streaming and verifying, show a subtle indicator */}
               {message.status === "streaming" && message.streamPhase === "verifying" && (
@@ -219,8 +304,9 @@ export default function ChatMessage({
         <Typography
           sx={{
             px: 0.5,
-            fontSize: "0.72rem",
+            fontSize: "0.66rem",
             color: "text.secondary",
+            opacity: 0.78,
           }}
         >
           {isUser ? "Bạn" : "AI Study Hub"} · {message.createdAt}
@@ -262,8 +348,8 @@ export default function ChatMessage({
       {isUser && (
         <Avatar
           sx={{
-            width: 34,
-            height: 34,
+            width: 30,
+            height: 30,
             bgcolor: "action.hover",
             color: "text.secondary",
           }}

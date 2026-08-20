@@ -1,4 +1,4 @@
-import { Box, Card, Chip, Stack, Typography } from "@mui/material";
+import { Box, Chip, Stack, Typography } from "@mui/material";
 import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
 import { isLibraryContext } from "../chatContext.js";
 
@@ -19,7 +19,7 @@ export default function ChatEmptyState({ chatContext }) {
   
   const title = isLibrary ? "Thư viện của bạn" : "Bắt đầu hỏi AI";
   const description = isLibrary
-    ? "Hỏi AI về các tài liệu trong thư viện của bạn. AI sẽ tìm kiếm và tổng hợp thông tin từ toàn bộ thư viện."
+    ? "Hỏi AI về các tài liệu trong thư viện của bạn."
     : "Nhập câu hỏi để nhận gợi ý học tập, tóm tắt nội dung hoặc giải thích khái niệm theo cách dễ hiểu hơn.";
   
   const suggestions = isLibrary ? LIBRARY_SUGGESTIONS : DOC_SUGGESTIONS;
@@ -32,49 +32,47 @@ export default function ChatEmptyState({ chatContext }) {
         justifyContent: "center",
         height: "100%",
         width: "100%",
-        py: 2,
+        py: { xs: 4, sm: 6 },
+        px: 2,
       }}
     >
-      <Card
-        variant="outlined"
+      <Stack
+        alignItems="center"
         sx={{
-          maxWidth: 720,
+          maxWidth: 620,
           width: "100%",
           mx: "auto",
-          px: { xs: 2.5, sm: 4 },
-          py: { xs: 4, sm: 5 },
           textAlign: "center",
-          borderRadius: 3,
         }}
       >
         <Box
           sx={{
-            width: 64,
-            height: 64,
+            width: 44,
+            height: 44,
             display: "grid",
             placeItems: "center",
             mx: "auto",
-            mb: 2,
-            borderRadius: 3,
+            mb: 1.5,
+            borderRadius: 2,
             bgcolor: "action.hover",
             color: "primary.main",
           }}
         >
-          <AutoAwesomeOutlined fontSize="large" />
+          <AutoAwesomeOutlined sx={{ fontSize: 22 }} />
         </Box>
-        <Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
+        <Typography variant="h6" sx={{ fontWeight: 800, mb: 0.75 }}>
           {title}
         </Typography>
-        <Typography color="text.secondary" sx={{ maxWidth: 560, mx: "auto", mb: 3 }}>
+        <Typography color="text.secondary" sx={{ maxWidth: 520, mx: "auto", mb: 2.5, fontSize: "0.9rem" }}>
           {description}
         </Typography>
 
         <Stack direction="row" gap={1} justifyContent="center" flexWrap="wrap">
           {suggestions.map((suggestion) => (
-            <Chip key={suggestion} label={suggestion} variant="outlined" />
+            <Chip key={suggestion} label={suggestion} variant="outlined" size="small" />
           ))}
         </Stack>
-      </Card>
+      </Stack>
     </Box>
   );
 }

@@ -22,6 +22,12 @@ import {
 
 const LIBRARY_BASE_PATH = "/ai-chat";
 const LIBRARY_PRESELECTION_KEY = "libraryDocumentPreselection";
+// AppShell header plus its responsive page-content padding.
+const CHAT_WORKSPACE_HEIGHT = {
+  xs: "calc(100dvh - 104px)",
+  sm: "calc(100dvh - 120px)",
+  lg: "calc(100dvh - 136px)",
+};
 
 function normalizeId(value) {
   if (typeof value !== "string") return null;
@@ -149,7 +155,7 @@ function ChatPageLayout({
       <Paper
         variant="outlined"
         sx={{
-          height: "100%",
+          height: CHAT_WORKSPACE_HEIGHT,
           minHeight: 0,
           display: "flex",
           flexDirection: "row",
@@ -176,6 +182,8 @@ function ChatPageLayout({
             flexDirection: "column",
             minWidth: 0,
             minHeight: 0,
+            height: "100%",
+            overflow: "hidden",
           }}
         >
           <ChatHeader
