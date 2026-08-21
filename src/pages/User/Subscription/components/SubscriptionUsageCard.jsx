@@ -9,6 +9,7 @@ import {
   LinearProgress,
   Stack,
   Typography,
+  useTheme,
 } from "@mui/material";
 
 function clampPercent(value) {
@@ -34,6 +35,8 @@ function formatStorage(megabytes = 0) {
 }
 
 function UsageItem({ icon, label, detail, percent, unlimited = false }) {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
   const value = clampPercent(percent);
   const isWarning = value >= 80;
 
@@ -49,16 +52,44 @@ function UsageItem({ icon, label, detail, percent, unlimited = false }) {
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          {icon}
-          <Typography fontWeight={700}>{label}</Typography>
+          <Box
+            sx={{
+              width: 28,
+              height: 28,
+              borderRadius: "8px",
+              bgcolor: isDark ? "#312e81" : "#e0e7ff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {icon}
+          </Box>
+          <Typography fontWeight={600} sx={{ fontSize: "0.9rem" }}>
+            {label}
+          </Typography>
         </Box>
         {unlimited ? (
-          <Chip label="Không giới hạn" size="small" color="success" />
+          <Chip
+            label="Không giới hạn"
+            size="small"
+            sx={{
+              bgcolor: isDark ? "#052e16" : "#dcfce7",
+              color: isDark ? "#4ade80" : "#15803d",
+              fontWeight: 600,
+              fontSize: "0.7rem",
+              height: 22,
+            }}
+          />
         ) : (
           <Typography
             variant="body2"
             color={isWarning ? "warning.main" : "text.secondary"}
-            textAlign="right"
+            sx={{
+              textAlign: "right",
+              fontWeight: isWarning ? 600 : 500,
+              fontSize: "0.8rem",
+            }}
           >
             {detail}
           </Typography>
@@ -69,7 +100,14 @@ function UsageItem({ icon, label, detail, percent, unlimited = false }) {
           variant="determinate"
           value={value}
           color={isWarning ? "warning" : "primary"}
-          sx={{ height: 8, borderRadius: 999 }}
+          sx={{
+            height: 6,
+            borderRadius: 3,
+            bgcolor: isDark ? "rgba(255,255,255,0.1)" : "#f3f4f6",
+            ".MuiLinearProgress-bar": {
+              borderRadius: 3,
+            },
+          }}
         />
       )}
     </Box>
@@ -77,6 +115,9 @@ function UsageItem({ icon, label, detail, percent, unlimited = false }) {
 }
 
 export default function SubscriptionUsageCard({ subscription }) {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
+
   if (!subscription) return null;
 
   const storageUsed = subscription.storageUsedMb || 0;
@@ -94,12 +135,23 @@ export default function SubscriptionUsageCard({ subscription }) {
     subscription.aiUsagePercent ??
     (aiLimit ? (aiUsed / aiLimit) * 100 : 0);
 
+  const daysRemaining = subscription.daysRemaining;
+
   return (
     <Card
-      variant="outlined"
-      sx={{ mb: 4, borderRadius: "var(--radius-md)", bgcolor: "var(--bg-card)" }}
+      sx={{
+        mb: 4,
+        borderRadius: "16px",
+        border: "1px solid",
+        borderColor: "var(--border-color)",
+        bgcolor: "var(--bg-card)",
+        boxShadow: isDark
+          ? "0 1px 3px rgba(0,0,0,0.3)"
+          : "0 1px 3px rgba(0,0,0,0.04)",
+      }}
     >
       <CardContent sx={{ p: { xs: 2.5, md: 3 } }}>
+        {/* Header Section */}
         <Box
           sx={{
             display: "flex",
@@ -108,37 +160,98 @@ export default function SubscriptionUsageCard({ subscription }) {
             gap: 2,
             flexWrap: "wrap",
             mb: 3,
+            pb: 3,
+            borderBottom: "1px solid",
+            borderColor: isDark ? "rgba(255,255,255,0.1)" : "divider",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <CheckCircleOutline color="success" />
+          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: "10px",
+                bgcolor: isDark ? "#052e16" : "#dcfce7",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                mt: 0.25,
+              }}
+            >
+              <CheckCircleOutline sx={{ color: isDark ? "#4ade80" : "#16a34a", fontSize: 22 }} />
+            </Box>
             <Box>
-              <Typography variant="h6" fontWeight={800}>
-                Gói {subscription.planName || subscription.plan}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Hiệu lực đến {formatDate(subscription.expiresAt)}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography
+                  variant="h6"
+                  fontWeight={800}
+                  sx={{ fontSize: "1.1rem" }}
+                >
+                  Gói {subscription.planName || subscription.plan}
+                </Typography>
+                <Chip
+                  label={subscription.plan || "FREE"}
+                  size="small"
+                  sx={{
+                    bgcolor: isDark
+                      ? subscription.plan === "FREE"
+                        ? "rgba(255,255,255,0.1)"
+                        : "#312e81"
+                      : subscription.plan === "FREE"
+                      ? "#f3f4f6"
+                      : "#e0e7ff",
+                    color: isDark
+                      ? subscription.plan === "FREE"
+                        ? "#9ca3af"
+                        : "#a5b4fc"
+                      : subscription.plan === "FREE"
+                      ? "#6b7280"
+                      : "#6366f1",
+                    fontWeight: 700,
+                    fontSize: "0.65rem",
+                    height: 20,
+                    borderRadius: "6px",
+                  }}
+                />
+              </Box>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ fontSize: "0.85rem", mt: 0.25 }}
+              >
+                Hiệu lực đến{" "}
+                <Box component="span" sx={{ fontWeight: 600 }}>
+                  {formatDate(subscription.expiresAt)}
+                </Box>
+                {daysRemaining != null && daysRemaining > 0 && (
+                  <Box
+                    component="span"
+                    sx={{
+                      ml: 1,
+                      color: daysRemaining <= 7 ? "error.main" : "warning.main",
+                      fontWeight: 600,
+                    }}
+                  >
+                    ({daysRemaining} ngày còn lại)
+                  </Box>
+                )}
               </Typography>
             </Box>
           </Box>
-          <Chip
-            label={subscription.plan || "FREE"}
-            color={subscription.plan === "FREE" ? "default" : "primary"}
-            size="small"
-          />
         </Box>
 
-        <Stack spacing={3}>
+        {/* Usage Stats */}
+        <Stack spacing={2.5}>
           <UsageItem
-            icon={<StorageOutlined color="primary" fontSize="small" />}
+            icon={<StorageOutlined sx={{ color: "#6366f1", fontSize: 16 }} />}
             label="Dung lượng lưu trữ"
             detail={`${formatStorage(storageUsed)} / ${formatStorage(storageLimit)} (${Math.round(clampPercent(storagePercent))}%)`}
             percent={storagePercent}
           />
           <UsageItem
-            icon={<AutoAwesomeOutlined color="primary" fontSize="small" />}
+            icon={<AutoAwesomeOutlined sx={{ color: "#6366f1", fontSize: 16 }} />}
             label="Hạn mức AI Credits"
-            detail={`${(aiRemaining || 0).toLocaleString("vi-VN")} Credits còn lại (${Math.round(clampPercent(aiPercent))}% đã dùng)`}
+            detail={`${(aiRemaining || 0).toLocaleString("vi-VN")} Credits còn lại (${Math.round(clampPercent(aiPercent))}%)`}
             percent={aiPercent}
             unlimited={aiLimit === null}
           />

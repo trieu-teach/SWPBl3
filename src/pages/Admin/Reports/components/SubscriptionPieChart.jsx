@@ -252,94 +252,106 @@ export default function SubscriptionPieChart({ data, loading }) {
           </Box>
         </Box>
 
-        {/* Pie Chart */}
-        <Box sx={{ display: "flex", flexDirection: { xs: "column", lg: "row" }, gap: 3, alignItems: "center" }}>
-          <ResponsiveContainer width={plans.length <= 3 ? 300 : "100%"} height={280}>
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                innerRadius={70}
-                outerRadius={110}
-                paddingAngle={4}
-                dataKey="value"
-                labelLine={false}
-                label={renderCustomLabel}
-              >
-                {chartData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={PLAN_COLORS[entry.code] || DEFAULT_COLORS[index % DEFAULT_COLORS.length]}
-                    stroke="transparent"
-                  />
-                ))}
-              </Pie>
-              <Tooltip 
-                content={<CustomTooltipContent />}
-                contentStyle={{ background: "transparent", border: "none", padding: 0 }}
-                wrapperStyle={{ background: "transparent" }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+        {/* Pie Chart + Legend */}
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1.2fr) minmax(280px, 1fr)" },
+            gap: { xs: 3, md: 4 },
+            alignItems: "center",
+            minHeight: 280,
+          }}
+        >
+          {/* Donut Chart */}
+          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+            <ResponsiveContainer width="100%" height={280}>
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={75}
+                  outerRadius={115}
+                  paddingAngle={3}
+                  dataKey="value"
+                  labelLine={false}
+                  label={renderCustomLabel}
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={PLAN_COLORS[entry.code] || DEFAULT_COLORS[index % DEFAULT_COLORS.length]}
+                      stroke="transparent"
+                    />
+                  ))}
+                </Pie>
+                <Tooltip
+                  content={<CustomTooltipContent />}
+                  contentStyle={{ background: "transparent", border: "none", padding: 0 }}
+                  wrapperStyle={{ background: "transparent" }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </Box>
 
-          {/* Legend & Details */}
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {chartData.map((plan, index) => {
-                const color = PLAN_COLORS[plan.code] || DEFAULT_COLORS[index % DEFAULT_COLORS.length];
-                const percent = totals.purchaseCount > 0 ? (plan.value / totals.purchaseCount * 100) : 0;
-                return (
-                  <Box
-                    key={plan.code}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      p: 1.5,
-                      borderRadius: 2,
-                      bgcolor: "action.hover",
-                      border: "1px solid",
-                      borderColor: "divider",
-                      transition: "all 0.2s",
-                      "&:hover": {
-                        bgcolor: "action.selected",
-                      },
-                    }}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                      <Box
-                        sx={{
-                          width: 12,
-                          height: 12,
-                          borderRadius: "50%",
-                          bgcolor: color,
-                          flexShrink: 0,
-                        }}
-                      />
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
-                        {plan.name}
+          {/* Legend Cards */}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minWidth: 0 }}>
+            {chartData.map((plan, index) => {
+              const color = PLAN_COLORS[plan.code] || DEFAULT_COLORS[index % DEFAULT_COLORS.length];
+              const percent = totals.purchaseCount > 0 ? (plan.value / totals.purchaseCount * 100) : 0;
+              return (
+                <Box
+                  key={plan.code}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    p: { xs: 1.5, sm: 2 },
+                    borderRadius: 2,
+                    bgcolor: "action.hover",
+                    border: "1px solid",
+                    borderColor: "divider",
+                    transition: "all 0.2s",
+                    "&:hover": {
+                      bgcolor: "action.selected",
+                    },
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
+                    <Box
+                      sx={{
+                        width: 14,
+                        height: 14,
+                        borderRadius: "50%",
+                        bgcolor: color,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 600, color: "text.primary", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}
+                    >
+                      {plan.name}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                      {percent.toFixed(1)}%
+                    </Typography>
+                    <Box sx={{ textAlign: "right", minWidth: { xs: 50, sm: 60 } }}>
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: color }}>
+                        {plan.value}
                       </Typography>
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                      <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                        {percent.toFixed(1)}%
-                      </Typography>
-                      <Box sx={{ textAlign: "right" }}>
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: color }}>
-                          {plan.value}
+                      {plan.revenue > 0 && (
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                          {plan.revenue.toLocaleString("vi-VN")}đ
                         </Typography>
-                        {plan.revenue > 0 && (
-                          <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                            {plan.revenue.toLocaleString("vi-VN")}đ
-                          </Typography>
-                        )}
-                      </Box>
+                      )}
                     </Box>
                   </Box>
-                );
-              })}
-            </Box>
+                </Box>
+              );
+            })}
           </Box>
         </Box>
       </CardContent>

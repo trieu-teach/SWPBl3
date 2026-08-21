@@ -10,11 +10,16 @@ import AssessmentOutlined from "@mui/icons-material/AssessmentOutlined";
 import TrendingUpOutlined from "@mui/icons-material/TrendingUpOutlined";
 import DownloadOutlined from "@mui/icons-material/DownloadOutlined";
 import BookmarkOutlined from "@mui/icons-material/BookmarkOutlined";
+import FolderOutlined from "@mui/icons-material/FolderOutlined";
+import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
+import UploadOutlined from "@mui/icons-material/UploadOutlined";
 import AdminLayout from "../Layout/AdminLayout.jsx";
 import ReportFilters from "./components/ReportFilters.jsx";
 import UploadStatsChart from "./components/UploadStatsChart.jsx";
 import TopDocumentsChart from "./components/TopDocumentsChart.jsx";
 import SubscriptionPieChart from "./components/SubscriptionPieChart.jsx";
+import HeaviestDocumentsChart from "./components/HeaviestDocumentsChart.jsx";
+import TopUsersChart from "./components/TopUsersChart.jsx";
 import useReports from "./hooks/useReports.js";
 
 function SectionHeader({ icon, title, subtitle, color }) {
@@ -244,6 +249,78 @@ export default function Reports() {
             data={reports.subscriptionStats}
             loading={reports.subscriptionLoading}
             dateRange={reports.statsRange}
+          />
+        </ChartCard>
+
+        {/* SECTION 5: Heaviest Documents */}
+        <ChartCard error={reports.heaviestError} errorTitle="Heaviest Documents">
+          <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 2, mb: 3 }}>
+            <SectionHeader
+              icon={<FolderOutlined sx={{ fontSize: 24 }} />}
+              title="Tài liệu có dung lượng nặng nhất"
+              subtitle="Trong các tài liệu tải lên khoảng thời gian đã chọn"
+              color="#ef4444"
+            />
+            <DateCaption
+              label="Tài liệu nặng"
+              dateRange={reports.heaviestRange}
+              getDateCaption={reports.getDateCaption}
+            />
+          </Box>
+          <HeaviestDocumentsChart
+            data={reports.heaviestDocuments}
+            loading={reports.heaviestLoading}
+            barColor="#ef4444"
+          />
+        </ChartCard>
+
+        {/* SECTION 6: Top Contributors */}
+        <ChartCard error={reports.contributorsError} errorTitle="Top Contributors">
+          <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 2, mb: 3 }}>
+            <SectionHeader
+              icon={<PeopleOutlined sx={{ fontSize: 24 }} />}
+              title="Người đóng góp cộng đồng nhiều nhất"
+              subtitle="Chỉ đếm tài liệu công khai đã được duyệt"
+              color="#06b6d4"
+            />
+            <DateCaption
+              label="Top đóng góp"
+              dateRange={reports.contributorsRange}
+              getDateCaption={reports.getDateCaption}
+            />
+          </Box>
+          <TopUsersChart
+            data={reports.topContributors}
+            loading={reports.contributorsLoading}
+            metricKey="documentCount"
+            metricLabel="tài liệu"
+            barColor="#06b6d4"
+            showStorage={false}
+          />
+        </ChartCard>
+
+        {/* SECTION 7: Top Uploaders */}
+        <ChartCard error={reports.uploadersError} errorTitle="Top Uploaders">
+          <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 2, mb: 3 }}>
+            <SectionHeader
+              icon={<UploadOutlined sx={{ fontSize: 24 }} />}
+              title="Người tải lên hệ thống nhiều nhất"
+              subtitle="Đếm toàn bộ tài liệu kể cả riêng tư và chưa duyệt"
+              color="#f59e0b"
+            />
+            <DateCaption
+              label="Top tải lên"
+              dateRange={reports.uploadersRange}
+              getDateCaption={reports.getDateCaption}
+            />
+          </Box>
+          <TopUsersChart
+            data={reports.topUploaders}
+            loading={reports.uploadersLoading}
+            metricKey="documentCount"
+            metricLabel="tài liệu"
+            barColor="#f59e0b"
+            showStorage={true}
           />
         </ChartCard>
       </Box>

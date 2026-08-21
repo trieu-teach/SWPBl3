@@ -1,8 +1,11 @@
 import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
+import CancelOutlined from "@mui/icons-material/CancelOutlined";
+import CheckCircle from "@mui/icons-material/CheckCircle";
 import CheckCircleOutline from "@mui/icons-material/CheckCircleOutlineRounded";
 import Close from "@mui/icons-material/Close";
 import ContentCopyOutlined from "@mui/icons-material/ContentCopyOutlined";
 import ErrorOutline from "@mui/icons-material/ErrorOutlineOutlined";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import {
   Alert,
   Box,
@@ -18,7 +21,9 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+const TERMINAL_STATUSES = ["PAID", "SUCCESS", "EXPIRED", "CANCELLED", "FAILED", "REFUNDED"];
 
 function formatMoney(amount = 0) {
   return new Intl.NumberFormat("vi-VN", {
@@ -73,16 +78,95 @@ function PaymentRow({ label, value, copyValue, emphasize = false, onCopy }) {
   );
 }
 
+function TerminalStatusView({ status, payment, onDismiss, onCreateNew }) {
+  const statusConfig = {
+    PAID: {
+      severity: "success",
+      icon: <CheckCircle sx={{ fontSize: 48, color: "success.main" }} />,
+      title: "Thanh toán thành công!",
+      message: "Gói cước của bạn đã được kích hoạt. Cảm ơn bạn đã tin tưởng sử dụng dịch vụ.",
+    },
+    SUCCESS: {
+      severity: "success",
+      icon: <CheckCircle sx={{ fontSize: 48, color: "success.main" }} />,
+      title: "Thanh toán thành công!",
+      message: "Gói cước của bạn đã được kích hoạt. Cảm ơn bạn đã tin tưởng sử dụng dịch vụ.",
+    },
+    EXPIRED: {
+      severity: "warning",
+      icon: <AccessTimeOutlined sx={{ fontSize: 48, color: "warning.main" }} />,
+      title: "Mã thanh toán đã hết hạn",
+      message: "Mã thanh toán chỉ có hiệu lực trong 15 phút. Vui lòng tạo giao dịch mới.",
+    },
+    CANCELLED: {
+      severity: "info",
+      icon: <CancelOutlined sx={{ fontSize: 48, color: "info.main" }} />,
+      title: "Đã hủy thanh toán",
+      message: "Giao dịch thanh toán đã bị hủy. Bạn có thể tạo giao dịch mới khi sẵn sàng.",
+    },
+    FAILED: {
+      severity: "error",
+      icon: <ErrorOutline sx={{ fontSize: 48, color: "error.main" }} />,
+      title: "Thanh toán thất bại",
+      message: "Đã xảy ra lỗi trong quá trình thanh toán. Vui lòng thử lại hoặc liên hệ hỗ trợ.",
+    },
+    REFUNDED: {
+      severity: "info",
+      icon: <CheckCircleOutline sx={{ fontSize: 48, color: "info.main" }} />,
+      title: "Đã hoàn tiền",
+      message: "Khoản thanh toán đã được hoàn lại. Vui lòng kiểm tra tài khoản ngân hàng của bạn.",
+    },
+  };
+
+  const config = statusConfig[status] || statusConfig.FAILED;
+
+  return (
+    <Stack spacing={3} alignItems="center" sx={{ textAlign: "center", py: 2 }}>
+      {config.icon}
+      <Typography variant="h6" fontWeight={800}>
+        {config.title}
+      </Typography>
+      <Typography color="text.secondary">{config.message}</Typography>
+
+      {["EXPIRED", "CANCELLED", "FAILED"].includes(status) && (
+        <Button
+          variant="contained"
+          startIcon={<RefreshIcon />}
+          onClick={onCreateNew}
+          sx={{ borderRadius: "10px", textTransform: "none", fontWeight: 600 }}
+        >
+          Tạo giao dịch mới
+        </Button>
+      )}
+
+      {payment?.amount && (
+        <Alert severity={config.severity} sx={{ width: "100%" }}>
+          Thanh toán: {formatMoney(payment.amount)}
+        </Alert>
+      )}
+    </Stack>
+  );
+}
+
 export default function PaymentDialog({
   payment,
   remainingSeconds,
   cancelling,
   onCancel,
   onDismiss,
+  onCreateNew,
 }) {
   const [copied, setCopied] = useState("");
   const isPending = payment?.status === "PENDING";
   const isExpired = payment?.status === "EXPIRED" || remainingSeconds === 0;
+  const isTerminal = TERMINAL_STATUSES.includes(payment?.status);
+
+  // Auto-dismiss on terminal status
+  useEffect(() => {
+    if (isTerminal && ["EXPIRED", "CANCELLED", "FAILED", "REFUNDED"].includes(payment?.status)) {
+      // Don't auto-dismiss, show the status view instead
+    }
+  }, [isTerminal, payment?.status]);
 
   const copy = async (value) => {
     try {
@@ -98,6 +182,15 @@ export default function PaymentDialog({
     if (isPending && !isExpired) onCancel();
     else onDismiss();
   };
+
+  // Extract bank info from BE response
+  const bankInfo = payment?.bankInfo || {};
+  const qrUrl = payment?.qrUrl;
+  const amount = payment?.amount;
+  const invoiceNumber = payment?.invoiceNumber;
+  const bankName = bankInfo.bankName;
+  const accountNumber = bankInfo.accountNumber;
+  const accountHolder = bankInfo.accountHolder;
 
   return (
     <Dialog
@@ -128,7 +221,32 @@ export default function PaymentDialog({
       </DialogTitle>
 
       <DialogContent dividers>
-        {isPending && !isExpired ? (
+        {/* PAID SUCCESS STATE */}
+        {payment?.status === "PAID" || payment?.status === "SUCCESS" ? (
+          <Stack spacing={3} alignItems="center" sx={{ textAlign: "center", py: 2 }}>
+            <CheckCircle sx={{ fontSize: 64, color: "success.main" }} />
+            <Typography variant="h5" fontWeight={800} color="success.main">
+              Thanh toán thành công!
+            </Typography>
+            <Typography color="text.secondary">
+              Cảm ơn bạn đã tin tưởng sử dụng dịch vụ. Gói cước của bạn đã được kích hoạt.
+            </Typography>
+            {payment?.amount && (
+              <Alert severity="success" icon={<CheckCircleOutline />}>
+                Số tiền: {formatMoney(payment.amount)}
+              </Alert>
+            )}
+          </Stack>
+        ) : /* TERMINAL NON-SUCCESS STATES */
+        isTerminal ? (
+          <TerminalStatusView
+            status={payment.status}
+            payment={payment}
+            onDismiss={onDismiss}
+            onCreateNew={onCreateNew}
+          />
+        ) : /* PENDING STATE - QR Code + Countdown */
+        isPending && !isExpired ? (
           <Stack spacing={2.5}>
             <Box
               sx={{
@@ -140,12 +258,26 @@ export default function PaymentDialog({
                 border: "1px solid var(--border-color)",
               }}
             >
-              <Box
-                component="img"
-                src={payment.qrUrl}
-                alt={`VietQR cho đơn ${payment.invoiceNumber}`}
-                sx={{ display: "block", width: "100%", aspectRatio: "1", objectFit: "contain" }}
-              />
+              {qrUrl ? (
+                <Box
+                  component="img"
+                  src={qrUrl}
+                  alt={`VietQR cho đơn ${invoiceNumber}`}
+                  sx={{ display: "block", width: "100%", aspectRatio: "1", objectFit: "contain" }}
+                />
+              ) : (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    aspectRatio: "1",
+                    bgcolor: "#f5f5f5",
+                  }}
+                >
+                  <CircularProgress />
+                </Box>
+              )}
             </Box>
 
             <Box
@@ -164,29 +296,29 @@ export default function PaymentDialog({
             </Box>
 
             <Box>
-              <PaymentRow label="Ngân hàng" value={payment.bankName} onCopy={copy} />
+              <PaymentRow label="Ngân hàng" value={bankName} onCopy={copy} />
               <Divider />
               <PaymentRow
                 label="Số tài khoản"
-                value={payment.bankAcc}
-                copyValue={payment.bankAcc}
+                value={accountNumber}
+                copyValue={accountNumber}
                 onCopy={copy}
               />
               <Divider />
-              <PaymentRow label="Chủ tài khoản" value={payment.accountName} onCopy={copy} />
+              <PaymentRow label="Chủ tài khoản" value={accountHolder} onCopy={copy} />
               <Divider />
               <PaymentRow
                 label="Số tiền"
-                value={formatMoney(payment.amount)}
-                copyValue={payment.amount}
+                value={formatMoney(amount)}
+                copyValue={amount}
                 emphasize
                 onCopy={copy}
               />
               <Divider />
               <PaymentRow
                 label="Nội dung chuyển khoản"
-                value={payment.invoiceNumber}
-                copyValue={payment.invoiceNumber}
+                value={invoiceNumber}
+                copyValue={invoiceNumber}
                 emphasize
                 onCopy={copy}
               />
@@ -208,6 +340,7 @@ export default function PaymentDialog({
             </Box>
           </Stack>
         ) : (
+          /* EXPIRED / UNKNOWN STATE */
           <Alert severity="warning" icon={<ErrorOutline />}>
             Đơn thanh toán đã hết hạn hoặc không còn ở trạng thái chờ. Hãy đóng cửa sổ và tạo giao dịch mới.
           </Alert>
