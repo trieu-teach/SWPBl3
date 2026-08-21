@@ -11,9 +11,8 @@ export default function SubscriptionGrid({ subscription }) {
               plan={plan}
               buttonState={subscription.getButtonState(plan)}
               onPurchase={subscription.purchasePlan}
-              loading={subscription.processing}
-              selectedPaymentMethod={subscription.selectedPaymentMethod}
-              onPaymentMethodChange={subscription.setSelectedPaymentMethod}
+              loading={subscription.processingPlanCode === plan.code}
+              processing={subscription.processing}
             />
           </Grid>
         ))}

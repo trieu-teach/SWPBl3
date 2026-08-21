@@ -1,23 +1,33 @@
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  getPublicSubscriptionPlans,
   createCheckout,
   getMySubscription,
   getPaymentStatus,
+  getPublicSubscriptionPlans,
   updatePaymentStatus,
 } from "../../../../api/subscription.api.js";
+
+const PAGE_SIZE = 6;
+const PAYMENT_METHOD = "BANK_TRANSFER";
+const POLL_DELAY_MS = 2_000;
+
+function secondsUntil(dateString) {
+  const expiresAt = new Date(dateString).getTime();
+  if (!Number.isFinite(expiresAt)) return 0;
+  return Math.max(0, Math.ceil((expiresAt - Date.now()) / 1_000));
+}
 
 export default function useSubscription() {
   const [plans, setPlans] = useState([]);
   const [mySubscription, setMySubscription] = useState(null);
+  const [checkout, setCheckout] = useState(null);
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [processing, setProcessing] = useState(false);
+  const [processingPlanCode, setProcessingPlanCode] = useState("");
+  const [cancellingPayment, setCancellingPayment] = useState(false);
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
   const [notification, setNotification] = useState(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("BANK_TRANSFER");
-  const PAGE_SIZE = 6;
-  const pollIntervalRef = useRef(null);
 
   const loadPlans = useCallback(async () => {
     setLoading(true);
@@ -25,7 +35,7 @@ export default function useSubscription() {
     try {
       const response = await getPublicSubscriptionPlans();
       const items = response?.items || response?.data || response || [];
-      setPlans(items);
+      setPlans(Array.isArray(items) ? items : []);
     } catch (err) {
       setError(err.message || "Không thể tải bảng giá.");
     } finally {
@@ -37,8 +47,10 @@ export default function useSubscription() {
     try {
       const data = await getMySubscription();
       setMySubscription(data);
+      return data;
     } catch {
       setMySubscription(null);
+      return null;
     }
   }, []);
 
@@ -50,148 +62,172 @@ export default function useSubscription() {
     loadAll();
   }, [loadAll]);
 
-  useEffect(() => {
-    return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-      }
-    };
-  }, []);
-
-  const submitSepayCheckout = useCallback((checkoutUrl, fields) => {
-    const form = document.createElement("form");
-    form.method = "POST";
-    form.action = checkoutUrl;
-    form.acceptCharset = "UTF-8";
-
-    for (const [name, value] of Object.entries(fields)) {
-      const input = document.createElement("input");
-      input.type = "hidden";
-      input.name = name;
-      input.value = String(value);
-      form.appendChild(input);
-    }
-
-    document.body.appendChild(form);
-    form.submit();
-  }, []);
-
   const purchasePlan = useCallback(async (planCode) => {
-    setProcessing(true);
+    if (processingPlanCode) return;
+
+    setProcessingPlanCode(planCode);
     setError("");
-    try {
-      const checkoutData = await createCheckout(planCode, selectedPaymentMethod);
-      if (checkoutData?.checkoutUrl && checkoutData?.fields) {
-        if (checkoutData.invoiceNumber) {
-          sessionStorage.setItem("pendingInvoice", checkoutData.invoiceNumber);
-        }
-        submitSepayCheckout(checkoutData.checkoutUrl, checkoutData.fields);
-      } else {
-        setNotification({ type: "success", message: "Đăng ký gói thành công!" });
-        await loadMySubscription();
-      }
-    } catch (err) {
-      setNotification({ type: "error", message: err.message || "Không thể đăng ký gói." });
-    } finally {
-      setProcessing(false);
-    }
-  }, [selectedPaymentMethod, submitSepayCheckout, loadMySubscription]);
-
-  const pollPaymentStatus = useCallback((invoiceNumber, onPaid, onExpired) => {
-    if (pollIntervalRef.current) {
-      clearInterval(pollIntervalRef.current);
-    }
-
-    const expiresAt = new Date(Date.now() + 3 * 60 * 1000);
-
-    pollIntervalRef.current = setInterval(async () => {
-      if (new Date() > expiresAt) {
-        clearInterval(pollIntervalRef.current);
-        pollIntervalRef.current = null;
-        onExpired?.();
-        return;
-      }
-
-      try {
-        const status = await getPaymentStatus(invoiceNumber);
-        if (status?.status === "PAID") {
-          clearInterval(pollIntervalRef.current);
-          pollIntervalRef.current = null;
-          onPaid?.(status);
-        } else if (status?.status && !["PENDING", "PAID"].includes(status.status)) {
-          clearInterval(pollIntervalRef.current);
-          pollIntervalRef.current = null;
-        }
-      } catch {
-        // Continue polling
-      }
-    }, 2000);
-  }, []);
-
-  const stopPolling = useCallback(() => {
-    if (pollIntervalRef.current) {
-      clearInterval(pollIntervalRef.current);
-      pollIntervalRef.current = null;
-    }
-  }, []);
-
-  const cancelPayment = useCallback(async (invoiceNumber) => {
-    try {
-      await updatePaymentStatus(invoiceNumber, "CANCELLED");
-    } catch {
-      // Ignore errors
-    }
-  }, []);
-
-  const failPayment = useCallback(async (invoiceNumber) => {
-    try {
-      await updatePaymentStatus(invoiceNumber, "FAILED");
-    } catch {
-      // Ignore errors
-    }
-  }, []);
-
-  const clearNotification = useCallback(() => {
     setNotification(null);
-  }, []);
 
+    try {
+      const payment = await createCheckout(planCode, PAYMENT_METHOD);
+      if (!payment?.invoiceNumber || !payment?.qrUrl || !payment?.expiresAt) {
+        throw new Error("Backend không trả về thông tin VietQR hợp lệ.");
+      }
+
+      setRemainingSeconds(secondsUntil(payment.expiresAt));
+      setCheckout({ ...payment, status: "PENDING" });
+    } catch (err) {
+      setNotification({
+        type: "error",
+        message: err.message || "Không thể tạo giao dịch thanh toán.",
+      });
+      setProcessingPlanCode("");
+    }
+  }, [processingPlanCode]);
+
+  useEffect(() => {
+    if (!checkout?.invoiceNumber || checkout.status !== "PENDING") return undefined;
+
+    let stopped = false;
+    let pollTimer;
+
+    const finishPayment = async (payment) => {
+      if (["PAID", "SUCCESS"].includes(payment.status)) {
+        setCheckout(null);
+        setProcessingPlanCode("");
+        setNotification({
+          type: "success",
+          message: "Thanh toán thành công! Gói cước của bạn đã được kích hoạt.",
+        });
+        await loadMySubscription();
+        return true;
+      }
+
+      if (payment.status && payment.status !== "PENDING") {
+        setCheckout((current) =>
+          current ? { ...current, status: payment.status } : current,
+        );
+        setProcessingPlanCode("");
+        return true;
+      }
+      return false;
+    };
+
+    const poll = async () => {
+      if (stopped) return;
+      try {
+        const payment = await getPaymentStatus(checkout.invoiceNumber);
+        if (stopped || (await finishPayment(payment))) return;
+      } catch {
+        // Lỗi mạng tạm thời không làm mất giao dịch; lần polling sau sẽ thử lại.
+      }
+      if (!stopped) pollTimer = window.setTimeout(poll, POLL_DELAY_MS);
+    };
+
+    const countdownTimer = window.setInterval(() => {
+      const seconds = secondsUntil(checkout.expiresAt);
+      setRemainingSeconds(seconds);
+      if (seconds === 0) {
+        window.clearInterval(countdownTimer);
+      }
+    }, 1_000);
+
+    poll();
+    return () => {
+      stopped = true;
+      window.clearTimeout(pollTimer);
+      window.clearInterval(countdownTimer);
+    };
+  }, [checkout?.expiresAt, checkout?.invoiceNumber, checkout?.status, loadMySubscription]);
+
+  const cancelPayment = useCallback(async () => {
+    if (!checkout?.invoiceNumber || cancellingPayment) return;
+
+    setCancellingPayment(true);
+    try {
+      const payment = await updatePaymentStatus(
+        checkout.invoiceNumber,
+        "CANCELLED",
+      );
+      setCheckout(null);
+      setProcessingPlanCode("");
+      setNotification({
+        type: payment?.status === "EXPIRED" ? "warning" : "info",
+        message:
+          payment?.status === "EXPIRED"
+            ? "Đơn thanh toán đã hết hạn."
+            : "Đã hủy giao dịch thanh toán.",
+      });
+    } catch (err) {
+      setNotification({
+        type: "error",
+        message: err.message || "Không thể hủy giao dịch thanh toán.",
+      });
+    } finally {
+      setCancellingPayment(false);
+    }
+  }, [cancellingPayment, checkout]);
+
+  const dismissPayment = useCallback(() => {
+    if (checkout?.status === "PENDING") return;
+    setCheckout(null);
+    setProcessingPlanCode("");
+  }, [checkout?.status]);
+
+  const clearNotification = useCallback(() => setNotification(null), []);
   const totalPages = Math.ceil(plans.length / PAGE_SIZE);
-  const paginatedPlans = plans.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const paginatedPlans = useMemo(
+    () => plans.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [page, plans],
+  );
 
   const currentPlanRank = mySubscription?.plan
-    ? plans.find((p) => p.code === mySubscription.plan)?.rank || 0
+    ? plans.find((plan) => plan.code === mySubscription.plan)?.rank || 0
     : 0;
 
   const getButtonState = useCallback(
     (plan) => {
       if (!mySubscription) return { disabled: false, label: "Mua gói" };
 
-      const currentRank = currentPlanRank;
       const planRank = plan.rank || 0;
-      const expiresAt = mySubscription.expiresAt;
-      const isActive = expiresAt && new Date(expiresAt) > new Date();
+      const isActive =
+        !mySubscription.expiresAt ||
+        new Date(mySubscription.expiresAt) > new Date();
       const isCurrentPlan = mySubscription.plan === plan.code;
 
       if (isCurrentPlan && isActive) {
         return { disabled: true, label: "Đang dùng" };
       }
-      if (mySubscription.plan !== "FREE" && isActive && planRank < currentRank) {
+      if (
+        mySubscription.plan !== "FREE" &&
+        isActive &&
+        planRank < currentPlanRank
+      ) {
         return { disabled: true, label: "Không khả dụng" };
       }
-      if (mySubscription.plan !== "FREE" && isActive && planRank > currentRank) {
+      if (
+        mySubscription.plan !== "FREE" &&
+        isActive &&
+        planRank > currentPlanRank
+      ) {
         return { disabled: false, label: "Nâng cấp" };
       }
       return { disabled: false, label: "Mua gói" };
     },
-    [mySubscription, currentPlanRank]
+    [currentPlanRank, mySubscription],
   );
 
   return {
     plans: paginatedPlans,
     allPlans: plans,
     mySubscription,
+    checkout,
+    remainingSeconds,
     loading,
-    processing,
+    processing: Boolean(processingPlanCode),
+    processingPlanCode,
+    cancellingPayment,
     error,
     notification,
     page,
@@ -200,13 +236,9 @@ export default function useSubscription() {
     loadPlans,
     loadAll,
     purchasePlan,
-    clearNotification,
-    selectedPaymentMethod,
-    setSelectedPaymentMethod,
-    pollPaymentStatus,
-    stopPolling,
     cancelPayment,
-    failPayment,
+    dismissPayment,
+    clearNotification,
     loadMySubscription,
     currentPlanRank,
     getButtonState,

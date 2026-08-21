@@ -1,61 +1,70 @@
-import { Box, Button, Card, CardContent, CircularProgress, Typography, FormControl, RadioGroup, FormControlLabel, Radio } from "@mui/material";
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CircularProgress,
+  Typography,
+} from "@mui/material";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import CheckCircle from "@mui/icons-material/CheckCircle";
 import CheckCircleOutline from "@mui/icons-material/CheckCircleOutlineRounded";
 import ShoppingCartOutlined from "@mui/icons-material/ShoppingCartOutlined";
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 
-function formatStorage(megabytes) {
+function formatStorage(megabytes = 0) {
   if (megabytes >= 1024) {
     return `${(megabytes / 1024).toLocaleString("vi-VN")} GB`;
   }
   return `${megabytes.toLocaleString("vi-VN")} MB`;
 }
 
-const FEATURE_LABELS = {
-  storageLimitMb: "Dung lượng lưu trữ",
-  uploadLimit: "Lượt tải lên",
-  aiChatLimit: "Câu hỏi AI",
-  durationDays: "Thời hạn",
-};
-
-const FEATURE_FORMATTERS = {
-  storageLimitMb: formatStorage,
-  aiChatLimit: (v) => (v === null ? "Không giới hạn" : `${v.toLocaleString("vi-VN")} câu`),
-  uploadLimit: (v) => `${v.toLocaleString("vi-VN")} lượt`,
-  durationDays: (v) => `${v} ngày`,
-};
+const FEATURES = [
+  {
+    key: "storageLimitMb",
+    label: "Dung lượng lưu trữ",
+    format: formatStorage,
+  },
+  {
+    key: "uploadLimit",
+    label: "Lượt tải lên",
+    format: (value = 0) => `${value.toLocaleString("vi-VN")} lượt`,
+  },
+  {
+    key: "aiChatLimit",
+    label: "Câu hỏi AI",
+    format: (value) =>
+      value === null
+        ? "Không giới hạn"
+        : `${(value || 0).toLocaleString("vi-VN")} câu`,
+  },
+  {
+    key: "durationDays",
+    label: "Thời hạn",
+    format: (value = 0) => `${value} ngày`,
+  },
+];
 
 export default function SubscriptionCard({
   plan,
   buttonState,
   onPurchase,
   loading,
-  selectedPaymentMethod,
-  onPaymentMethodChange,
-  showPaymentSelector = true,
+  processing,
 }) {
   const displayPrice = plan.checkoutAmount ?? plan.amount ?? 0;
   const originalPrice = plan.amount ?? displayPrice;
   const hasDiscount = originalPrice > displayPrice;
+  const isCurrentPlan = buttonState?.label === "Đang dùng";
 
-  const features = [
-    { key: "storageLimitMb", label: FEATURE_LABELS.storageLimitMb },
-    { key: "uploadLimit", label: FEATURE_LABELS.uploadLimit },
-    { key: "aiChatLimit", label: FEATURE_LABELS.aiChatLimit },
-    { key: "durationDays", label: FEATURE_LABELS.durationDays },
-  ];
-
-  const getValue = (key) => {
-    const fmt = FEATURE_FORMATTERS[key];
-    return fmt ? fmt(plan[key]) : plan[key];
-  };
-
-  const getButtonIcon = () => {
-    if (loading) return <CircularProgress size={18} color="inherit" />;
-    if (buttonState?.label === "Đang dùng") return <CheckCircleOutline />;
-    if (buttonState?.label === "Nâng cấp") return <ArrowUpwardIcon />;
-    return <ShoppingCartOutlined />;
-  };
+  const buttonIcon = loading ? (
+    <CircularProgress size={18} color="inherit" />
+  ) : isCurrentPlan ? (
+    <CheckCircleOutline />
+  ) : buttonState?.label === "Nâng cấp" ? (
+    <ArrowUpwardIcon />
+  ) : (
+    <ShoppingCartOutlined />
+  );
 
   return (
     <Card
@@ -65,22 +74,27 @@ export default function SubscriptionCard({
         flexDirection: "column",
         background: "var(--bg-card)",
         border: "2px solid",
-        borderColor: buttonState?.label === "Đang dùng" ? "primary.main" : "var(--border-color)",
+        borderColor: isCurrentPlan ? "primary.main" : "var(--border-color)",
         borderRadius: "var(--radius-md)",
         transition: "transform 0.2s, box-shadow 0.2s",
         "&:hover": {
           transform: "translateY(-4px)",
-          boxShadow:
-            buttonState?.label === "Đang dùng"
-              ? "0 12px 32px rgba(99, 102, 241, 0.25)"
-              : "0 12px 32px rgba(0,0,0,0.15)",
+          boxShadow: isCurrentPlan
+            ? "0 12px 32px rgba(99, 102, 241, 0.25)"
+            : "0 12px 32px rgba(0,0,0,0.15)",
         },
       }}
     >
       <CardContent
-        sx={{ flex: 1, display: "flex", flexDirection: "column", p: 3, position: "relative" }}
+        sx={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          p: 3,
+          position: "relative",
+        }}
       >
-        {buttonState?.label === "Đang dùng" && (
+        {isCurrentPlan && (
           <Box
             sx={{
               position: "absolute",
@@ -103,7 +117,10 @@ export default function SubscriptionCard({
           {plan.name}
         </Typography>
         {plan.description && (
-          <Typography variant="body2" sx={{ color: "var(--text-secondary)", mb: 2 }}>
+          <Typography
+            variant="body2"
+            sx={{ color: "var(--text-secondary)", mb: 2 }}
+          >
             {plan.description}
           </Typography>
         )}
@@ -115,7 +132,10 @@ export default function SubscriptionCard({
           >
             {displayPrice.toLocaleString("vi-VN")}
           </Typography>
-          <Typography component="span" sx={{ color: "var(--text-secondary)", ml: 0.5 }}>
+          <Typography
+            component="span"
+            sx={{ color: "var(--text-secondary)", ml: 0.5 }}
+          >
             đ
           </Typography>
           {hasDiscount && (
@@ -133,43 +153,47 @@ export default function SubscriptionCard({
         </Box>
 
         <Box sx={{ flex: 1, mb: 3 }}>
-          {features.map(({ key, label }) => (
-            <Box key={key} sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-              <CheckCircle sx={{ fontSize: 16, color: "success.main", flexShrink: 0 }} />
+          {FEATURES.map(({ key, label, format }) => (
+            <Box
+              key={key}
+              sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
+            >
+              <CheckCircle
+                sx={{ fontSize: 16, color: "success.main", flexShrink: 0 }}
+              />
               <Typography variant="body2">
-                {label}: <strong>{getValue(key)}</strong>
+                {label}: <strong>{format(plan[key])}</strong>
               </Typography>
             </Box>
           ))}
         </Box>
 
-        {showPaymentSelector && !buttonState?.disabled && (
-          <Box sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+        {!buttonState?.disabled && (
+          <Box sx={{ mb: 2 }}>
             <Box
               sx={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 0.5,
                 px: 1.5,
                 py: 0.5,
                 borderRadius: "8px",
                 backgroundColor: "#d1fae5",
-                color: "#059669",
+                color: "#047857",
                 fontSize: "0.75rem",
-                fontWeight: 600,
+                fontWeight: 700,
               }}
             >
-              QR VietQR
+              Thanh toán qua SePay
             </Box>
           </Box>
         )}
 
         <Button
-          variant={buttonState?.label === "Đang dùng" ? "outlined" : "contained"}
+          variant={isCurrentPlan ? "outlined" : "contained"}
           fullWidth
-          disabled={buttonState?.disabled || loading}
+          disabled={buttonState?.disabled || processing}
           onClick={() => onPurchase?.(plan.code)}
-          startIcon={getButtonIcon()}
+          startIcon={buttonIcon}
           sx={{
             py: 1.25,
             fontWeight: 600,
@@ -177,11 +201,7 @@ export default function SubscriptionCard({
             textTransform: "none",
           }}
         >
-          {buttonState?.disabled && buttonState?.label !== "Đang dùng"
-            ? buttonState.label
-            : loading
-              ? "Đang xử lý..."
-              : buttonState?.label || "Mua gói"}
+          {loading ? "Đang tạo giao dịch..." : buttonState?.label || "Mua gói"}
         </Button>
       </CardContent>
     </Card>
