@@ -1,125 +1,101 @@
-import { Box, Button, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { Button, Stack, Typography } from "@mui/material";
+import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
 import AddCommentOutlined from "@mui/icons-material/AddCommentOutlined";
-import ChatBubbleOutlineOutlined from "@mui/icons-material/ChatBubbleOutlineOutlined";
 import FolderOpenOutlined from "@mui/icons-material/FolderOpenOutlined";
-import SmartToyOutlined from "@mui/icons-material/SmartToyOutlined";
+import HistoryOutlined from "@mui/icons-material/HistoryOutlined";
+import { isDocumentContext, isLibraryContext } from "../chatContext.js";
 
 export default function ChatHeader({
+  chatContext,
   onOpenDocuments,
   onNewChat,
   onOpenHistory,
-  selectedDocumentCount = 0,
 }) {
-  const documentLabel =
-    selectedDocumentCount > 0
-      ? `Tài liệu (${selectedDocumentCount})`
-      : "Tài liệu";
+  const inDocumentMode = isDocumentContext(chatContext);
+  const inLibraryMode = isLibraryContext(chatContext);
 
   return (
     <Stack
-      component="header"
-      direction="row"
-      gap={1.5}
+      direction={{ xs: "column", sm: "row" }}
+      alignItems={{ xs: "flex-start", sm: "center" }}
+      justifyContent="space-between"
+      gap={1}
       sx={{
-        alignItems: "center",
-        justifyContent: "space-between",
-        width: "100%",
-        minHeight: 68,
-        px: { xs: 1.5, sm: 2.5 },
+        px: { xs: 2, sm: 3 },
         py: 1.25,
+        minHeight: { sm: 62 },
         flexShrink: 0,
         borderBottom: "1px solid",
         borderColor: "divider",
-        bgcolor: "background.paper",
       }}
     >
-      <Stack
-        direction="row"
-        spacing={1.25}
-        sx={{ minWidth: 0, alignItems: "center" }}
-      >
-        <Tooltip title="Mở danh sách cuộc trò chuyện">
-          <IconButton
-            onClick={onOpenHistory}
-            aria-label="Mở danh sách cuộc trò chuyện"
-            sx={{ display: { xs: "inline-flex", lg: "none" }, width: 40, height: 40 }}
-          >
-            <ChatBubbleOutlineOutlined />
-          </IconButton>
-        </Tooltip>
-
-        <Box
-          sx={{
-            width: 38,
-            height: 38,
-            flexShrink: 0,
-            display: { xs: "none", sm: "grid" },
-            placeItems: "center",
-            borderRadius: 2,
-            bgcolor: "action.selected",
-            color: "primary.main",
-          }}
-        >
-          <SmartToyOutlined sx={{ fontSize: 21 }} />
-        </Box>
-
-        <Box sx={{ minWidth: 0 }}>
+      <Stack spacing={0.2} sx={{ minWidth: 0 }}>
+        <Typography sx={{ fontWeight: 800, fontSize: "1rem", lineHeight: 1.3 }}>
+          {inLibraryMode ? "Thư viện của bạn" : "Trợ lý tài liệu"}
+        </Typography>
+        {inDocumentMode && chatContext.document?.title && (
+          <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mt: 0.25 }}>
+            <DescriptionOutlined
+              sx={{ fontSize: "0.85rem", color: "text.secondary" }}
+            />
+            <Typography
+              color="text.secondary"
+              sx={{
+                fontSize: "0.85rem",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                maxWidth: { xs: 180, sm: 320 },
+              }}
+            >
+              {chatContext.document.title}
+            </Typography>
+          </Stack>
+        )}
+        {inLibraryMode && (
           <Typography
-            noWrap
-            sx={{ fontWeight: 800, fontSize: { xs: "0.95rem", sm: "1.02rem" }, lineHeight: 1.35 }}
-          >
-            Trợ lý học tập AI
-          </Typography>
-          <Typography
-            noWrap
             color="text.secondary"
-            sx={{ display: { xs: "none", sm: "block" }, fontSize: "0.74rem" }}
+            sx={{ fontSize: "0.76rem", display: { xs: "none", sm: "block" } }}
           >
-            Hỏi đáp dựa trên tài liệu học tập của bạn
+            Chọn tài liệu bên trái để thu hẹp phạm vi câu hỏi tiếp theo.
           </Typography>
-        </Box>
+        )}
+        {!inDocumentMode && !inLibraryMode && (
+          <Typography
+            color="text.secondary"
+            sx={{ fontSize: "0.76rem", display: { xs: "none", sm: "block" } }}
+          >
+            Trợ lý học tập giúp giải thích, tóm tắt và gợi ý cách ôn bài.
+          </Typography>
+        )}
       </Stack>
-
-      <Stack
-        direction="row"
-        spacing={0.75}
-        sx={{ flexShrink: 0, alignItems: "center" }}
-      >
-        <Button
-          size="small"
-          color="inherit"
-          startIcon={<FolderOpenOutlined />}
-          onClick={onOpenDocuments}
-          aria-label={`Mở tài liệu, ${selectedDocumentCount} tài liệu đã chọn`}
-          sx={{
-            minHeight: 40,
-            color: "text.secondary",
-            px: { xs: 1, sm: 1.25 },
-            "& .MuiButton-startIcon": { mr: { xs: 0, sm: 0.75 } },
-          }}
-        >
-          <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>
-            {documentLabel}
-          </Box>
-        </Button>
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<AddCommentOutlined />}
-          onClick={onNewChat}
-          aria-label="Tạo cuộc trò chuyện mới"
-          sx={{
-            minHeight: 40,
-            px: { xs: 1, sm: 1.5 },
-            fontWeight: 700,
-            "& .MuiButton-startIcon": { mr: { xs: 0, sm: 0.75 } },
-          }}
-        >
-          <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>
+      {inLibraryMode && (
+        <Stack direction="row" spacing={0.75} flexWrap="wrap">
+          <Button
+            size="small"
+            startIcon={<FolderOpenOutlined />}
+            onClick={onOpenDocuments}
+            sx={{ display: { xs: "inline-flex", lg: "none" }, minHeight: 36 }}
+          >
+            Tài liệu
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<AddCommentOutlined />}
+            onClick={onNewChat}
+          >
             Chat mới
-          </Box>
-        </Button>
-      </Stack>
+          </Button>
+          <Button
+            size="small"
+            startIcon={<HistoryOutlined />}
+            onClick={onOpenHistory}
+          >
+            Lịch sử
+          </Button>
+        </Stack>
+      )}
     </Stack>
   );
 }

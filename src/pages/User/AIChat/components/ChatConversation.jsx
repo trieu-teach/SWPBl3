@@ -1,7 +1,6 @@
-import { Box } from "@mui/material";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import ChatInput from "./ChatInput.jsx";
 import ChatMessageList from "./ChatMessageList.jsx";
-import ChatSkeleton from "./ChatSkeleton.jsx";
 
 export default function ChatConversation({
   chatContext,
@@ -11,10 +10,6 @@ export default function ChatConversation({
   onSend,
   onRetry,
   onSourceSelect,
-  onAbort,
-  selectedDocuments = [],
-  onRemoveDocument,
-  onOpenDocuments,
   isSending = false,
   error = null,
   isLoadingHistory = false,
@@ -41,7 +36,24 @@ export default function ChatConversation({
       }}
     >
       {isLoadingHistory ? (
-        <ChatSkeleton />
+        <Box
+          role="status"
+          aria-live="polite"
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
+            color: "text.secondary",
+          }}
+        >
+          <CircularProgress size={20} thickness={5} />
+          <Typography variant="body2">
+            Đang tải cuộc hội thoại...
+          </Typography>
+        </Box>
       ) : (
         <ChatMessageList
           chatContext={chatContext}
@@ -73,12 +85,8 @@ export default function ChatConversation({
           value={inputValue}
           onChange={onInputChange}
           onSend={onSend}
-          onAbort={onAbort}
           isSending={isSending}
           error={error}
-          selectedDocuments={selectedDocuments}
-          onRemoveDocument={onRemoveDocument}
-          onOpenDocuments={onOpenDocuments}
         />
       </Box>
     </Box>

@@ -10,29 +10,13 @@ function withQuery(path, params = {}) {
   return `${path}${search ? `?${search}` : ""}`;
 }
 
-const PENDING_FILTERS = new Set([
-  "keyword",
-  "aiStatus",
-  "moderationFlag",
-  "ownerId",
-  "page",
-  "limit",
-]);
-
-export const getPendingAdminDocuments = (params = {}) =>
-  apiRequest(
-    withQuery(
-      "/admin/documents/pending",
-      Object.fromEntries(
-        Object.entries(params).filter(([key]) => PENDING_FILTERS.has(key)),
-      ),
-    ),
-  );
+export const getAdminDocuments = (params) =>
+  apiRequest(withQuery("/admin/documents", params));
 export const getAdminDocument = (id) => apiRequest(`/admin/documents/${id}`);
 export const getAdminDocumentPreview = (id) =>
   apiRequest(`/admin/documents/${id}/preview`);
 
-export const moderateAdminDocument = (id, status, reason) =>
+const moderateAdminDocument = (id, status, reason) =>
   apiRequest(`/admin/documents/${id}/moderate`, {
     method: "PATCH",
     body: {
@@ -46,3 +30,9 @@ export const approveAdminDocument = (id) =>
 
 export const rejectAdminDocument = (id, reason) =>
   moderateAdminDocument(id, "REJECTED", reason);
+
+export const setAdminDocumentHidden = (id, hidden, reason) =>
+  apiRequest(`/admin/documents/${id}/hide`, {
+    method: "PUT",
+    body: { hidden, ...(reason?.trim() ? { reason: reason.trim() } : {}) },
+  });

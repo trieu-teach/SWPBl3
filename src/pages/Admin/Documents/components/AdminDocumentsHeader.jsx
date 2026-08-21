@@ -25,10 +25,10 @@ export default function AdminDocumentsHeader() {
           <Typography
             sx={{ fontWeight: 800, fontSize: "1.75rem", lineHeight: 1.1 }}
           >
-            Hàng đợi kiểm duyệt
+            Quản lý tài liệu
           </Typography>
           <Typography color="text.secondary" sx={{ fontSize: ".9rem" }}>
-            Xem xét các tài liệu công khai đang chờ phê duyệt
+            Kiểm duyệt và quản lý tài liệu toàn hệ thống
           </Typography>
         </Box>
       </Box>

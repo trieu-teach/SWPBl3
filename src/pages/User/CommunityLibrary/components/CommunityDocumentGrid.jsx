@@ -31,7 +31,6 @@ export default function CommunityDocumentGrid({ community }) {
         <CommunityCard
           key={document.id}
           document={document}
-          reported={community.reportedDocumentIds.has(document.id)}
           actionId={community.actionId}
           onPreview={community.openPreview}
           onDownload={community.downloadDocument}

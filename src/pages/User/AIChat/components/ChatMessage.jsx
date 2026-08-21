@@ -1,29 +1,23 @@
-import { useState } from "react";
 import {
   Alert,
   Avatar,
   Box,
   Button,
-  IconButton,
+  CircularProgress,
   Link,
   Paper,
   Stack,
-  Tooltip,
   Typography,
 } from "@mui/material";
-import CheckRounded from "@mui/icons-material/CheckRounded";
-import ContentCopyRounded from "@mui/icons-material/ContentCopyRounded";
-import ReplayRounded from "@mui/icons-material/ReplayRounded";
 import SmartToyOutlined from "@mui/icons-material/SmartToyOutlined";
+import PersonOutlineOutlined from "@mui/icons-material/PersonOutlineOutlined";
+import ReplayRounded from "@mui/icons-material/ReplayRounded";
 import ReactMarkdown from "react-markdown";
 import ChatSources from "./ChatSources.jsx";
 
 const markdownComponents = {
   p: ({ children }) => (
-    <Typography
-      component="p"
-      sx={{ m: 0, mb: 1.15, fontSize: "0.96rem", lineHeight: 1.72 }}
-    >
+    <Typography component="p" sx={{ m: 0, mb: 1.1, fontSize: "0.95rem", lineHeight: 1.72 }}>
       {children}
     </Typography>
   ),
@@ -34,45 +28,32 @@ const markdownComponents = {
   ),
   em: ({ children }) => <Box component="em">{children}</Box>,
   h1: ({ children }) => (
-    <Typography
-      component="h1"
-      variant="h6"
-      sx={{ mt: 1.5, mb: 0.75, fontWeight: 800 }}
-    >
+    <Typography component="h1" variant="h6" sx={{ mt: 1.5, mb: 0.75, fontWeight: 800 }}>
       {children}
     </Typography>
   ),
   h2: ({ children }) => (
-    <Typography
-      component="h2"
-      sx={{ mt: 1.4, mb: 0.65, fontSize: "1.03rem", fontWeight: 800 }}
-    >
+    <Typography component="h2" sx={{ mt: 1.4, mb: 0.65, fontSize: "1.02rem", fontWeight: 800 }}>
       {children}
     </Typography>
   ),
   h3: ({ children }) => (
-    <Typography
-      component="h3"
-      sx={{ mt: 1.25, mb: 0.5, fontSize: "0.98rem", fontWeight: 750 }}
-    >
+    <Typography component="h3" sx={{ mt: 1.25, mb: 0.5, fontSize: "0.96rem", fontWeight: 750 }}>
       {children}
     </Typography>
   ),
   ul: ({ children }) => (
-    <Box component="ul" sx={{ my: 0.8, pl: 2.75 }}>
+    <Box component="ul" sx={{ my: 0.75, pl: 2.75 }}>
       {children}
     </Box>
   ),
   ol: ({ children }) => (
-    <Box component="ol" sx={{ my: 0.8, pl: 2.75 }}>
+    <Box component="ol" sx={{ my: 0.75, pl: 2.75 }}>
       {children}
     </Box>
   ),
   li: ({ children }) => (
-    <Box
-      component="li"
-      sx={{ mb: 0.45, pl: 0.25, fontSize: "0.96rem", lineHeight: 1.68 }}
-    >
+    <Box component="li" sx={{ mb: 0.45, pl: 0.25, fontSize: "0.95rem", lineHeight: 1.68 }}>
       {children}
     </Box>
   ),
@@ -85,8 +66,7 @@ const markdownComponents = {
         py: 0.15,
         borderRadius: 0.75,
         bgcolor: "action.selected",
-        fontFamily:
-          '"SFMono-Regular", Consolas, "Liberation Mono", monospace',
+        fontFamily: '"SFMono-Regular", Consolas, "Liberation Mono", monospace',
         fontSize: "0.86em",
         overflowWrap: "anywhere",
       }}
@@ -108,38 +88,21 @@ const markdownComponents = {
         borderColor: "divider",
         fontSize: "0.84rem",
         lineHeight: 1.6,
-        "& code": {
-          p: 0,
-          bgcolor: "transparent",
-          borderRadius: 0,
-          overflowWrap: "normal",
-        },
+        "& code": { p: 0, bgcolor: "transparent", borderRadius: 0, overflowWrap: "normal" },
       }}
     >
       {children}
     </Box>
   ),
   a: ({ children, href }) => (
-    <Link
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      sx={{ overflowWrap: "anywhere" }}
-    >
+    <Link href={href} target="_blank" rel="noopener noreferrer" sx={{ overflowWrap: "anywhere" }}>
       {children}
     </Link>
   ),
   blockquote: ({ children }) => (
     <Box
       component="blockquote"
-      sx={{
-        m: 0,
-        my: 1.25,
-        pl: 1.5,
-        borderLeft: "3px solid",
-        borderColor: "divider",
-        color: "text.secondary",
-      }}
+      sx={{ m: 0, my: 1.25, pl: 1.5, borderLeft: "3px solid", borderColor: "divider", color: "text.secondary" }}
     >
       {children}
     </Box>
@@ -165,58 +128,10 @@ function MarkdownContent({ content }) {
 
 function PlainContent({ content }) {
   return (
-    <Typography
-      component="div"
-      sx={{ fontSize: "0.95rem", lineHeight: 1.65, whiteSpace: "pre-wrap" }}
-    >
+    <Typography component="div" sx={{ fontSize: "0.95rem", lineHeight: 1.68, whiteSpace: "pre-wrap" }}>
       {content}
     </Typography>
   );
-}
-
-function TypingIndicator({ label }) {
-  return (
-    <Stack
-      direction="row"
-      spacing={1.1}
-      aria-live="polite"
-      sx={{ alignItems: "center" }}
-    >
-      <Stack direction="row" spacing={0.45} aria-hidden="true">
-        {[0, 1, 2].map((index) => (
-          <Box
-            key={index}
-            sx={{
-              width: 6,
-              height: 6,
-              borderRadius: "50%",
-              bgcolor: "text.secondary",
-              animation: "aiTypingPulse 1.2s ease-in-out infinite",
-              animationDelay: `${index * 160}ms`,
-              "@keyframes aiTypingPulse": {
-                "0%, 60%, 100%": { opacity: 0.28, transform: "translateY(0)" },
-                "30%": { opacity: 0.9, transform: "translateY(-2px)" },
-              },
-              "@media (prefers-reduced-motion: reduce)": {
-                animation: "none",
-                opacity: 0.55,
-              },
-            }}
-          />
-        ))}
-      </Stack>
-      <Typography variant="caption" color="text.secondary">
-        {label}
-      </Typography>
-    </Stack>
-  );
-}
-
-function getStreamLabel(message) {
-  if (message.streamPhase === "verifying") return "Đang kiểm tra thông tin...";
-  if (message.streamPhase === "generating") return "Đang tạo câu trả lời...";
-  if (message.streamPhase === "retrieving") return "Đang tìm kiếm tài liệu...";
-  return "";
 }
 
 export default function ChatMessage({
@@ -226,40 +141,25 @@ export default function ChatMessage({
   onSend,
   onSourceSelect,
 }) {
-  const [copied, setCopied] = useState(false);
   const isUser = message.role === "user";
   const isLoading = message.status === "loading";
   const isError = message.status === "error";
   const isComplete = message.status === "complete";
-  const streamLabel = getStreamLabel(message);
   const hasSources = !isUser && isComplete && message.sources?.length > 0;
-
-  async function handleCopy() {
-    if (!message.content || !navigator.clipboard) return;
-    try {
-      await navigator.clipboard.writeText(message.content);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
-    } catch {
-      setCopied(false);
-    }
-  }
 
   return (
     <Stack
       direction="row"
-      spacing={{ xs: 1, sm: 1.5 }}
-      sx={{
-        width: "100%",
-        justifyContent: isUser ? "flex-end" : "flex-start",
-        alignItems: "flex-start",
-      }}
+      spacing={1.5}
+      justifyContent={isUser ? "flex-end" : "flex-start"}
+      alignItems="flex-start"
+      sx={{ width: "100%" }}
     >
       {!isUser && (
         <Avatar
           sx={{
-            width: 32,
-            height: 32,
+            width: 30,
+            height: 30,
             bgcolor: "action.selected",
             color: "primary.main",
           }}
@@ -271,45 +171,43 @@ export default function ChatMessage({
       <Box
         sx={{
           width: isUser ? "fit-content" : "100%",
-          maxWidth: isUser ? { xs: "88%", sm: "76%" } : 820,
+          maxWidth: isUser ? { xs: "86%", sm: 680 } : 900,
           minWidth: 0,
           display: "flex",
           flexDirection: "column",
           alignItems: isUser ? "flex-end" : "flex-start",
-          gap: 0.55,
+          gap: 0.5,
         }}
       >
-        {!isUser && (
-          <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
-            <Typography variant="caption" sx={{ fontWeight: 750, color: "text.primary" }}>
-              AI Study Assistant
-            </Typography>
-            <Typography variant="caption" color="text.disabled">
-              {message.createdAt}
-            </Typography>
-          </Stack>
-        )}
-
         <Paper
           elevation={0}
           sx={{
-            width: "100%",
-            px: isUser ? { xs: 1.5, sm: 1.75 } : isError ? 1.5 : 0,
-            py: isUser ? { xs: 1.1, sm: 1.25 } : isError ? 1.25 : 0.4,
-            borderRadius: isUser ? "14px 14px 5px 14px" : isError ? 2.5 : 0,
+            px: { xs: 1.5, sm: 1.75 },
+            py: { xs: 1.15, sm: 1.35 },
+            borderRadius: isUser ? "18px 18px 6px 18px" : "18px 18px 18px 6px",
             bgcolor: isUser
-              ? "action.selected"
+              ? "rgba(99, 102, 241, 0.12)"
               : isError
                 ? "error.light"
-                : "transparent",
+                : "action.hover",
             color: "text.primary",
-            border: isError ? "1px solid" : isUser ? "1px solid" : 0,
-            borderColor: isError ? "error.main" : "divider",
+            border: "1px solid",
+            borderColor: isUser
+              ? "rgba(99, 102, 241, 0.18)"
+              : isError
+                ? "error.main"
+                : "transparent",
             overflowWrap: "anywhere",
+            width: "100%",
           }}
         >
           {isLoading ? (
-            <TypingIndicator label="Đang suy nghĩ..." />
+            <Stack direction="row" spacing={1.25} alignItems="center">
+              <CircularProgress size={18} thickness={5} />
+              <Typography sx={{ fontSize: "0.95rem", lineHeight: 1.7 }}>
+                {message.content}
+              </Typography>
+            </Stack>
           ) : isError ? (
             <Stack spacing={1.25}>
               {message.content && message.content !== "Đang suy nghĩ..." && (
@@ -358,9 +256,29 @@ export default function ChatMessage({
               ) : (
                 <MarkdownContent content={message.content} />
               )}
+              
+              {/* If streaming and verifying, show a subtle indicator */}
+              {message.status === "streaming" && message.streamPhase === "verifying" && (
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ opacity: 0.7 }}>
+                  <CircularProgress size={14} thickness={4} />
+                  <Typography variant="caption">Đang kiểm tra thông tin...</Typography>
+                </Stack>
+              )}
+              
+              {/* Show generating if streaming but no content yet */}
+              {message.status === "streaming" && message.streamPhase === "generating" && !message.content && (
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ opacity: 0.7 }}>
+                  <CircularProgress size={14} thickness={4} />
+                  <Typography variant="caption">Đang tạo câu trả lời...</Typography>
+                </Stack>
+              )}
 
-              {message.status === "streaming" && streamLabel && (
-                <TypingIndicator label={streamLabel} />
+              {/* Show retrieving if streaming but no content yet */}
+              {message.status === "streaming" && message.streamPhase === "retrieving" && !message.content && (
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ opacity: 0.7 }}>
+                  <CircularProgress size={14} thickness={4} />
+                  <Typography variant="caption">Đang tìm kiếm tài liệu...</Typography>
+                </Stack>
               )}
 
               {message.sources?.length > 0 && (
@@ -371,55 +289,32 @@ export default function ChatMessage({
               )}
 
               {message.answerStatus === "FALLBACK_WITH_SOURCES" && (
-                <Typography variant="caption" sx={{ fontStyle: "italic", opacity: 0.8 }}>
+                <Typography variant="caption" sx={{ fontStyle: "italic", opacity: 0.8, display: "block", mt: 0.5 }}>
                   Câu trả lời được tạo từ các nguồn phù hợp.
                 </Typography>
               )}
               {message.answerStatus === "NO_SOURCES" && (
-                <Typography variant="caption" sx={{ fontStyle: "italic", opacity: 0.8 }}>
+                <Typography variant="caption" sx={{ fontStyle: "italic", opacity: 0.8, display: "block", mt: 0.5 }}>
                   Không tìm thấy nguồn phù hợp trong phạm vi tài liệu hiện tại.
                 </Typography>
               )}
             </Stack>
           )}
         </Paper>
+        <Typography
+          sx={{
+            px: 0.5,
+            fontSize: "0.66rem",
+            color: "text.secondary",
+            opacity: 0.78,
+          }}
+        >
+          {isUser ? "Bạn" : "AI Study Hub"} · {message.createdAt}
+        </Typography>
 
-        {isUser ? (
-          <Typography variant="caption" color="text.disabled" sx={{ px: 0.5 }}>
-            Bạn · {message.createdAt}
-          </Typography>
-        ) : (
-          isComplete &&
-          message.content && (
-            <Stack
-              direction="row"
-              sx={{
-                minHeight: 32,
-                alignItems: "center",
-                opacity: { xs: 1, sm: 0.72 },
-                "&:hover": { opacity: 1 },
-              }}
-            >
-              <Tooltip title={copied ? "Đã sao chép" : "Sao chép"}>
-                <IconButton
-                  size="small"
-                  onClick={handleCopy}
-                  aria-label={copied ? "Đã sao chép câu trả lời" : "Sao chép câu trả lời"}
-                  sx={{ width: 32, height: 32, color: "text.secondary" }}
-                >
-                  {copied ? <CheckRounded fontSize="small" /> : <ContentCopyRounded sx={{ fontSize: 17 }} />}
-                </IconButton>
-              </Tooltip>
-            </Stack>
-          )
-        )}
-
+        {/* Suggested Prompts below the paper bubble */}
         {!isUser && isComplete && message.suggestedPrompts?.length > 0 && (
-          <Stack
-            direction="row"
-            gap={1}
-            sx={{ mt: 0.25, flexWrap: "wrap" }}
-          >
+          <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mt: 0.5 }}>
             {message.suggestedPrompts.map((prompt) => (
               <Button
                 key={prompt}
@@ -428,18 +323,18 @@ export default function ChatMessage({
                 onClick={() => onSend(prompt)}
                 disabled={isSending}
                 sx={{
-                  borderRadius: 2,
+                  borderRadius: 4,
                   textTransform: "none",
-                  fontSize: "0.78rem",
+                  fontSize: "0.8rem",
                   color: "text.secondary",
                   borderColor: "divider",
                   textAlign: "left",
-                  lineHeight: 1.35,
+                  lineHeight: 1.3,
                   whiteSpace: "normal",
                   "&:hover": {
                     borderColor: "primary.main",
                     color: "primary.main",
-                    bgcolor: "action.hover",
+                    bgcolor: "transparent",
                   },
                 }}
               >
@@ -449,6 +344,19 @@ export default function ChatMessage({
           </Stack>
         )}
       </Box>
+
+      {isUser && (
+        <Avatar
+          sx={{
+            width: 30,
+            height: 30,
+            bgcolor: "action.hover",
+            color: "text.secondary",
+          }}
+        >
+          <PersonOutlineOutlined sx={{ fontSize: 19 }} />
+        </Avatar>
+      )}
     </Stack>
   );
 }

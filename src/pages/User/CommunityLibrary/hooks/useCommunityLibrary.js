@@ -8,10 +8,6 @@ import {
 } from "../../../../api/community.api.js";
 import { getDocumentDownload } from "../../../../api/documents.api.js";
 import { useToast } from "../../../../components/Toast/ToastProvider.jsx";
-import {
-  canReportDocument,
-  getModerationRequestError,
-} from "../../../../lib/moderation.js";
 
 export default function useCommunityLibrary() {
   const toast = useToast();
@@ -29,9 +25,6 @@ export default function useCommunityLibrary() {
   const [actionId, setActionId] = useState("");
   const [preview, setPreview] = useState(null);
   const [reportTarget, setReportTarget] = useState(null);
-  const [reportedDocumentIds, setReportedDocumentIds] = useState(
-    () => new Set(),
-  );
   const [reporting, setReporting] = useState(false);
   const [reportError, setReportError] = useState("");
 
@@ -164,12 +157,6 @@ export default function useCommunityLibrary() {
   }
 
   function openReport(document) {
-    if (
-      !canReportDocument(document) ||
-      reportedDocumentIds.has(document.id)
-    ) {
-      return;
-    }
     setReportError("");
     setReportTarget(document);
   }
@@ -187,25 +174,12 @@ export default function useCommunityLibrary() {
     try {
       await reportCommunityDocument(reportTarget.id, payload);
       toast.success("Báo cáo đã được gửi đến đội ngũ kiểm duyệt.");
-      setReportedDocumentIds((current) =>
-        new Set(current).add(reportTarget.id),
-      );
       setReportTarget(null);
     } catch (requestError) {
-      if (requestError.status === 409) {
-        const message =
-          "Bạn đã báo cáo tài liệu này và báo cáo đang chờ xử lý.";
-        setReportedDocumentIds((current) =>
-          new Set(current).add(reportTarget.id),
-        );
-        setReportError(message);
-        return;
-      }
-      const message = getModerationRequestError(
-        requestError,
-        "Không thể gửi báo cáo tài liệu.",
-        "Tài liệu không còn khả dụng để báo cáo.",
-      );
+      const message =
+        requestError.status === 409
+          ? "Bạn đã có một báo cáo đang chờ xử lý cho tài liệu này."
+          : requestError.message || "Không thể gửi báo cáo tài liệu.";
       setReportError(message);
     } finally {
       setReporting(false);
@@ -223,7 +197,6 @@ export default function useCommunityLibrary() {
     actionId,
     preview,
     reportTarget,
-    reportedDocumentIds,
     reporting,
     reportError,
     setSearchInput,

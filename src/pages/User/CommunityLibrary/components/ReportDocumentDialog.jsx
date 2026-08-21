@@ -14,16 +14,12 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import {
-  REPORT_REASONS,
-  REPORT_REASON_OPTIONS,
-} from "../../../../lib/moderation.js";
+import { REPORT_REASON_OPTIONS } from "../../../../lib/moderation.js";
 
 export default function ReportDocumentDialog({
   document,
   loading,
   error,
-  reported,
   onClose,
   onSubmit,
 }) {
@@ -39,14 +35,7 @@ export default function ReportDocumentDialog({
 
   function submit(event) {
     event.preventDefault();
-    if (
-      loading ||
-      reported ||
-      !REPORT_REASONS.includes(reason) ||
-      description.trim().length > 2000
-    ) {
-      return;
-    }
+    if (!reason) return;
     onSubmit({
       reason,
       ...(description.trim() ? { description: description.trim() } : {}),
@@ -69,11 +58,7 @@ export default function ReportDocumentDialog({
             Bạn đang báo cáo <strong>{document.title}</strong>. Báo cáo sẽ được
             gửi đến đội ngũ kiểm duyệt.
           </Typography>
-          {error && (
-            <Alert severity={reported ? "warning" : "error"}>
-              {error}
-            </Alert>
-          )}
+          {error && <Alert severity="error">{error}</Alert>}
           <FormControl fullWidth required>
             <InputLabel id="report-reason-label">Lý do</InputLabel>
             <Select
@@ -81,7 +66,7 @@ export default function ReportDocumentDialog({
               label="Lý do"
               value={reason}
               onChange={(event) => setReason(event.target.value)}
-              disabled={loading || reported}
+              disabled={loading}
             >
               {REPORT_REASON_OPTIONS.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
@@ -97,7 +82,7 @@ export default function ReportDocumentDialog({
             value={description}
             onChange={(event) => setDescription(event.target.value.slice(0, 2000))}
             helperText={`${description.length}/2000`}
-            disabled={loading || reported}
+            disabled={loading}
           />
         </Stack>
       </DialogContent>
@@ -105,11 +90,7 @@ export default function ReportDocumentDialog({
         <Button onClick={onClose} disabled={loading}>
           Hủy
         </Button>
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={loading || reported || !REPORT_REASONS.includes(reason)}
-        >
+        <Button type="submit" variant="contained" disabled={loading || !reason}>
           {loading ? "Đang gửi..." : "Gửi báo cáo"}
         </Button>
       </DialogActions>
