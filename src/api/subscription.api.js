@@ -6,10 +6,10 @@ export const getPublicSubscriptionPlans = () =>
 export const getMySubscription = () =>
   apiRequest("/subscription/current");
 
-export const createCheckout = (planCode) =>
+export const createCheckout = (plan, paymentMethod = "BANK_TRANSFER") =>
   apiRequest("/payments/checkout", {
     method: "POST",
-    body: { plan: planCode, paymentMethod: "BANK_TRANSFER" },
+    body: { plan, paymentMethod },
   });
 
 export const getPaymentHistory = () =>
@@ -17,3 +17,9 @@ export const getPaymentHistory = () =>
 
 export const getPaymentStatus = (invoiceNumber) =>
   apiRequest(`/payments/${invoiceNumber}`);
+
+export const updatePaymentStatus = (invoiceNumber, status) =>
+  apiRequest(`/payments/${invoiceNumber}/status`, {
+    method: "POST",
+    body: { status },
+  });

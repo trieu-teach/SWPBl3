@@ -7,7 +7,6 @@ import {
   IconButton,
   Tooltip,
   Typography,
-  Badge,
 } from "@mui/material";
 import AssessmentOutlined from "@mui/icons-material/AssessmentOutlined";
 import BookmarkOutlined from "@mui/icons-material/BookmarkOutlined";
@@ -23,19 +22,20 @@ import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
 import SmartToyOutlined from "@mui/icons-material/SmartToyOutlined";
 import ShoppingCartOutlined from "@mui/icons-material/ShoppingCartOutlined";
 import UploadFileOutlined from "@mui/icons-material/UploadFileOutlined";
-import NotificationsOutlined from "@mui/icons-material/NotificationsOutlined";
+import ReportProblemOutlined from "@mui/icons-material/ReportProblemOutlined";
 import ChevronLeftRounded from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRounded from "@mui/icons-material/ChevronRightRounded";
 import { useColorMode } from "../../App.jsx";
 import ColorModeToggle from "../ColorModeToggle/ColorModeToggle.jsx";
 import Logo from "../Logo/Logo.jsx";
 import { useAuth } from "../../features/auth/AuthProvider.jsx";
+import NotificationBell from "../../pages/User/Notifications/components/NotificationBell.jsx";
 
 const DRAWER_WIDTH = 280;
 const COLLAPSED_DRAWER_WIDTH = 88;
+const APP_HEADER_HEIGHT = 84;
 
 const USER_NAVIGATION = [
-  { label: "Tổng quan", path: "/dashboard", icon: DashboardOutlined },
   { label: "Thư viện", path: "/documents", icon: FolderOpenOutlined },
   {
     label: "Tải tài liệu",
@@ -75,6 +75,14 @@ const ADMIN_NAVIGATION = [
   { label: "Báo cáo", path: "/admin/reports", icon: AssessmentOutlined },
 ];
 
+const MODERATOR_NAVIGATION = [
+  {
+    label: "Báo cáo vi phạm",
+    path: "/moderator/reports",
+    icon: ReportProblemOutlined,
+  },
+];
+
 function getInitials(name, fallback) {
   if (!name?.trim()) return fallback;
   return name
@@ -89,6 +97,16 @@ function getInitials(name, fallback) {
 function isActivePath(currentPath, itemPath) {
   if (["/dashboard", "/admin/dashboard"].includes(itemPath))
     return currentPath === itemPath;
+  if (itemPath === "/documents") {
+    const isUploadPath =
+      currentPath === "/documents/upload" ||
+      currentPath.startsWith("/documents/upload/");
+
+    return (
+      currentPath === "/documents" ||
+      (currentPath.startsWith("/documents/") && !isUploadPath)
+    );
+  }
   return currentPath === itemPath || currentPath.startsWith(`${itemPath}/`);
 }
 
@@ -144,6 +162,7 @@ function NavItem({ item, active, onClick, accent, collapsed = false }) {
 
 function SidebarContent({
   isAdmin,
+  isModerator,
   navigation,
   location,
   setMobileOpen,
@@ -153,7 +172,27 @@ function SidebarContent({
   collapsed = false,
   onToggle,
 }) {
-  const accent = isAdmin ? "#f97316" : "#6366f1";
+  const accent = isAdmin ? "#f97316" : isModerator ? "#d97706" : "#6366f1";
+  const homePath = isAdmin
+    ? "/admin/dashboard"
+    : isModerator
+      ? "/moderator/reports"
+      : "/documents";
+  const workspaceLabel = isAdmin
+    ? "Hệ thống quản trị"
+    : isModerator
+      ? "Không gian kiểm duyệt"
+      : "Không gian học tập";
+  const navigationLabel = isAdmin
+    ? "Quản trị"
+    : isModerator
+      ? "Kiểm duyệt"
+      : "Chính";
+  const roleLabel = isAdmin
+    ? "Quản trị viên"
+    : isModerator
+      ? "Kiểm duyệt viên"
+      : "Sinh viên";
 
   return (
     <Box
@@ -170,7 +209,7 @@ function SidebarContent({
       {/* Logo Section */}
       <Box
         component={Link}
-        to={isAdmin ? "/admin/dashboard" : "/dashboard"}
+        to={homePath}
         onClick={() => setMobileOpen(false)}
         sx={{
           display: "flex",
@@ -178,7 +217,8 @@ function SidebarContent({
           justifyContent: collapsed ? "center" : "flex-start",
           gap: collapsed ? 0 : 1.5,
           px: collapsed ? 1 : 2.5,
-          py: 2.5,
+          height: APP_HEADER_HEIGHT,
+          boxSizing: "border-box",
           textDecoration: "none",
           color: "inherit",
           borderBottom: "1px solid",
@@ -205,7 +245,7 @@ function SidebarContent({
                 fontWeight: 500,
               }}
             >
-              {isAdmin ? "Hệ thống quản trị" : "Không gian học tập"}
+              {workspaceLabel}
             </Typography>
           </Box>
         )}
@@ -257,7 +297,7 @@ function SidebarContent({
               textTransform: "uppercase",
             }}
           >
-            {isAdmin ? "Quản trị" : "Chính"}
+            {navigationLabel}
           </Typography>
         )}
         {navigation.map((item) => (
@@ -332,7 +372,7 @@ function SidebarContent({
                 <Typography
                   sx={{ fontSize: "0.72rem", color: "text.secondary" }}
                 >
-                  {isAdmin ? "Quản trị viên" : "Sinh viên"}
+                  {roleLabel}
                 </Typography>
               </Box>
             )}
@@ -396,10 +436,15 @@ export default function AppShell({ children, role = "USER" }) {
   const location = useLocation();
   const navigate = useNavigate();
   const isAdmin = role === "ADMIN";
-  const navigation = isAdmin ? ADMIN_NAVIGATION : USER_NAVIGATION;
+  const isModerator = role === "MODERATOR";
+  const navigation = isAdmin
+    ? ADMIN_NAVIGATION
+    : isModerator
+      ? MODERATOR_NAVIGATION
+      : USER_NAVIGATION;
   const initials = useMemo(
-    () => getInitials(user?.fullName, isAdmin ? "AD" : "U"),
-    [isAdmin, user?.fullName],
+    () => getInitials(user?.fullName, isAdmin ? "AD" : isModerator ? "MD" : "U"),
+    [isAdmin, isModerator, user?.fullName],
   );
 
   async function handleLogout() {
@@ -438,6 +483,7 @@ export default function AppShell({ children, role = "USER" }) {
       >
         <SidebarContent
           isAdmin={isAdmin}
+          isModerator={isModerator}
           navigation={navigation}
           location={location}
           setMobileOpen={setMobileOpen}
@@ -464,6 +510,7 @@ export default function AppShell({ children, role = "USER" }) {
       >
         <SidebarContent
           isAdmin={isAdmin}
+          isModerator={isModerator}
           navigation={navigation}
           location={location}
           setMobileOpen={setMobileOpen}
@@ -497,6 +544,8 @@ export default function AppShell({ children, role = "USER" }) {
             zIndex: 1100,
             px: { xs: 2, sm: 3, lg: 4 },
             py: 2,
+            minHeight: APP_HEADER_HEIGHT,
+            boxSizing: "border-box",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -542,27 +591,11 @@ export default function AppShell({ children, role = "USER" }) {
           </Box>
 
           {/* Right: Actions */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, position: "relative" }}>
             <ColorModeToggle />
 
-            {/* Notification */}
-            <Tooltip title="Thông báo">
-              <IconButton>
-                <Badge
-                  badgeContent={0}
-                  color="error"
-                  sx={{
-                    "& .MuiBadge-badge": {
-                      fontSize: "0.6rem",
-                      height: 16,
-                      minWidth: 16,
-                    },
-                  }}
-                >
-                  <NotificationsOutlined sx={{ fontSize: 22 }} />
-                </Badge>
-              </IconButton>
-            </Tooltip>
+            {/* Notification Bell */}
+            <NotificationBell />
           </Box>
         </Box>
 

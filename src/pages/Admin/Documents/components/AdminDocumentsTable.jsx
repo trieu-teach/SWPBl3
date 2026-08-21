@@ -109,6 +109,12 @@ export default function AdminDocumentsTable({ admin }) {
                     <TableCell>
                       <Chip
                         size="small"
+                        color={
+                          document.visibility === "PUBLIC"
+                            ? "success"
+                            : "secondary"
+                        }
+                        variant="outlined"
                         label={
                           document.visibility === "PUBLIC"
                             ? "Công khai"

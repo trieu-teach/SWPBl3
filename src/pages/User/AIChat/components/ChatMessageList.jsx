@@ -11,9 +11,12 @@ function isNearBottom(element) {
 }
 
 export default function ChatMessageList({
+  chatContext,
   messages,
   isSending,
   onRetry,
+  onSend,
+  onSourceSelect,
   // History loader props
   hasMoreHistory,
   isLoadingOlderMessages,
@@ -56,7 +59,7 @@ export default function ChatMessageList({
 
     const lastMessage = messages.at(-1);
     const isNewUserMessage = lastMessage?.role === "user";
-    const isPendingAssistantMessage = lastMessage?.status === "loading";
+    const isPendingAssistantMessage = lastMessage?.status === "loading" || lastMessage?.status === "streaming";
     const shouldForceScroll = isNewUserMessage || isPendingAssistantMessage;
 
     // Only scroll to bottom if we were already near bottom OR it's a new interaction
@@ -79,9 +82,18 @@ export default function ChatMessageList({
       <Box
         ref={listRef}
         onScroll={handleScroll}
-        sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: { xs: 2, sm: 3 } }}
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+          overflowX: "hidden",
+          overscrollBehaviorY: "contain",
+          p: { xs: 2, sm: 3 },
+          display: "flex",
+          flexDirection: "column"
+        }}
       >
-        <ChatEmptyState />
+        <ChatEmptyState chatContext={chatContext} />
       </Box>
     );
   }
@@ -90,7 +102,14 @@ export default function ChatMessageList({
     <Box
       ref={listRef}
       onScroll={handleScroll}
-      sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: { xs: 2, sm: 3 } }}
+      sx={{
+        flex: 1,
+        minHeight: 0,
+        overflowY: "auto",
+        overflowX: "hidden",
+        overscrollBehaviorY: "contain",
+        p: { xs: 1.5, sm: 3 },
+      }}
     >
       <ChatHistoryLoader
         hasMore={hasMoreHistory}
@@ -98,13 +117,15 @@ export default function ChatMessageList({
         onLoad={onLoadOlderMessages}
       />
       
-      <Stack spacing={2.5}>
+      <Stack spacing={2.25} sx={{ width: "100%", maxWidth: 980, minWidth: 0, mx: "auto" }}>
         {messages.map((message) => (
           <ChatMessage
             key={message.id}
             message={message}
             isSending={isSending}
             onRetry={onRetry}
+            onSend={onSend}
+            onSourceSelect={onSourceSelect}
           />
         ))}
       </Stack>

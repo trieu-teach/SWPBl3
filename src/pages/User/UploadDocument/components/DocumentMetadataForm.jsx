@@ -3,6 +3,8 @@ import {
   Button,
   FormControl,
   FormLabel,
+  IconButton,
+  ListItemText,
   MenuItem,
   Paper,
   Select,
@@ -10,10 +12,39 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
+import { useState } from "react";
+import { useAuth } from "../../../../features/auth/AuthProvider.jsx";
 import DocumentTagInput from "./DocumentTagInput.jsx";
 import CreateTaxonomyDialog from "./CreateTaxonomyDialog.jsx";
+import DeleteSubjectCategoryDialog from "./DeleteSubjectCategoryDialog.jsx";
 
 export default function DocumentMetadataForm({ upload }) {
+  const { user } = useAuth();
+  const [subjectMenuOpen, setSubjectMenuOpen] = useState(false);
+  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
+
+  function deleteButton(type, item, closeMenu) {
+    if (!item.ownerId || item.ownerId !== user?.id) return null;
+    return (
+      <IconButton
+        size="small"
+        color="error"
+        aria-label={`Xóa ${type === "subject" ? "môn học" : "danh mục"} ${item.name}`}
+        onMouseDown={(event) => event.stopPropagation()}
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          closeMenu();
+          upload.openDeleteDialog(type, item);
+        }}
+        sx={{ ml: 1 }}
+      >
+        <DeleteOutlineOutlined fontSize="small" />
+      </IconButton>
+    );
+  }
+
   return (
     <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, borderRadius: 3 }}>
       <Typography variant="h6" sx={{ fontWeight: 750, mb: 2 }}>
@@ -52,6 +83,16 @@ export default function DocumentMetadataForm({ upload }) {
               <Select
                 value={upload.subjectId}
                 displayEmpty
+                renderValue={(selectedId) => {
+                  const selected = upload.subjects.find(
+                    (item) => item.id === selectedId,
+                  );
+                  if (!selected) return "Chọn môn học";
+                  return `${selected.name}${selected.code ? ` (${selected.code})` : ""}`;
+                }}
+                open={subjectMenuOpen}
+                onOpen={() => setSubjectMenuOpen(true)}
+                onClose={() => setSubjectMenuOpen(false)}
                 onChange={(event) =>
                   upload.updateField("subjectId", event.target.value)
                 }
@@ -60,9 +101,17 @@ export default function DocumentMetadataForm({ upload }) {
                   {upload.loadingOptions ? "Đang tải..." : "Chọn môn học"}
                 </MenuItem>
                 {upload.subjects.map((item) => (
-                  <MenuItem key={item.id} value={item.id}>
-                    {item.name}
-                    {item.code ? ` (${item.code})` : ""}
+                  <MenuItem
+                    key={item.id}
+                    value={item.id}
+                    sx={{ display: "flex", gap: 1 }}
+                  >
+                    <ListItemText
+                      primary={`${item.name}${item.code ? ` (${item.code})` : ""}`}
+                    />
+                    {deleteButton("subject", item, () =>
+                      setSubjectMenuOpen(false),
+                    )}
                   </MenuItem>
                 ))}
               </Select>
@@ -81,6 +130,13 @@ export default function DocumentMetadataForm({ upload }) {
               <Select
                 value={upload.categoryId}
                 displayEmpty
+                renderValue={(selectedId) =>
+                  upload.categories.find((item) => item.id === selectedId)
+                    ?.name || "Chọn danh mục"
+                }
+                open={categoryMenuOpen}
+                onOpen={() => setCategoryMenuOpen(true)}
+                onClose={() => setCategoryMenuOpen(false)}
                 onChange={(event) =>
                   upload.updateField("categoryId", event.target.value)
                 }
@@ -89,8 +145,15 @@ export default function DocumentMetadataForm({ upload }) {
                   {upload.subjectId ? "Chọn danh mục" : "Chọn môn học trước"}
                 </MenuItem>
                 {upload.categories.map((item) => (
-                  <MenuItem key={item.id} value={item.id}>
-                    {item.name}
+                  <MenuItem
+                    key={item.id}
+                    value={item.id}
+                    sx={{ display: "flex", gap: 1 }}
+                  >
+                    <ListItemText primary={item.name} />
+                    {deleteButton("category", item, () =>
+                      setCategoryMenuOpen(false),
+                    )}
                   </MenuItem>
                 ))}
               </Select>
@@ -121,6 +184,7 @@ export default function DocumentMetadataForm({ upload }) {
         onClose={upload.closeTaxonomyDialog}
         onSubmit={upload.submitTaxonomy}
       />
+      <DeleteSubjectCategoryDialog upload={upload} />
     </Paper>
   );
 }

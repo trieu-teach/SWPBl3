@@ -1,15 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getAdminSubscriptionPurchases,
-  getAdminSubscriptionStats,
   getAdminUserBilling,
 } from "../../../../api/admin-subscriptions.api.js";
+import { getAdminSubscriptionPlans } from "../../../../api/admin-subscription-plans.api.js";
 
 export default function useAdminSubscriptions() {
-  const [stats, setStats] = useState({
-    plans: [],
-    totals: { purchaseCount: 0, revenue: 0 },
-  });
+  const [plans, setPlans] = useState([]);
   const [purchases, setPurchases] = useState([]);
   const [meta, setMeta] = useState({ page: 1, totalItems: 0, totalPages: 0 });
   const [searchInput, setSearchInput] = useState("");
@@ -33,17 +30,12 @@ export default function useAdminSubscriptions() {
     setError("");
 
     try {
-      const [statsResponse, purchasesResponse] = await Promise.all([
-        getAdminSubscriptionStats(),
+      const [plansResponse, purchasesResponse] = await Promise.all([
+        getAdminSubscriptionPlans(),
         getAdminSubscriptionPurchases(query),
       ]);
 
-      setStats(
-        statsResponse || {
-          plans: [],
-          totals: { purchaseCount: 0, revenue: 0 },
-        },
-      );
+      setPlans(plansResponse?.items || plansResponse?.data || plansResponse || []);
       setPurchases(purchasesResponse?.items || purchasesResponse?.data || []);
       setMeta(
         purchasesResponse?.meta || {
@@ -113,7 +105,7 @@ export default function useAdminSubscriptions() {
   }
 
   return {
-    stats,
+    plans,
     purchases,
     meta,
     searchInput,
