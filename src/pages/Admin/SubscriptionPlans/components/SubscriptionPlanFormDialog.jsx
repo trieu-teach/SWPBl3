@@ -19,7 +19,6 @@ const EMPTY_FORM = {
   durationDays: "30",
   rank: "",
   storageLimitMb: "",
-  uploadLimit: "",
   aiChatLimit: "",
   isActive: true,
 };
@@ -29,7 +28,6 @@ const NUMBER_FIELDS = [
   "durationDays",
   "rank",
   "storageLimitMb",
-  "uploadLimit",
 ];
 
 export default function SubscriptionPlanFormDialog({
@@ -55,7 +53,6 @@ export default function SubscriptionPlanFormDialog({
             durationDays: String(plan.durationDays),
             rank: String(plan.rank),
             storageLimitMb: String(plan.storageLimitMb),
-            uploadLimit: String(plan.uploadLimit),
             aiChatLimit: plan.aiChatLimit ?? "",
             isActive: plan.isActive,
           }
@@ -99,7 +96,7 @@ export default function SubscriptionPlanFormDialog({
       durationDays: Number(form.durationDays),
       rank: Number(form.rank),
       storageLimitMb: Number(form.storageLimitMb),
-      uploadLimit: Number(form.uploadLimit),
+      uploadLimit: plan?.uploadLimit ?? 0,
       aiChatLimit: form.aiChatLimit === "" ? null : Number(form.aiChatLimit),
       isActive: form.isActive,
     };
@@ -201,7 +198,7 @@ export default function SubscriptionPlanFormDialog({
                 required
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={6}>
               <TextField
                 label="Dung lượng (MB)"
                 type="number"
@@ -216,20 +213,7 @@ export default function SubscriptionPlanFormDialog({
                 required
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
-              <TextField
-                label="Giới hạn upload"
-                type="number"
-                value={form.uploadLimit}
-                onChange={(event) => update("uploadLimit", event.target.value)}
-                error={Boolean(errors.uploadLimit)}
-                helperText={errors.uploadLimit}
-                inputProps={{ min: 0, step: 1 }}
-                fullWidth
-                required
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={6}>
               <TextField
                 label="Giới hạn chat AI"
                 type="number"

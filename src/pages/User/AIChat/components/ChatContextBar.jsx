@@ -1,72 +1,80 @@
 import { Box, Chip, Stack, Tooltip, Typography } from "@mui/material";
-import AddOutlined from "@mui/icons-material/AddOutlined";
 import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
+import LibraryBooksOutlined from "@mui/icons-material/LibraryBooksOutlined";
+import { isDocumentContext, isLibraryContext } from "../chatContext.js";
 
 export default function ChatContextBar({
+  chatContext,
   selectedDocuments = [],
   onRemove,
-  onOpenPicker,
 }) {
-  if (selectedDocuments.length === 0) return null;
+  // In ASK_THIS_DOCUMENT mode, the header already shows the document.
+  if (isDocumentContext(chatContext)) return null;
+  
+  // Only render for ASK_MY_LIBRARY or when we don't have a specific context but want to default to library visually
+  if (!isLibraryContext(chatContext)) return null;
 
   return (
     <Box
       sx={{
         px: { xs: 2, sm: 3 },
-        py: 1.25,
+        py: 0.8,
+        flexShrink: 0,
         borderBottom: "1px solid",
         borderColor: "divider",
-        bgcolor: "action.hover",
+        bgcolor: "background.paper",
       }}
     >
       <Stack
-        direction="row"
-        alignItems="center"
-        spacing={1}
-        sx={{ flexWrap: "wrap", gap: 0.75 }}
+        direction={{ xs: "column", sm: "row" }}
+        alignItems={{ xs: "flex-start", sm: "center" }}
+        spacing={0.75}
+        sx={{ gap: 0.75 }}
       >
+        <Stack direction="row" spacing={0.75} alignItems="center">
+          <LibraryBooksOutlined sx={{ fontSize: "1rem", color: "text.secondary" }} />
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ fontWeight: 750, flexShrink: 0 }}
+          >
+            {selectedDocuments.length === 0
+              ? "Toàn bộ thư viện"
+              : `${selectedDocuments.length} tài liệu đã chọn`}
+          </Typography>
+        </Stack>
+
         <Typography
           variant="caption"
           color="text.secondary"
-          sx={{ fontWeight: 600, flexShrink: 0, mr: 0.5 }}
+          sx={{ opacity: 0.85 }}
         >
-          Ngữ cảnh:
+          Áp dụng cho câu hỏi tiếp theo.
         </Typography>
 
-        {selectedDocuments.map((doc) => (
-          <Tooltip key={doc.id} title={doc.title}>
-            <Chip
-              icon={<DescriptionOutlined sx={{ fontSize: "0.95rem !important" }} />}
-              label={doc.title}
-              onDelete={() => onRemove(doc.id)}
-              size="small"
-              variant="outlined"
-              sx={{
-                maxWidth: { xs: 160, sm: 240 },
-                fontWeight: 600,
-                fontSize: "0.78rem",
-                "& .MuiChip-label": {
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                },
-              }}
-            />
-          </Tooltip>
-        ))}
-
-        <Tooltip title="Thêm tài liệu">
-          <Chip
-            icon={<AddOutlined sx={{ fontSize: "0.95rem !important" }} />}
-            label="Thêm"
-            onClick={onOpenPicker}
-            size="small"
-            variant="outlined"
-            color="primary"
-            clickable
-            sx={{ fontWeight: 600, fontSize: "0.78rem" }}
-          />
-        </Tooltip>
+        {selectedDocuments.length > 0 && (
+          <Stack
+            direction="row"
+            gap={0.75}
+            flexWrap="wrap"
+            sx={{ display: { xs: "flex", lg: "none" } }}
+          >
+            {selectedDocuments.map((doc) => (
+              <Tooltip key={doc.id} title={doc.title}>
+                <Chip
+                  icon={
+                    <DescriptionOutlined sx={{ fontSize: "0.95rem !important" }} />
+                  }
+                  label={doc.title}
+                  onDelete={() => onRemove(doc.id)}
+                  size="small"
+                  variant="outlined"
+                  sx={{ maxWidth: 220, fontWeight: 600, fontSize: "0.75rem" }}
+                />
+              </Tooltip>
+            ))}
+          </Stack>
+        )}
       </Stack>
     </Box>
   );

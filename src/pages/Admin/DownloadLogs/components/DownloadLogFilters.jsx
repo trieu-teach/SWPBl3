@@ -1,178 +1,298 @@
 import {
   Box,
   Button,
+  Chip,
+  Divider,
+  FormControl,
   InputAdornment,
+  MenuItem,
+  Select,
   TextField,
   Typography,
 } from "@mui/material";
 import FilterListOutlined from "@mui/icons-material/FilterListOutlined";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
-import PersonOutlined from "@mui/icons-material/PersonOutlined";
-import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
+import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import ClearOutlined from "@mui/icons-material/ClearOutlined";
+import SwapVertOutlined from "@mui/icons-material/SwapVertOutlined";
+
+const ROLE_OPTIONS = [
+  { value: "USER", label: "Người dùng" },
+  { value: "ADMIN", label: "Quản trị viên" },
+  { value: "MODERATOR", label: "Kiểm duyệt viên" },
+];
+
+const FILE_TYPE_OPTIONS = [
+  { value: "PDF", label: "PDF" },
+  { value: "DOCX", label: "DOCX" },
+  { value: "PPTX", label: "PPTX" },
+  { value: "XLSX", label: "XLSX" },
+];
+
+const VISIBILITY_OPTIONS = [
+  { value: "PUBLIC", label: "Cộng đồng" },
+  { value: "PRIVATE", label: "Riêng tư" },
+];
+
+const SORT_OPTIONS = [
+  { label: "Mới nhất", sortBy: "downloadedAt", sortOrder: "desc" },
+  { label: "Cũ nhất", sortBy: "downloadedAt", sortOrder: "asc" },
+  { label: "Nhiều tải", sortBy: "downloadCount", sortOrder: "desc" },
+  { label: "Ít tải", sortBy: "downloadCount", sortOrder: "asc" },
+];
 
 export default function DownloadLogFilters({ download }) {
-  const { filters } = download;
+  const { filters, sort, hasActiveFilters, updateFilter, updateSort, resetFilters } = download;
 
-  const hasActiveFilters = filters.userId || filters.documentId;
-  const activeCount = Object.values(filters).filter(Boolean).length;
+  const currentSort = SORT_OPTIONS.find(
+    (opt) => opt.sortBy === sort.sortBy && opt.sortOrder === sort.sortOrder,
+  ) || SORT_OPTIONS[0];
 
   return (
     <Box
       sx={{
-        borderRadius: "16px",
+        borderRadius: "12px",
         overflow: "hidden",
-        mb: 3,
+        mb: 2,
         background: "background.paper",
         border: "1px solid",
         borderColor: "divider",
-        boxShadow: "none",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
       }}
     >
-      {/* Header bar */}
-      <Box
-        sx={{
-          px: 2.5,
-          py: 2,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          borderBottom: "1px solid",
-          borderColor: "divider",
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Box
-            sx={{
-              width: 36,
-              height: 36,
-              borderRadius: "10px",
-              background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "white",
-              boxShadow: "0 4px 12px rgba(249, 115, 22, 0.25)",
-            }}
-          >
-            <FilterListOutlined sx={{ fontSize: 18 }} />
+      {/* Compact Search Row */}
+      <Box sx={{ px: 2, py: 1.5 }}>
+        <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start" }}>
+          {/* Search */}
+          <Box sx={{ flex: 1 }}>
+            <TextField
+              fullWidth
+              size="small"
+              value={filters.keyword}
+              onChange={(e) => updateFilter("keyword", e.target.value)}
+              placeholder="Tìm tên, email, tài liệu, môn học..."
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "8px",
+                  backgroundColor: "action.hover",
+                  py: 0,
+                  "& fieldset": { border: "none" },
+                },
+                "& .MuiOutlinedInput-input": {
+                  py: "6px",
+                  fontSize: "0.875rem",
+                },
+              }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchOutlined sx={{ fontSize: 18, color: "text.disabled" }} />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
           </Box>
-          <Box>
-            <Typography variant="body1" fontWeight={600}>
-              Bộ lọc
-            </Typography>
-            {activeCount > 0 && (
-              <Typography variant="caption" color="text.secondary">
-                {activeCount} bộ lọc đang hoạt động
-              </Typography>
+
+          {/* Quick Filters */}
+          <Box sx={{ display: "flex", gap: 1, flexShrink: 0 }}>
+            <FormControl size="small" sx={{ minWidth: 110 }}>
+              <Select
+                value={filters.userRole}
+                onChange={(e) => updateFilter("userRole", e.target.value)}
+                displayEmpty
+                sx={{
+                  borderRadius: "8px",
+                  backgroundColor: "action.hover",
+                  fontSize: "0.8rem",
+                  "& .MuiSelect-select": { py: "4px", px: 1.5 },
+                  "& fieldset": { border: "none" },
+                }}
+                renderValue={(value) => {
+                  const opt = ROLE_OPTIONS.find((o) => o.value === value);
+                  return (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <Typography sx={{ fontSize: "0.8rem" }}>
+                        {opt ? opt.label : "Vai trò"}
+                      </Typography>
+                    </Box>
+                  );
+                }}
+              >
+                <MenuItem value=""><em>Tất cả vai trò</em></MenuItem>
+                {ROLE_OPTIONS.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ minWidth: 100 }}>
+              <Select
+                value={filters.fileType}
+                onChange={(e) => updateFilter("fileType", e.target.value)}
+                displayEmpty
+                sx={{
+                  borderRadius: "8px",
+                  backgroundColor: "action.hover",
+                  fontSize: "0.8rem",
+                  "& .MuiSelect-select": { py: "4px", px: 1.5 },
+                  "& fieldset": { border: "none" },
+                }}
+                renderValue={(value) => {
+                  const opt = FILE_TYPE_OPTIONS.find((o) => o.value === value);
+                  return (
+                    <Typography sx={{ fontSize: "0.8rem" }}>
+                      {opt ? opt.label : "Loại file"}
+                    </Typography>
+                  );
+                }}
+              >
+                <MenuItem value=""><em>Tất cả loại</em></MenuItem>
+                {FILE_TYPE_OPTIONS.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ minWidth: 100 }}>
+              <Select
+                value={filters.visibility}
+                onChange={(e) => updateFilter("visibility", e.target.value)}
+                displayEmpty
+                sx={{
+                  borderRadius: "8px",
+                  backgroundColor: "action.hover",
+                  fontSize: "0.8rem",
+                  "& .MuiSelect-select": { py: "4px", px: 1.5 },
+                  "& fieldset": { border: "none" },
+                }}
+                renderValue={(value) => {
+                  const opt = VISIBILITY_OPTIONS.find((o) => o.value === value);
+                  return (
+                    <Typography sx={{ fontSize: "0.8rem" }}>
+                      {opt ? opt.label : "Phạm vi"}
+                    </Typography>
+                  );
+                }}
+              >
+                <MenuItem value=""><em>Tất cả phạm vi</em></MenuItem>
+                {VISIBILITY_OPTIONS.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* Date range */}
+            <TextField
+              type="date"
+              size="small"
+              value={filters.from}
+              onChange={(e) => updateFilter("from", e.target.value)}
+              placeholder="Từ"
+              sx={{
+                width: 130,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "8px",
+                  backgroundColor: "action.hover",
+                  fontSize: "0.8rem",
+                  "& fieldset": { border: "none" },
+                },
+                "& input": { py: "4px", px: 1.5 },
+              }}
+              slotProps={{
+                inputLabel: { shrink: true },
+              }}
+            />
+            <TextField
+              type="date"
+              size="small"
+              value={filters.to}
+              onChange={(e) => updateFilter("to", e.target.value)}
+              placeholder="Đến"
+              sx={{
+                width: 130,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "8px",
+                  backgroundColor: "action.hover",
+                  fontSize: "0.8rem",
+                  "& fieldset": { border: "none" },
+                },
+                "& input": { py: "4px", px: 1.5 },
+              }}
+              slotProps={{
+                inputLabel: { shrink: true },
+              }}
+            />
+
+            {hasActiveFilters && (
+              <Button
+                size="small"
+                variant="text"
+                color="error"
+                startIcon={<ClearOutlined sx={{ fontSize: 14 }} />}
+                onClick={resetFilters}
+                sx={{
+                  fontSize: "0.75rem",
+                  borderRadius: "8px",
+                  px: 1,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Xóa
+              </Button>
             )}
           </Box>
         </Box>
-        {hasActiveFilters && (
-          <Button
-            size="small"
-            variant="outlined"
-            color="error"
-            startIcon={<ClearOutlined sx={{ fontSize: 14 }} />}
-            onClick={download.resetFilters}
-            sx={{
-              fontSize: "0.8rem",
-              borderRadius: "10px",
-              height: 36,
-            }}
-          >
-            Xóa tất cả
-          </Button>
-        )}
       </Box>
 
-      {/* Filter fields */}
-      <Box sx={{ p: 2.5 }}>
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "1fr",
-              sm: "repeat(2, 1fr)",
-              md: "repeat(3, 1fr)",
-            },
-            gap: 2,
-          }}
-        >
-          {/* User ID */}
-          <Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1 }}>
-              <PersonOutlined sx={{ fontSize: 14, color: "text.secondary" }} />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ fontWeight: 600, fontSize: "0.78rem" }}
-              >
-                Người dùng
-              </Typography>
-            </Box>
-            <TextField
-              fullWidth
-              size="medium"
-              value={filters.userId}
-              onChange={(e) => download.updateFilter("userId", e.target.value)}
-              placeholder="UUID người dùng..."
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "12px",
-                  backgroundColor: "action.hover",
-                },
-              }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchOutlined sx={{ fontSize: 18, color: "text.disabled" }} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-          </Box>
+      <Divider />
 
-          {/* Document ID */}
-          <Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1 }}>
-              <DescriptionOutlined sx={{ fontSize: 14, color: "text.secondary" }} />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ fontWeight: 600, fontSize: "0.78rem" }}
-              >
-                Tài liệu
-              </Typography>
-            </Box>
-            <TextField
-              fullWidth
-              size="medium"
-              value={filters.documentId}
-              onChange={(e) => download.updateFilter("documentId", e.target.value)}
-              placeholder="UUID tài liệu..."
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "12px",
-                  backgroundColor: "action.hover",
-                },
-              }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchOutlined sx={{ fontSize: 18, color: "text.disabled" }} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
+      {/* Sort Row */}
+      <Box sx={{ px: 2, py: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <SwapVertOutlined sx={{ fontSize: 14, color: "text.disabled" }} />
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: "0.75rem" }}>
+              Sắp xếp:
+            </Typography>
           </Box>
-
-          {/* Placeholder */}
-          <Box />
+          <Box sx={{ display: "flex", gap: 0.75 }}>
+            {SORT_OPTIONS.map((opt) => {
+              const isActive = currentSort.label === opt.label;
+              return (
+                <Chip
+                  key={opt.label}
+                  label={opt.label}
+                  size="small"
+                  onClick={() => {
+                    updateSort("sortBy", opt.sortBy);
+                    updateSort("sortOrder", opt.sortOrder);
+                  }}
+                  sx={{
+                    height: 24,
+                    borderRadius: "6px",
+                    fontSize: "0.72rem",
+                    fontWeight: isActive ? 600 : 400,
+                    bgcolor: isActive ? "primary.main" : "transparent",
+                    color: isActive ? "primary.contrastText" : "text.secondary",
+                    border: isActive ? "none" : "1px solid",
+                    borderColor: "divider",
+                    transition: "all 0.15s",
+                    "&:hover": {
+                      bgcolor: isActive ? "primary.dark" : "action.hover",
+                    },
+                  }}
+                />
+              );
+            })}
+          </Box>
         </Box>
       </Box>
     </Box>

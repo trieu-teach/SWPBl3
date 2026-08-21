@@ -146,11 +146,26 @@ export async function sendChatMessage({ question, documentIds, sessionId }) {
 }
 
 /**
- * GET /chat/sessions?page=&limit=
+ * GET /chat/sessions?mode=&documentId=&page=&limit=
  */
-export async function getChatSessions({ page = 1, limit = DEFAULT_SESSIONS_LIMIT } = {}) {
+export async function getChatSessions({
+  mode,
+  documentId,
+  page = 1,
+  limit = DEFAULT_SESSIONS_LIMIT,
+} = {}) {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (mode) params.set("mode", mode);
+  if (documentId) params.set("documentId", documentId);
   return apiRequest(`/chat/sessions?${params}`);
+}
+
+/**
+ * GET /chat/sessions/{sessionId}
+ */
+export async function getChatSession(sessionId) {
+  if (!sessionId) throw new Error("sessionId is required");
+  return apiRequest(`/chat/sessions/${sessionId}`);
 }
 
 /**

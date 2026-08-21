@@ -98,7 +98,13 @@ export default function SavedDocumentCard({
             {document.owner?.fullName || "Người chia sẻ"}
           </Typography>
         </Stack>
-        <Stack direction="row" gap={1} sx={{ mt: 1.5 }}>
+        <Stack
+          direction="row"
+          spacing={1.25}
+          alignItems="center"
+          flexWrap="wrap"
+          sx={{ mt: 1.5, rowGap: 0.75 }}
+        >
           <Chip
             size="small"
             label={status.label}

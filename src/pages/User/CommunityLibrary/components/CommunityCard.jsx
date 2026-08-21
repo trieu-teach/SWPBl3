@@ -7,13 +7,17 @@ import {
   CardContent,
   Chip,
   CircularProgress,
+  IconButton,
   Stack,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import {
   BookmarkBorderOutlined,
   BookmarkOutlined,
+  CloudDownloadOutlined,
   DescriptionOutlined,
+  ReportProblemOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
 import {
@@ -28,7 +32,9 @@ export default function CommunityCard({
   document,
   actionId,
   onPreview,
+  onDownload,
   onSave,
+  onReport,
 }) {
   const tags = normalizeTags(document.tags);
   const fileColors = getFileTypeColors(document);
@@ -138,17 +144,43 @@ export default function CommunityCard({
         >
           Xem
         </Button>
+        <Tooltip title="Tải xuống">
+          <span>
+            <IconButton
+              size="small"
+              disabled={Boolean(actionId)}
+              onClick={() => onDownload(document)}
+            >
+              {actionId === `download-${document.id}` ? (
+                <CircularProgress size={18} />
+              ) : (
+                <CloudDownloadOutlined />
+              )}
+            </IconButton>
+          </span>
+        </Tooltip>
         {!document.owned && (
-          <Button
-            size="small"
-            disabled={actionId === `save-${document.id}`}
-            startIcon={
-              document.saved ? <BookmarkOutlined /> : <BookmarkBorderOutlined />
-            }
-            onClick={() => onSave(document)}
-          >
-            {document.saved ? "Bỏ lưu" : "Lưu"}
-          </Button>
+          <>
+            <Button
+              size="small"
+              disabled={actionId === `save-${document.id}`}
+              startIcon={
+                document.saved ? <BookmarkOutlined /> : <BookmarkBorderOutlined />
+              }
+              onClick={() => onSave(document)}
+            >
+              {document.saved ? "Bỏ lưu" : "Lưu"}
+            </Button>
+            <Button
+              size="small"
+              color="error"
+              startIcon={<ReportProblemOutlined />}
+              onClick={() => onReport(document)}
+              sx={{ ml: "auto" }}
+            >
+              Báo cáo
+            </Button>
+          </>
         )}
       </CardActions>
     </Card>

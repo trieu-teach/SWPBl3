@@ -3,7 +3,6 @@ import {
   EditOutlined,
   HideSourceOutlined,
   SmartToyOutlined,
-  UploadFileOutlined,
 } from "@mui/icons-material";
 import {
   Alert,
@@ -133,11 +132,6 @@ export default function SubscriptionPlansGrid({ admin }) {
                     icon={<CloudOutlined fontSize="small" />}
                     label="Dung lượng"
                     value={`${plan.storageLimitMb.toLocaleString("vi-VN")} MB`}
-                  />
-                  <LimitItem
-                    icon={<UploadFileOutlined fontSize="small" />}
-                    label="Lượt tải lên"
-                    value={plan.uploadLimit.toLocaleString("vi-VN")}
                   />
                   <LimitItem
                     icon={<SmartToyOutlined fontSize="small" />}

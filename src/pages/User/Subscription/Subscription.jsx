@@ -1,100 +1,123 @@
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Pagination, Snackbar, Typography } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Pagination,
+  Typography,
+} from "@mui/material";
 import UserLayout from "../Layout/UserLayout.jsx";
+import PaymentDialog from "./components/PaymentDialog.jsx";
 import SubscriptionGrid from "./components/SubscriptionGrid.jsx";
 import SubscriptionHeader from "./components/SubscriptionHeader.jsx";
+import SubscriptionUsageCard from "./components/SubscriptionUsageCard.jsx";
 import useSubscription from "./hooks/useSubscription.js";
-
-function formatDate(dateString) {
-  if (!dateString) return "";
-  return new Date(dateString).toLocaleDateString("vi-VN", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
-}
-
-function MySubscriptionCard({ subscription }) {
-  if (!subscription) return null;
-
-  return (
-    <Card sx={{ mb: 4, bgcolor: "primary.main", color: "white" }}>
-      <CardContent sx={{ p: 3 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-              {subscription.planName || subscription.plan?.name || "Gói của bạn"}
-            </Typography>
-            <Typography sx={{ opacity: 0.9, fontSize: "0.875rem" }}>
-              Hết hạn: {formatDate(subscription.endDate || subscription.expiresAt)}
-            </Typography>
-            <Typography sx={{ opacity: 0.9, fontSize: "0.875rem" }}>
-              Trạng thái: <strong>{subscription.status}</strong>
-            </Typography>
-          </Box>
-        </Box>
-      </CardContent>
-    </Card>
-  );
-}
 
 export default function Subscription() {
   const subscription = useSubscription();
 
   return (
     <UserLayout>
-      <SubscriptionHeader />
+      <Box
+        sx={{
+          maxWidth: 1200,
+          mx: "auto",
+          px: { xs: 2, md: 3 },
+          py: { xs: 3, md: 4 },
+        }}
+      >
+        <SubscriptionHeader />
+        <SubscriptionUsageCard subscription={subscription.mySubscription} />
 
-      <MySubscriptionCard
-        subscription={subscription.mySubscription}
-      />
+        {subscription.notification && (
+          <Alert
+            severity={subscription.notification.type}
+            onClose={subscription.clearNotification}
+            sx={{
+              mb: 3,
+              borderRadius: "12px",
+              "& .MuiAlert-icon": { alignItems: "center" },
+            }}
+          >
+            {subscription.notification.message}
+          </Alert>
+        )}
 
-      {subscription.notification && (
-        <Alert
-          severity={subscription.notification.type}
-          onClose={subscription.clearNotification}
-          sx={{ mb: 3 }}
-        >
-          {subscription.notification.message}
-        </Alert>
-      )}
+        {subscription.error && (
+          <Alert
+            severity="error"
+            action={
+              <Button color="inherit" onClick={subscription.loadPlans}>
+                Thử lại
+              </Button>
+            }
+            sx={{
+              mb: 3,
+              borderRadius: "12px",
+            }}
+          >
+            {subscription.error}
+          </Alert>
+        )}
 
-      {subscription.error && (
-        <Alert
-          severity="error"
-          action={
-            <Button color="inherit" onClick={subscription.loadPlans}>
-              Thử lại
-            </Button>
-          }
-          sx={{ mb: 3 }}
-        >
-          {subscription.error}
-        </Alert>
-      )}
-
-      {subscription.loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <>
-          <Typography fontWeight={700} sx={{ mb: 2 }}>
-            {subscription.allPlans.length} gói dịch vụ
-          </Typography>
-          <SubscriptionGrid subscription={subscription} />
-
-          {subscription.totalPages > 1 && (
-            <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-              <Pagination
-                page={subscription.page}
-                count={subscription.totalPages}
-                color="primary"
-                onChange={(_e, value) => subscription.setPage(value)}
+        {subscription.loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                mb: 3,
+                mt: 4,
+              }}
+            >
+              <Typography
+                fontWeight={700}
+                sx={{ fontSize: { xs: "1rem", md: "1.1rem" } }}
+              >
+                {subscription.allPlans.length} gói dịch vụ
+              </Typography>
+              <Box
+                sx={{
+                  flex: 1,
+                  height: 1,
+                  bgcolor: "var(--border-color)",
+                }}
               />
             </Box>
-          )}
-        </>
-      )}
+            <SubscriptionGrid subscription={subscription} />
+
+            {subscription.totalPages > 1 && (
+              <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+                <Pagination
+                  page={subscription.page}
+                  count={subscription.totalPages}
+                  color="primary"
+                  onChange={(_event, value) => subscription.setPage(value)}
+                  sx={{
+                    "& .MuiPaginationItem-root": {
+                      borderRadius: "8px",
+                    },
+                  }}
+                />
+              </Box>
+            )}
+          </>
+        )}
+      </Box>
+
+      <PaymentDialog
+        payment={subscription.checkout}
+        remainingSeconds={subscription.remainingSeconds}
+        cancelling={subscription.cancellingPayment}
+        onCancel={subscription.cancelPayment}
+        onDismiss={subscription.dismissPayment}
+        onCreateNew={subscription.resetPayment}
+      />
     </UserLayout>
   );
 }
