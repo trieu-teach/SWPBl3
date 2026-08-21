@@ -1,7 +1,20 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  lazy,
+  Suspense,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
-import { ConfigProvider, App as AntApp, theme as antdThemeAlgo } from "antd";
-import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
+import {
+  Box,
+  CircularProgress,
+  ThemeProvider,
+  createTheme,
+  CssBaseline,
+} from "@mui/material";
 import { AuthProvider } from "./features/auth/AuthProvider.jsx";
 import { ToastProvider } from "./components/Toast/ToastProvider.jsx";
 import {
@@ -10,38 +23,60 @@ import {
   RequireAuth,
 } from "./features/auth/ProtectedRoute.jsx";
 
-// Guest routes (login / register / forgot-password)
-import Login from "./pages/Auth/Login.jsx";
-import Register from "./pages/Auth/Register.jsx";
-import ForgotPassword from "./pages/Auth/ForgotPassword.jsx";
-import ResetPassword from "./pages/Auth/ResetPassword.jsx";
-
-// Authenticated routes
-import Profile from "./pages/Profile/Profile.jsx";
-import UploadDocument from "./pages/User/UploadDocument/UploadDocument.jsx";
-import DocumentLibrary from "./pages/User/DocumentLibrary/DocumentLibrary.jsx";
-import DocumentDetails from "./pages/User/DocumentDetails/DocumentDetails.jsx";
-import DocumentAIWorkspace from "./pages/User/DocumentAIWorkspace/DocumentAIWorkspace.jsx";
-import CommunityLibrary from "./pages/User/CommunityLibrary/CommunityLibrary.jsx";
-import SavedDocuments from "./pages/User/SavedDocuments/SavedDocuments.jsx";
-import Subscription from "./pages/User/Subscription/Subscription.jsx";
-import PaymentCallback from "./pages/User/Subscription/PaymentCallback.jsx";
-import ChatPage from "./pages/User/AIChat/ChatPage.jsx";
-
-// Admin routes
-import AdminDashboard from "./pages/Admin/Dashboard/AdminDashboard.jsx";
-import AdminUsers from "./pages/Admin/Users/AdminUsers.jsx";
-import AdminDocuments from "./pages/Admin/Documents/AdminDocuments.jsx";
-import SubscriptionPlans from "./pages/Admin/SubscriptionPlans/SubscriptionPlans.jsx";
-import Subscriptions from "./pages/Admin/Subscriptions/Subscriptions.jsx";
-import AuditLogs from "./pages/Admin/AuditLogs/AuditLogs.jsx";
-import DownloadLogs from "./pages/Admin/DownloadLogs/DownloadLogs.jsx";
-import Reports from "./pages/Admin/Reports/Reports.jsx";
-// Moderator routes
-import ModeratorReports from "./pages/Moderator/Reports/ModeratorReports.jsx";
-
-// Public
-import Homepage from "./pages/Home/Homepage.jsx";
+const Login = lazy(() => import("./pages/Auth/Login.jsx"));
+const Register = lazy(() => import("./pages/Auth/Register.jsx"));
+const ForgotPassword = lazy(() => import("./pages/Auth/ForgotPassword.jsx"));
+const ResetPassword = lazy(() => import("./pages/Auth/ResetPassword.jsx"));
+const Profile = lazy(() => import("./pages/Profile/Profile.jsx"));
+const UploadDocument = lazy(
+  () => import("./pages/User/UploadDocument/UploadDocument.jsx"),
+);
+const DocumentLibrary = lazy(
+  () => import("./pages/User/DocumentLibrary/DocumentLibrary.jsx"),
+);
+const DocumentDetails = lazy(
+  () => import("./pages/User/DocumentDetails/DocumentDetails.jsx"),
+);
+const DocumentAIWorkspace = lazy(
+  () => import("./pages/User/DocumentAIWorkspace/DocumentAIWorkspace.jsx"),
+);
+const CommunityLibrary = lazy(
+  () => import("./pages/User/CommunityLibrary/CommunityLibrary.jsx"),
+);
+const SavedDocuments = lazy(
+  () => import("./pages/User/SavedDocuments/SavedDocuments.jsx"),
+);
+const Subscription = lazy(
+  () => import("./pages/User/Subscription/Subscription.jsx"),
+);
+const PaymentCallback = lazy(
+  () => import("./pages/User/Subscription/PaymentCallback.jsx"),
+);
+const ChatPage = lazy(() => import("./pages/User/AIChat/ChatPage.jsx"));
+const AdminDashboard = lazy(
+  () => import("./pages/Admin/Dashboard/AdminDashboard.jsx"),
+);
+const AdminUsers = lazy(() => import("./pages/Admin/Users/AdminUsers.jsx"));
+const AdminDocuments = lazy(
+  () => import("./pages/Admin/Documents/AdminDocuments.jsx"),
+);
+const SubscriptionPlans = lazy(
+  () => import("./pages/Admin/SubscriptionPlans/SubscriptionPlans.jsx"),
+);
+const Subscriptions = lazy(
+  () => import("./pages/Admin/Subscriptions/Subscriptions.jsx"),
+);
+const AuditLogs = lazy(
+  () => import("./pages/Admin/AuditLogs/AuditLogs.jsx"),
+);
+const DownloadLogs = lazy(
+  () => import("./pages/Admin/DownloadLogs/DownloadLogs.jsx"),
+);
+const Reports = lazy(() => import("./pages/Admin/Reports/Reports.jsx"));
+const ModeratorReports = lazy(
+  () => import("./pages/Moderator/Reports/ModeratorReports.jsx"),
+);
+const Homepage = lazy(() => import("./pages/Home/Homepage.jsx"));
 
 // ---------------------------------------------------------------------------
 // Color mode context (light / dark)
@@ -97,19 +132,21 @@ function buildMuiTheme(mode) {
   });
 }
 
-function buildAntdTheme(mode) {
-  return {
-    algorithm:
-      mode === "dark"
-        ? antdThemeAlgo.darkAlgorithm
-        : antdThemeAlgo.defaultAlgorithm,
-    token: {
-      colorPrimary: mode === "dark" ? "#6366f1" : "#1f2a44",
-      fontFamily:
-        '"Plus Jakarta Sans", "Inter", system-ui, -apple-system, sans-serif',
-      borderRadius: 10,
-    },
-  };
+function RouteLoadingFallback() {
+  return (
+    <Box
+      role="status"
+      aria-label="Đang tải trang"
+      sx={{
+        minHeight: "100vh",
+        display: "grid",
+        placeItems: "center",
+        bgcolor: "background.default",
+      }}
+    >
+      <CircularProgress size={36} />
+    </Box>
+  );
 }
 
 export default function App() {
@@ -133,18 +170,16 @@ export default function App() {
   );
 
   const muiTheme = useMemo(() => buildMuiTheme(mode), [mode]);
-  const antdThemeConfig = useMemo(() => buildAntdTheme(mode), [mode]);
 
   return (
     <ColorModeContext.Provider value={colorMode}>
       <ThemeProvider theme={muiTheme}>
         <CssBaseline />
-        <ConfigProvider theme={antdThemeConfig}>
-          <AntApp>
-            <ToastProvider>
-              <BrowserRouter>
-                <AuthProvider>
-                  <Routes>
+        <ToastProvider>
+          <BrowserRouter>
+            <AuthProvider>
+              <Suspense fallback={<RouteLoadingFallback />}>
+                <Routes>
                     {/* ── Public (chỉ Guest mới vào được) ── */}
                     <Route
                       path="/"
@@ -372,12 +407,11 @@ export default function App() {
                         </GuestRoute>
                       }
                     />
-                  </Routes>
-                </AuthProvider>
-              </BrowserRouter>
-            </ToastProvider>
-          </AntApp>
-        </ConfigProvider>
+                </Routes>
+              </Suspense>
+            </AuthProvider>
+          </BrowserRouter>
+        </ToastProvider>
       </ThemeProvider>
     </ColorModeContext.Provider>
   );
