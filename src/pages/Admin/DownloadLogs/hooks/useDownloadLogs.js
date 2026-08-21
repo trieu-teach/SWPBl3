@@ -2,13 +2,23 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getDownloadLogs } from "../../../../api/download-logs.api.js";
 
 const INITIAL_FILTERS = {
-  userId: "",
-  documentId: "",
+  keyword: "",
+  userRole: "",
+  fileType: "",
+  visibility: "",
+  from: "",
+  to: "",
+};
+
+const INITIAL_SORT = {
+  sortBy: "downloadedAt",
+  sortOrder: "desc",
 };
 
 export default function useDownloadLogs() {
   const [logs, setLogs] = useState([]);
   const [filters, setFilters] = useState(INITIAL_FILTERS);
+  const [sort, setSort] = useState(INITIAL_SORT);
   const [page, setPage] = useState(1);
   const [pageCount, setPageCount] = useState(1);
   const [total, setTotal] = useState(0);
@@ -18,10 +28,11 @@ export default function useDownloadLogs() {
   const query = useMemo(
     () => ({
       ...filters,
+      ...sort,
       page,
       limit: 20,
     }),
-    [filters, page],
+    [filters, sort, page],
   );
 
   const loadLogs = useCallback(async () => {
@@ -55,8 +66,14 @@ export default function useDownloadLogs() {
     setFilters((current) => ({ ...current, [name]: value }));
   }
 
+  function updateSort(name, value) {
+    setPage(1);
+    setSort((current) => ({ ...current, [name]: value }));
+  }
+
   function resetFilters() {
     setFilters(INITIAL_FILTERS);
+    setSort(INITIAL_SORT);
     setPage(1);
   }
 
@@ -64,16 +81,28 @@ export default function useDownloadLogs() {
     loadLogs();
   }
 
+  const hasActiveFilters = [
+    filters.keyword,
+    filters.userRole,
+    filters.fileType,
+    filters.visibility,
+    filters.from,
+    filters.to,
+  ].some(Boolean);
+
   return {
     logs,
     filters,
+    sort,
     page,
     pageCount,
     total,
     loading,
     error,
+    hasActiveFilters,
     setPage,
     updateFilter,
+    updateSort,
     resetFilters,
     retry,
   };

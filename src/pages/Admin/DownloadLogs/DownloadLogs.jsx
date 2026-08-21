@@ -1,4 +1,4 @@
-import { Box, Typography, Card, CardContent } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import DownloadOutlined from "@mui/icons-material/DownloadOutlined";
 import AdminLayout from "../Layout/AdminLayout.jsx";
 import DownloadLogFilters from "./components/DownloadLogFilters.jsx";
@@ -13,50 +13,35 @@ export default function DownloadLogs() {
       {/* Page Header */}
       <Box
         sx={{
-          mb: 3,
-          pb: 3,
-          borderBottom: "1px solid",
-          borderColor: "divider",
+          display: "flex",
+          alignItems: "center",
+          gap: 1.5,
+          mb: 2.5,
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 0.5 }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              borderRadius: "14px",
-              background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "white",
-              boxShadow: "0 8px 24px rgba(249, 115, 22, 0.35)",
-            }}
-          >
-            <DownloadOutlined sx={{ fontSize: 24 }} />
-          </Box>
-          <Box>
-            <Typography
-              sx={{
-                fontWeight: 800,
-                fontSize: "1.75rem",
-                lineHeight: 1.1,
-                letterSpacing: "-0.02em",
-                color: "text.primary",
-              }}
-            >
-              Nhật ký tải xuống
-            </Typography>
-            <Typography
-              sx={{
-                color: "text.secondary",
-                fontSize: "0.9rem",
-                fontWeight: 400,
-              }}
-            >
-              Theo dõi hoạt động tải tài liệu của người dùng
-            </Typography>
-          </Box>
+        <Box
+          sx={{
+            width: 40,
+            height: 40,
+            borderRadius: 2,
+            background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "white",
+            flexShrink: 0,
+            boxShadow: "0 4px 14px rgba(249, 115, 22, 0.35)",
+          }}
+        >
+          <DownloadOutlined sx={{ fontSize: 20 }} />
+        </Box>
+        <Box>
+          <Typography variant="h5" fontWeight={700} sx={{ lineHeight: 1.2 }}>
+            Nhật ký tải xuống
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.8rem" }}>
+            Theo dõi hoạt động tải tài liệu
+          </Typography>
         </Box>
       </Box>
 

@@ -11,7 +11,7 @@ export function getCommunityDocuments(params = {}) {
 }
 
 export function getCommunityPreview(id) {
-  return apiRequest(`/community/documents/${id}/preview`);
+  return apiRequest(`/documents/${id}/preview`);
 }
 
 export function saveCommunityDocument(id) {
@@ -20,4 +20,11 @@ export function saveCommunityDocument(id) {
 
 export function unsaveCommunityDocument(id) {
   return apiRequest(`/community/documents/${id}/save`, { method: "DELETE" });
+}
+
+export function reportCommunityDocument(id, payload) {
+  return apiRequest(`/documents/${id}/report`, {
+    method: "POST",
+    body: payload,
+  });
 }

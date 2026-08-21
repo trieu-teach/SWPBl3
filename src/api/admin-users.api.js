@@ -17,3 +17,10 @@ export function updateAdminUserStatus(id, status, reason) {
     body: { status, ...(reason?.trim() ? { reason: reason.trim() } : {}) },
   });
 }
+
+export function updateAdminUserRole(id, role) {
+  return apiRequest(`/admin/users/${id}/role`, {
+    method: "PATCH",
+    body: { role },
+  });
+}

@@ -33,7 +33,9 @@ export default function CommunityDocumentGrid({ community }) {
           document={document}
           actionId={community.actionId}
           onPreview={community.openPreview}
+          onDownload={community.downloadDocument}
           onSave={community.toggleSave}
+          onReport={community.openReport}
         />
       ))}
     </Box>

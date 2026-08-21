@@ -28,6 +28,11 @@ export default function AdminDocumentDetailDialog({
   onAction,
 }) {
   if (!document) return null;
+
+  const isPendingPublicDocument =
+    document.visibility === "PUBLIC" && document.moderationStatus === "PENDING";
+  const canToggleHidden = document.moderationStatus === "APPROVED";
+
   return (
     <Dialog open onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>Chi tiết tài liệu</DialogTitle>
@@ -39,6 +44,10 @@ export default function AdminDocumentDetailDialog({
         <Stack direction="row" gap={1} flexWrap="wrap" sx={{ my: 2 }}>
           <Chip
             size="small"
+            color={
+              document.visibility === "PUBLIC" ? "success" : "secondary"
+            }
+            variant="outlined"
             label={document.visibility === "PUBLIC" ? "Công khai" : "Riêng tư"}
           />
           <Chip
@@ -104,35 +113,35 @@ export default function AdminDocumentDetailDialog({
       </DialogContent>
       <DialogActions sx={{ flexWrap: "wrap" }}>
         <Button onClick={() => onPreview(document)}>Xem file</Button>
-        {document.visibility === "PUBLIC" &&
-          document.moderationStatus !== "APPROVED" && (
+        {isPendingPublicDocument && (
+          <>
             <Button
               color="success"
               onClick={() => onAction({ type: "approve", document })}
             >
               Duyệt
             </Button>
-          )}
-        {document.visibility === "PUBLIC" &&
-          document.moderationStatus !== "REJECTED" && (
             <Button
               color="error"
               onClick={() => onAction({ type: "reject", document })}
             >
               Từ chối
             </Button>
-          )}
-        <Button
-          color={document.status === "HIDDEN" ? "success" : "error"}
-          onClick={() =>
-            onAction({
-              type: document.status === "HIDDEN" ? "unhide" : "hide",
-              document,
-            })
-          }
-        >
-          {document.status === "HIDDEN" ? "Khôi phục" : "Ẩn"}
-        </Button>
+          </>
+        )}
+        {canToggleHidden && (
+          <Button
+            color={document.status === "HIDDEN" ? "success" : "error"}
+            onClick={() =>
+              onAction({
+                type: document.status === "HIDDEN" ? "unhide" : "hide",
+                document,
+              })
+            }
+          >
+            {document.status === "HIDDEN" ? "Khôi phục" : "Ẩn"}
+          </Button>
+        )}
         <Button onClick={onClose}>Đóng</Button>
       </DialogActions>
     </Dialog>

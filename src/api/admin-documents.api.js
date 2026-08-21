@@ -15,13 +15,22 @@ export const getAdminDocuments = (params) =>
 export const getAdminDocument = (id) => apiRequest(`/admin/documents/${id}`);
 export const getAdminDocumentPreview = (id) =>
   apiRequest(`/admin/documents/${id}/preview`);
-export const approveAdminDocument = (id) =>
-  apiRequest(`/admin/documents/${id}/approve`, { method: "PUT" });
-export const rejectAdminDocument = (id, reason) =>
-  apiRequest(`/admin/documents/${id}/reject`, {
-    method: "PUT",
-    body: { reason },
+
+const moderateAdminDocument = (id, status, reason) =>
+  apiRequest(`/admin/documents/${id}/moderate`, {
+    method: "PATCH",
+    body: {
+      status,
+      ...(reason?.trim() ? { reason: reason.trim() } : {}),
+    },
   });
+
+export const approveAdminDocument = (id) =>
+  moderateAdminDocument(id, "APPROVED");
+
+export const rejectAdminDocument = (id, reason) =>
+  moderateAdminDocument(id, "REJECTED", reason);
+
 export const setAdminDocumentHidden = (id, hidden, reason) =>
   apiRequest(`/admin/documents/${id}/hide`, {
     method: "PUT",
