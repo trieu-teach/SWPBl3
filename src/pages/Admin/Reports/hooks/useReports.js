@@ -3,6 +3,9 @@ import {
   getUploadStatistics,
   getMostDownloaded,
   getMostSaved,
+  getHeaviestDocuments,
+  getTopContributors,
+  getTopUploaders,
 } from "../../../../api/admin-reports.api.js";
 import { getAdminSubscriptionStats } from "../../../../api/admin-subscriptions.api.js";
 import { formatDateShort } from "../../utils/admin-formatters.js";
@@ -46,6 +49,27 @@ export default function useReports() {
   const [subscriptionError, setSubscriptionError] = useState("");
   const [statsRange, setStatsRange] = useState(getDefaultDateRange);
 
+  // === HEAVIEST DOCUMENTS STATE ===
+  const [heaviestDocuments, setHeaviestDocuments] = useState([]);
+  const [heaviestLoading, setHeaviestLoading] = useState(true);
+  const [heaviestError, setHeaviestError] = useState("");
+  const [heaviestRange, setHeaviestRange] = useState(getDefaultDateRange);
+  const [heaviestLimit, setHeaviestLimit] = useState(10);
+
+  // === TOP CONTRIBUTORS STATE ===
+  const [topContributors, setTopContributors] = useState([]);
+  const [contributorsLoading, setContributorsLoading] = useState(true);
+  const [contributorsError, setContributorsError] = useState("");
+  const [contributorsRange, setContributorsRange] = useState(getDefaultDateRange);
+  const [contributorsLimit, setContributorsLimit] = useState(10);
+
+  // === TOP UPLOADERS STATE ===
+  const [topUploaders, setTopUploaders] = useState([]);
+  const [uploadersLoading, setUploadersLoading] = useState(true);
+  const [uploadersError, setUploadersError] = useState("");
+  const [uploadersRange, setUploadersRange] = useState(getDefaultDateRange);
+  const [uploadersLimit, setUploadersLimit] = useState(10);
+
   // === DRAFT STATE (for filter UI) ===
   const [draftRange, setDraftRange] = useState(getDefaultDateRange);
   const [draftGroupBy, setDraftGroupBy] = useState("day");
@@ -86,6 +110,33 @@ export default function useReports() {
       to: statsRange.to || undefined,
     }),
     [statsRange],
+  );
+
+  const heaviestQuery = useMemo(
+    () => ({
+      from: heaviestRange.from || undefined,
+      to: heaviestRange.to || undefined,
+      limit: heaviestLimit,
+    }),
+    [heaviestRange, heaviestLimit],
+  );
+
+  const contributorsQuery = useMemo(
+    () => ({
+      from: contributorsRange.from || undefined,
+      to: contributorsRange.to || undefined,
+      limit: contributorsLimit,
+    }),
+    [contributorsRange, contributorsLimit],
+  );
+
+  const uploadersQuery = useMemo(
+    () => ({
+      from: uploadersRange.from || undefined,
+      to: uploadersRange.to || undefined,
+      limit: uploadersLimit,
+    }),
+    [uploadersRange, uploadersLimit],
   );
 
   // === LOADERS ===
@@ -136,7 +187,10 @@ export default function useReports() {
     setSubscriptionError("");
     try {
       const response = await getAdminSubscriptionStats(statsQuery);
-      const data = response?.data || { plans: [], totals: {} };
+      // Interceptor unwraps response: { success: true, data: {...} } → {...}
+      const data = response && typeof response === "object" && "plans" in response
+        ? response
+        : (response?.data || { plans: [], totals: {} });
       setSubscriptionStats(data);
     } catch (err) {
       setSubscriptionError(err.message || "Không thể tải thống kê subscription.");
@@ -144,6 +198,48 @@ export default function useReports() {
       setSubscriptionLoading(false);
     }
   }, [statsQuery]);
+
+  const loadHeaviestDocuments = useCallback(async () => {
+    setHeaviestLoading(true);
+    setHeaviestError("");
+    try {
+      const response = await getHeaviestDocuments(heaviestQuery);
+      const data = response?.data || response?.items || response || [];
+      setHeaviestDocuments(data);
+    } catch (err) {
+      setHeaviestError(err.message || "Không thể tải tài liệu nặng nhất.");
+    } finally {
+      setHeaviestLoading(false);
+    }
+  }, [heaviestQuery]);
+
+  const loadTopContributors = useCallback(async () => {
+    setContributorsLoading(true);
+    setContributorsError("");
+    try {
+      const response = await getTopContributors(contributorsQuery);
+      const data = response?.data || response?.items || response || [];
+      setTopContributors(data);
+    } catch (err) {
+      setContributorsError(err.message || "Không thể tải top người đóng góp.");
+    } finally {
+      setContributorsLoading(false);
+    }
+  }, [contributorsQuery]);
+
+  const loadTopUploaders = useCallback(async () => {
+    setUploadersLoading(true);
+    setUploadersError("");
+    try {
+      const response = await getTopUploaders(uploadersQuery);
+      const data = response?.data || response?.items || response || [];
+      setTopUploaders(data);
+    } catch (err) {
+      setUploadersError(err.message || "Không thể tải top người tải lên.");
+    } finally {
+      setUploadersLoading(false);
+    }
+  }, [uploadersQuery]);
 
   // === INITIAL LOAD ===
   useEffect(() => {
@@ -161,6 +257,18 @@ export default function useReports() {
   useEffect(() => {
     loadSubscriptionStats();
   }, [loadSubscriptionStats]);
+
+  useEffect(() => {
+    loadHeaviestDocuments();
+  }, [loadHeaviestDocuments]);
+
+  useEffect(() => {
+    loadTopContributors();
+  }, [loadTopContributors]);
+
+  useEffect(() => {
+    loadTopUploaders();
+  }, [loadTopUploaders]);
 
   // === FILTER ACTIONS (Auto-apply) ===
   
@@ -184,6 +292,12 @@ export default function useReports() {
         setSavedRange(draftRange);
         setSavedLimit(draftLimit);
         setStatsRange(draftRange);
+        setHeaviestRange(draftRange);
+        setHeaviestLimit(draftLimit);
+        setContributorsRange(draftRange);
+        setContributorsLimit(draftLimit);
+        setUploadersRange(draftRange);
+        setUploadersLimit(draftLimit);
         break;
       case "upload":
         setUploadRange(draftRange);
@@ -199,6 +313,18 @@ export default function useReports() {
         break;
       case "stats":
         setStatsRange(draftRange);
+        break;
+      case "heaviest":
+        setHeaviestRange(draftRange);
+        setHeaviestLimit(draftLimit);
+        break;
+      case "contributors":
+        setContributorsRange(draftRange);
+        setContributorsLimit(draftLimit);
+        break;
+      case "uploaders":
+        setUploadersRange(draftRange);
+        setUploadersLimit(draftLimit);
         break;
       default:
         break;
@@ -222,10 +348,19 @@ export default function useReports() {
     if (selectedTarget === "all") {
       setDownloadedLimit(value);
       setSavedLimit(value);
+      setHeaviestLimit(value);
+      setContributorsLimit(value);
+      setUploadersLimit(value);
     } else if (selectedTarget === "downloaded") {
       setDownloadedLimit(value);
     } else if (selectedTarget === "saved") {
       setSavedLimit(value);
+    } else if (selectedTarget === "heaviest") {
+      setHeaviestLimit(value);
+    } else if (selectedTarget === "contributors") {
+      setContributorsLimit(value);
+    } else if (selectedTarget === "uploaders") {
+      setUploadersLimit(value);
     }
   }
 
@@ -234,6 +369,9 @@ export default function useReports() {
     loadTopDownloaded();
     loadTopSaved();
     loadSubscriptionStats();
+    loadHeaviestDocuments();
+    loadTopContributors();
+    loadTopUploaders();
   }
 
   // === HELPERS ===
@@ -258,12 +396,24 @@ export default function useReports() {
     subscriptionStats,
     subscriptionLoading,
     subscriptionError,
+    heaviestDocuments,
+    heaviestLoading,
+    heaviestError,
+    topContributors,
+    contributorsLoading,
+    contributorsError,
+    topUploaders,
+    uploadersLoading,
+    uploadersError,
 
     // === RANGES (for captions) ===
     uploadRange,
     downloadedRange,
     savedRange,
     statsRange,
+    heaviestRange,
+    contributorsRange,
+    uploadersRange,
 
     // === DRAFT STATE ===
     draftRange,

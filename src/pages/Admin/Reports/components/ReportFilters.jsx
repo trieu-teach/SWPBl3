@@ -30,6 +30,9 @@ const TARGET_OPTIONS = [
   { value: "downloaded", label: "Top tải" },
   { value: "saved", label: "Top lưu" },
   { value: "stats", label: "Phân bố gói" },
+  { value: "heaviest", label: "Tài liệu nặng" },
+  { value: "contributors", label: "Top đóng góp" },
+  { value: "uploaders", label: "Top tải lên" },
 ];
 
 export default function ReportFilters({ reports }) {

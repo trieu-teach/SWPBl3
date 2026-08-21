@@ -1,0 +1,625 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="AI Study Hub - Database Schema" id="ai-study-hub">
+    <mxGraphModel dx="4800" dy="3200" grid="1" gridSize="20" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="5500" pageHeight="4200" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- ========== LEGEND ========== -->
+        <mxCell id="legend" value="LEGEND" style="swimlane;fontStyle=1;align=center;verticalAlign=top;padding=14;fontSize=14;strokeWidth=1;horizontal=1;fillColor=#f5f5f5;strokeColor=#1a1a1a;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="3800" y="80" width="380" height="360" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg1" value="Multiplicity:" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontColor=#1a1a1a;fontSize=13;fontStyle=2;" vertex="1" parent="legend">
+          <mxGeometry y="60" width="380" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg2" value="  1     = exactly one" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontColor=#1a1a1a;fontSize=13;" vertex="1" parent="legend">
+          <mxGeometry y="92" width="380" height="24" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg2b" value="  *     = zero or many" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontColor=#1a1a1a;fontSize=13;" vertex="1" parent="legend">
+          <mxGeometry y="120" width="380" height="24" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg2c" value="  0..1  = zero or one" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontColor=#1a1a1a;fontSize=13;" vertex="1" parent="legend">
+          <mxGeometry y="148" width="380" height="24" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg_arrow" value="" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontColor=#1a1a1a;fontSize=10;" vertex="1" parent="legend">
+          <mxGeometry y="180" width="380" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg3" value="Relationships:" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontColor=#1a1a1a;fontSize=13;fontStyle=2;" vertex="1" parent="legend">
+          <mxGeometry y="200" width="380" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg3b" value="  A -----> B   Association" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontColor=#1a1a1a;fontSize=13;" vertex="1" parent="legend">
+          <mxGeometry y="232" width="380" height="24" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg4" value="  A ----◆----> B  Composition" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontColor=#1a1a1a;fontSize=13;" vertex="1" parent="legend">
+          <mxGeometry y="260" width="380" height="24" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg5" value="  A ----◇----> B  Aggregation" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontColor=#1a1a1a;fontSize=13;" vertex="1" parent="legend">
+          <mxGeometry y="288" width="380" height="24" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg6" value="  A -------&gt; B  Dependency (dashed)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontColor=#1a1a1a;fontSize=13;" vertex="1" parent="legend">
+          <mxGeometry y="316" width="380" height="24" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== Role ========== -->
+        <mxCell id="Role" value="Role" style="swimlane;fontStyle=1;align=center;verticalAlign=top;padding=14;fontSize=14;strokeWidth=1;horizontal=1;fillColor=#ffffff;strokeColor=#1a1a1a;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="80" y="120" width="280" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="Role_attrs" value="+ id: String (PK)&#10;+ name: RoleName (unique)&#10;+ createdAt: DateTime&#10;+ updatedAt: DateTime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=10;fontColor=#1a1a1a;fontSize=12;" vertex="1" parent="Role">
+          <mxGeometry y="50" width="280" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== User ========== -->
+        <mxCell id="User" value="User" style="swimlane;fontStyle=1;align=center;verticalAlign=top;padding=14;fontSize=14;strokeWidth=1;horizontal=1;fillColor=#ffffff;strokeColor=#1a1a1a;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="560" y="120" width="320" height="320" as="geometry"/>
+        </mxCell>
+        <mxCell id="User_attrs" value="+ id: String (PK)&#10;+ firebaseUid: String (unique)&#10;+ email: String (unique)&#10;+ fullName: String&#10;+ avatarUrl: String?&#10;+ authProvider: AuthProvider&#10;+ roleId: String (FK)&#10;+ status: UserStatus&#10;+ termsAcceptedAt: DateTime?&#10;+ lastLogin: DateTime?&#10;+ createdAt: DateTime&#10;+ updatedAt: DateTime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=10;fontColor=#1a1a1a;fontSize=12;" vertex="1" parent="User">
+          <mxGeometry y="50" width="320" height="270" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== SubscriptionPlanConfig ========== -->
+        <mxCell id="PlanConfig" value="SubscriptionPlanConfig" style="swimlane;fontStyle=1;align=center;verticalAlign=top;padding=14;fontSize=14;strokeWidth=1;horizontal=1;fillColor=#ffffff;strokeColor=#1a1a1a;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="120" width="320" height="260" as="geometry"/>
+        </mxCell>
+        <mxCell id="PlanConfig_attrs" value="+ id: String (PK)&#10;+ code: String (unique)&#10;+ name: String&#10;+ price: Int&#10;+ checkoutPrice: Int?&#10;+ durationDays: Int&#10;+ rank: Int (unique)&#10;+ storageLimitMb: Int&#10;+ uploadLimit: Int&#10;+ aiChatLimit: Int?&#10;+ isActive: Boolean&#10;+ createdAt: DateTime&#10;+ updatedAt: DateTime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=10;fontColor=#1a1a1a;fontSize=12;" vertex="1" parent="PlanConfig">
+          <mxGeometry y="50" width="320" height="210" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== PaymentOrder ========== -->
+        <mxCell id="PaymentOrder" value="PaymentOrder" style="swimlane;fontStyle=1;align=center;verticalAlign=top;padding=14;fontSize=14;strokeWidth=1;horizontal=1;fillColor=#ffffff;strokeColor=#1a1a1a;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="1660" y="120" width="320" height="280" as="geometry"/>
+        </mxCell>
+        <mxCell id="PaymentOrder_attrs" value="+ id: String (PK)&#10;+ invoiceNumber: String (unique)&#10;+ userId: String (FK)&#10;+ planId: String (FK)&#10;+ paymentMethod: PaymentMethod&#10;+ amount: Int&#10;+ currency: String = &quot;VND&quot;&#10;+ status: PaymentStatus&#10;+ sepayOrderId: String?&#10;+ paidAt: DateTime?&#10;+ expiresAt: DateTime&#10;+ createdAt: DateTime&#10;+ updatedAt: DateTime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=10;fontColor=#1a1a1a;fontSize=12;" vertex="1" parent="PaymentOrder">
+          <mxGeometry y="50" width="320" height="230" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== Subscription ========== -->
+        <mxCell id="Subscription" value="Subscription" style="swimlane;fontStyle=1;align=center;verticalAlign=top;padding=14;fontSize=14;strokeWidth=1;horizontal=1;fillColor=#ffffff;strokeColor=#1a1a1a;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="1660" y="560" width="320" height="260" as="geometry"/>
+        </mxCell>
+        <mxCell id="Subscription_attrs" value="+ id: String (PK)&#10;+ userId: String (FK, unique)&#10;+ planId: String (FK)&#10;+ paymentOrderId: String? (FK, unique)&#10;+ startsAt: DateTime&#10;+ expiresAt: DateTime?&#10;+ storageLimitMb: Int&#10;+ uploadLimit: Int&#10;+ aiChatLimit: Int?&#10;+ aiChatsUsed: Int&#10;+ createdAt: DateTime&#10;+ updatedAt: DateTime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=10;fontColor=#1a1a1a;fontSize=12;" vertex="1" parent="Subscription">
+          <mxGeometry y="50" width="320" height="210" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== Category ========== -->
+        <mxCell id="Category" value="Category" style="swimlane;fontStyle=1;align=center;verticalAlign=top;padding=14;fontSize=14;strokeWidth=1;horizontal=1;fillColor=#ffffff;strokeColor=#1a1a1a;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="80" y="900" width="280" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="Category_attrs" value="+ id: String (PK)&#10;+ ownerId: String? (FK)&#10;+ subjectId: String? (FK)&#10;+ name: String&#10;+ description: String?&#10;+ deletedAt: DateTime?&#10;+ createdAt: DateTime&#10;+ updatedAt: DateTime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=10;fontColor=#1a1a1a;fontSize=12;" vertex="1" parent="Category">
+          <mxGeometry y="50" width="280" height="150" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== Subject ========== -->
+        <mxCell id="Subject" value="Subject" style="swimlane;fontStyle=1;align=center;verticalAlign=top;padding=14;fontSize=14;strokeWidth=1;horizontal=1;fillColor=#ffffff;strokeColor=#1a1a1a;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="560" y="900" width="280" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="Subject_attrs" value="+ id: String (PK)&#10;+ ownerId: String? (FK)&#10;+ code: String&#10;+ name: String&#10;+ description: String?&#10;+ deletedAt: DateTime?&#10;+ createdAt: DateTime&#10;+ updatedAt: DateTime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=10;fontColor=#1a1a1a;fontSize=12;" vertex="1" parent="Subject">
+          <mxGeometry y="50" width="280" height="150" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== Document ========== -->
+        <mxCell id="Document" value="Document" style="swimlane;fontStyle=1;align=center;verticalAlign=top;padding=14;fontSize=14;strokeWidth=1;horizontal=1;fillColor=#ffffff;strokeColor=#1a1a1a;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="900" width="340" height="380" as="geometry"/>
+        </mxCell>
+        <mxCell id="Document_attrs" value="+ id: String (PK)&#10;+ ownerId: String (FK)&#10;+ subjectId: String (FK)&#10;+ categoryId: String (FK)&#10;+ title: String&#10;+ description: String?&#10;+ fileName: String&#10;+ fileType: String&#10;+ fileSize: BigInt&#10;+ storagePath: String&#10;+ fileUrl: String?&#10;+ visibility: DocumentVisibility&#10;+ status: DocumentStatus&#10;+ extractionStatus: ExtractionStatus&#10;+ moderationStatus: ModerationStatus&#10;+ downloadCount: Int&#10;+ saveCount: Int&#10;+ createdAt: DateTime&#10;+ updatedAt: DateTime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=10;fontColor=#1a1a1a;fontSize=12;" vertex="1" parent="Document">
+          <mxGeometry y="50" width="340" height="330" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== Tag ========== -->
+        <mxCell id="Tag" value="Tag" style="swimlane;fontStyle=1;align=center;verticalAlign=top;padding=14;fontSize=14;strokeWidth=1;horizontal=1;fillColor=#ffffff;strokeColor=#1a1a1a;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="1640" y="900" width="240" height="130" as="geometry"/>
+        </mxCell>
+        <mxCell id="Tag_attrs" value="+ id: String (PK)&#10;+ name: String (unique)&#10;+ createdAt: DateTime&#10;+ updatedAt: DateTime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=10;fontColor=#1a1a1a;fontSize=12;" vertex="1" parent="Tag">
+          <mxGeometry y="50" width="240" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== DocumentTag ========== -->
+        <mxCell id="DocumentTag" value="DocumentTag" style="swimlane;fontStyle=1;align=center;verticalAlign=top;padding=14;fontSize=14;strokeWidth=1;horizontal=1;fillColor=#ffffff;strokeColor=#1a1a1a;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="2000" y="900" width="260" height="130" as="geometry"/>
+        </mxCell>
+        <mxCell id="DocumentTag_attrs" value="+ documentId: String (FK, PK)&#10;+ tagId: String (FK, PK)&#10;+ createdAt: DateTime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=10;fontColor=#1a1a1a;fontSize=12;" vertex="1" parent="DocumentTag">
+          <mxGeometry y="50" width="260" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== DocumentContent ========== -->
+        <mxCell id="DocumentContent" value="DocumentContent" style="swimlane;fontStyle=1;align=center;verticalAlign=top;padding=14;fontSize=14;strokeWidth=1;horizontal=1;fillColor=#ffffff;strokeColor=#1a1a1a;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="2380" y="120" width="300" height="240" as="geometry"/>
+        </mxCell>
+        <mxCell id="DocumentContent_attrs" value="+ id: String (PK)&#10;+ documentId: String (FK, unique)&#10;+ extractedText: String?&#10;+ contentSummary: String?&#10;+ sourceType: SourceType&#10;+ extractionStatus: ExtractionStatus&#10;+ extractedAt: DateTime?&#10;+ jobId: String&#10;+ qualityStatus: ExtractionQuality&#10;+ createdAt: DateTime&#10;+ updatedAt: DateTime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=10;fontColor=#1a1a1a;fontSize=12;" vertex="1" parent="DocumentContent">
+          <mxGeometry y="50" width="300" height="190" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== DocumentChunk ========== -->
+        <mxCell id="DocumentChunk" value="DocumentChunk" style="swimlane;fontStyle=1;align=center;verticalAlign=top;padding=14;fontSize=14;strokeWidth=1;horizontal=1;fillColor=#ffffff;strokeColor=#1a1a1a;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="2380" y="440" width="280" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="DocumentChunk_attrs" value="+ id: String (PK)&#10;+ documentId: String (FK)&#10;+ chunkIndex: Int&#10;+ content: String&#10;+ embedding: Unsupported&#10;+ sourceLocator: Json?&#10;+ createdAt: DateTime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=10;fontColor=#1a1a1a;fontSize=12;" vertex="1" parent="DocumentChunk">
+          <mxGeometry y="50" width="280" height="130" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== DocumentReport ========== -->
+        <mxCell id="DocumentReport" value="DocumentReport" style="swimlane;fontStyle=1;align=center;verticalAlign=top;padding=14;fontSize=14;strokeWidth=1;horizontal=1;fillColor=#ffffff;strokeColor=#1a1a1a;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="2380" y="900" width="300" height="230" as="geometry"/>
+        </mxCell>
+        <mxCell id="DocumentReport_attrs" value="+ id: String (PK)&#10;+ documentId: String (FK)&#10;+ reporterId: String (FK)&#10;+ reason: String&#10;+ description: String?&#10;+ status: ReportStatus&#10;+ resolvedAt: DateTime?&#10;+ resolverId: String? (FK)&#10;+ createdAt: DateTime&#10;+ updatedAt: DateTime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=10;fontColor=#1a1a1a;fontSize=12;" vertex="1" parent="DocumentReport">
+          <mxGeometry y="50" width="300" height="180" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== SavedDocument ========== -->
+        <mxCell id="SavedDocument" value="SavedDocument" style="swimlane;fontStyle=1;align=center;verticalAlign=top;padding=14;fontSize=14;strokeWidth=1;horizontal=1;fillColor=#ffffff;strokeColor=#1a1a1a;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="2780" y="900" width="280" height="130" as="geometry"/>
+        </mxCell>
+        <mxCell id="SavedDocument_attrs" value="+ id: String (PK)&#10;+ userId: String (FK)&#10;+ documentId: String (FK)&#10;+ savedAt: DateTime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=10;fontColor=#1a1a1a;fontSize=12;" vertex="1" parent="SavedDocument">
+          <mxGeometry y="50" width="280" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== ChatSession ========== -->
+        <mxCell id="ChatSession" value="ChatSession" style="swimlane;fontStyle=1;align=center;verticalAlign=top;padding=14;fontSize=14;strokeWidth=1;horizontal=1;fillColor=#ffffff;strokeColor=#1a1a1a;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="80" y="1600" width="280" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="ChatSession_attrs" value="+ id: String (PK)&#10;+ userId: String (FK)&#10;+ documentId: String? (FK)&#10;+ mode: ChatMode&#10;+ title: String?&#10;+ createdAt: DateTime&#10;+ updatedAt: DateTime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=10;fontColor=#1a1a1a;fontSize=12;" vertex="1" parent="ChatSession">
+          <mxGeometry y="50" width="280" height="130" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== ChatMessage ========== -->
+        <mxCell id="ChatMessage" value="ChatMessage" style="swimlane;fontStyle=1;align=center;verticalAlign=top;padding=14;fontSize=14;strokeWidth=1;horizontal=1;fillColor=#ffffff;strokeColor=#1a1a1a;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="560" y="1600" width="320" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="ChatMessage_attrs" value="+ id: String (PK)&#10;+ chatSessionId: String (FK)&#10;+ sender: MessageSender&#10;+ content: String&#10;+ status: String?&#10;+ interruptionReason: String?&#10;+ createdAt: DateTime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=10;fontColor=#1a1a1a;fontSize=12;" vertex="1" parent="ChatMessage">
+          <mxGeometry y="50" width="320" height="130" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== ChatSource ========== -->
+        <mxCell id="ChatSource" value="ChatSource" style="swimlane;fontStyle=1;align=center;verticalAlign=top;padding=14;fontSize=14;strokeWidth=1;horizontal=1;fillColor=#ffffff;strokeColor=#1a1a1a;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="1600" width="320" height="190" as="geometry"/>
+        </mxCell>
+        <mxCell id="ChatSource_attrs" value="+ id: String (PK)&#10;+ chatMessageId: String (FK)&#10;+ documentId: String (FK)&#10;+ relevanceScore: Float?&#10;+ snippet: String?&#10;+ sourceLocator: Json?&#10;+ createdAt: DateTime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=10;fontColor=#1a1a1a;fontSize=12;" vertex="1" parent="ChatSource">
+          <mxGeometry y="50" width="320" height="140" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== DownloadLog ========== -->
+        <mxCell id="DownloadLog" value="DownloadLog" style="swimlane;fontStyle=1;align=center;verticalAlign=top;padding=14;fontSize=14;strokeWidth=1;horizontal=1;fillColor=#ffffff;strokeColor=#1a1a1a;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="1640" y="1600" width="280" height="130" as="geometry"/>
+        </mxCell>
+        <mxCell id="DownloadLog_attrs" value="+ id: String (PK)&#10;+ userId: String (FK)&#10;+ documentId: String (FK)&#10;+ downloadedAt: DateTime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=10;fontColor=#1a1a1a;fontSize=12;" vertex="1" parent="DownloadLog">
+          <mxGeometry y="50" width="280" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== AuditLog ========== -->
+        <mxCell id="AuditLog" value="AuditLog" style="swimlane;fontStyle=1;align=center;verticalAlign=top;padding=14;fontSize=14;strokeWidth=1;horizontal=1;fillColor=#ffffff;strokeColor=#1a1a1a;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="2000" y="1600" width="280" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="AuditLog_attrs" value="+ id: String (PK)&#10;+ userId: String? (FK)&#10;+ action: String&#10;+ targetType: String&#10;+ targetId: String?&#10;+ metadata: Json?&#10;+ createdAt: DateTime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=10;fontColor=#1a1a1a;fontSize=12;" vertex="1" parent="AuditLog">
+          <mxGeometry y="50" width="280" height="130" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== Notification ========== -->
+        <mxCell id="Notification" value="Notification" style="swimlane;fontStyle=1;align=center;verticalAlign=top;padding=14;fontSize=14;strokeWidth=1;horizontal=1;fillColor=#ffffff;strokeColor=#1a1a1a;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="2380" y="1600" width="300" height="220" as="geometry"/>
+        </mxCell>
+        <mxCell id="Notification_attrs" value="+ id: String (PK)&#10;+ userId: String (FK)&#10;+ type: NotificationType&#10;+ title: String&#10;+ body: String&#10;+ metadata: Json?&#10;+ referenceId: String?&#10;+ isRead: Boolean&#10;+ createdAt: DateTime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=10;fontColor=#1a1a1a;fontSize=12;" vertex="1" parent="Notification">
+          <mxGeometry y="50" width="300" height="170" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== UserSubscription ========== -->
+        <mxCell id="UserSubscription" value="UserSubscription" style="swimlane;fontStyle=1;align=center;verticalAlign=top;padding=14;fontSize=14;strokeWidth=1;horizontal=1;fillColor=#ffffff;strokeColor=#1a1a1a;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="2780" y="120" width="280" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="UserSubscription_attrs" value="+ id: String (PK)&#10;+ userId: String (FK)&#10;+ planId: String&#10;+ status: SubscriptionStatus&#10;+ startsAt: DateTime&#10;+ expiresAt: DateTime&#10;+ createdAt: DateTime&#10;+ updatedAt: DateTime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=10;fontColor=#1a1a1a;fontSize=12;" vertex="1" parent="UserSubscription">
+          <mxGeometry y="50" width="280" height="130" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== Payment ========== -->
+        <mxCell id="Payment" value="Payment" style="swimlane;fontStyle=1;align=center;verticalAlign=top;padding=14;fontSize=14;strokeWidth=1;horizontal=1;fillColor=#ffffff;strokeColor=#1a1a1a;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="2780" y="440" width="280" height="220" as="geometry"/>
+        </mxCell>
+        <mxCell id="Payment_attrs" value="+ id: String (PK)&#10;+ userId: String (FK)&#10;+ planId: String&#10;+ amount: Int&#10;+ status: PaymentStatus&#10;+ transactionCode: String (unique)&#10;+ paymentGateway: String?&#10;+ gatewayTransactionId: String?&#10;+ createdAt: DateTime&#10;+ updatedAt: DateTime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=10;fontColor=#1a1a1a;fontSize=12;" vertex="1" parent="Payment">
+          <mxGeometry y="50" width="280" height="170" as="geometry"/>
+        </mxCell>
+
+        <!-- ============================================================== -->
+        <!-- RELATIONSHIPS (with bend points for clarity)                   -->
+        <!-- ============================================================== -->
+
+        <!-- Role -> User -->
+        <mxCell id="rel_role_user" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.15;entryDx=0;entryDy=0;" edge="1" parent="1" source="Role" target="User">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel_role_user_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_role_user">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_role_user_lm" value="*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_role_user">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- User -> PaymentOrder -->
+        <mxCell id="rel_user_po" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.4;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" edge="1" parent="1" source="User" target="PaymentOrder">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel_user_po_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_po">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_user_po_lm" value="*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_po">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- User -> Subscription (Composition) -->
+        <mxCell id="rel_user_sub" style="endArrow=diamondThin;startSize=18;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;fillColor=#1a1a1a;exitX=1;exitY=0.85;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="User" target="Subscription">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel_user_sub_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_sub">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_user_sub_l1b" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_sub">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- PlanConfig -> PaymentOrder -->
+        <mxCell id="rel_plan_po" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.4;exitDx=0;exitDy=0;entryX=0;entryY=0.6;entryDx=0;entryDy=0;" edge="1" parent="1" source="PlanConfig" target="PaymentOrder">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel_plan_po_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_plan_po">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_plan_po_lm" value="*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_plan_po">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- PlanConfig -> Subscription -->
+        <mxCell id="rel_plan_sub" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="PlanConfig" target="Subscription">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel_plan_sub_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_plan_sub">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_plan_sub_lm" value="*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_plan_sub">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- PaymentOrder -> Subscription (Aggregation) -->
+        <mxCell id="rel_po_sub" style="endArrow=diamondThin;startSize=18;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="PaymentOrder" target="Subscription">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel_po_sub_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_po_sub">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_po_sub_l01" value="0..1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_po_sub">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="20" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- User -> Subject -->
+        <mxCell id="rel_user_subject" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.3;entryDx=0;entryDy=0;" edge="1" parent="1" source="User" target="Subject">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel_user_subject_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_subject">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_user_subject_lm" value="*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_subject">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- User -> Category -->
+        <mxCell id="rel_user_cat" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=0;exitY=0.85;exitDx=0;exitDy=0;entryX=1;entryY=0.3;entryDx=0;entryDy=0;" edge="1" parent="1" source="User" target="Category">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel_user_cat_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_cat">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_user_cat_lm" value="*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_cat">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- Subject -> Category -->
+        <mxCell id="rel_subject_cat" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Subject" target="Category">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel_subject_cat_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_subject_cat">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_subject_cat_l01" value="0..1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_subject_cat">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="20" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- Subject -> Document -->
+        <mxCell id="rel_subject_doc" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.6;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" edge="1" parent="1" source="Subject" target="Document">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel_subject_doc_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_subject_doc">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_subject_doc_lm" value="*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_subject_doc">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- Category -> Document -->
+        <mxCell id="rel_cat_doc" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.7;exitDx=0;exitDy=0;entryX=0;entryY=0.4;entryDx=0;entryDy=0;" edge="1" parent="1" source="Category" target="Document">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel_cat_doc_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_cat_doc">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_cat_doc_lm" value="*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_cat_doc">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- User -> Document -->
+        <mxCell id="rel_user_doc" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0.3;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="User" target="Document">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel_user_doc_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_doc">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_user_doc_lm" value="*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_doc">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- Document -> DocumentContent -->
+        <mxCell id="rel_doc_dc" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.2;exitDx=0;exitDy=0;entryX=0;entryY=0.2;entryDx=0;entryDy=0;" edge="1" parent="1" source="Document" target="DocumentContent">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2400" y="980"/>
+              <mxPoint x="2400" y="170"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_doc_dc_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_doc_dc">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_doc_dc_l1b" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_doc_dc">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- Document -> DocumentChunk -->
+        <mxCell id="rel_doc_dch" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.4;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" edge="1" parent="1" source="Document" target="DocumentChunk">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2400" y="1050"/>
+              <mxPoint x="2400" y="500"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_doc_dch_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_doc_dch">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_doc_dch_lm" value="*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_doc_dch">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- Document -> DocumentTag -->
+        <mxCell id="rel_doc_dt" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.6;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Document" target="DocumentTag">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel_doc_dt_l1" value="*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_doc_dt">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_doc_dt_l1b" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_doc_dt">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- Tag -> DocumentTag -->
+        <mxCell id="rel_tag_dt" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Tag" target="DocumentTag">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel_tag_dt_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_tag_dt">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_tag_dt_l1b" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_tag_dt">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- Document -> DocumentReport -->
+        <mxCell id="rel_doc_dr" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.8;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" edge="1" parent="1" source="Document" target="DocumentReport">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2400" y="1200"/>
+              <mxPoint x="2400" y="970"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_doc_dr_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_doc_dr">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_doc_dr_lm" value="*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_doc_dr">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- Document -> SavedDocument -->
+        <mxCell id="rel_doc_sd" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.9;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Document" target="SavedDocument">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel_doc_sd_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_doc_sd">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_doc_sd_lm" value="*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_doc_sd">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- User -> SavedDocument -->
+        <mxCell id="rel_user_sd" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="User" target="SavedDocument">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="3120" y="470"/>
+              <mxPoint x="3120" y="970"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_user_sd_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_sd">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_user_sd_lm" value="*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_sd">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- User -> ChatSession -->
+        <mxCell id="rel_user_cs" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.3;entryDx=0;entryDy=0;" edge="1" parent="1" source="User" target="ChatSession">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="480" y="470"/>
+              <mxPoint x="480" y="1660"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_user_cs_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_cs">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_user_cs_lm" value="*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_cs">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- Document -> ChatSession -->
+        <mxCell id="rel_doc_cs" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Document" target="ChatSession">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="960" y="1300"/>
+              <mxPoint x="960" y="1660"/>
+              <mxPoint x="380" y="1660"/>
+              <mxPoint x="380" y="1660"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_doc_cs_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_doc_cs">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_doc_cs_l0m" value="0..*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_doc_cs">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="20" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- ChatSession -> ChatMessage -->
+        <mxCell id="rel_cs_cm" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="ChatSession" target="ChatMessage">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel_cs_cm_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_cs_cm">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_cs_cm_lm" value="*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_cs_cm">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- ChatMessage -> ChatSource -->
+        <mxCell id="rel_cm_csrc" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="ChatMessage" target="ChatSource">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel_cm_csrc_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_cm_csrc">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_cm_csrc_lm" value="*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_cm_csrc">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- Document -> ChatSource -->
+        <mxCell id="rel_doc_csrc" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=0.7;exitY=1;exitDx=0;exitDy=0;entryX=0.3;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="Document" target="ChatSource">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1300" y="1320"/>
+              <mxPoint x="1240" y="1320"/>
+              <mxPoint x="1240" y="1610"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_doc_csrc_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_doc_csrc">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_doc_csrc_lm" value="*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_doc_csrc">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- User -> DownloadLog -->
+        <mxCell id="rel_user_dl" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="User" target="DownloadLog">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1800" y="470"/>
+              <mxPoint x="1800" y="1660"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_user_dl_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_dl">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_user_dl_lm" value="*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_dl">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- Document -> DownloadLog -->
+        <mxCell id="rel_doc_dl" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=0.6;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="Document" target="DownloadLog">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1240" y="1320"/>
+              <mxPoint x="1780" y="1320"/>
+              <mxPoint x="1780" y="1610"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_doc_dl_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_doc_dl">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_doc_dl_lm" value="*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_doc_dl">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- User -> AuditLog (dashed - optional) -->
+        <mxCell id="rel_user_al" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;dashed=1;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="User" target="AuditLog">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2160" y="470"/>
+              <mxPoint x="2160" y="1660"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_user_al_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_al">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_user_al_l0m" value="0..*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_al">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="20" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- User -> Notification -->
+        <mxCell id="rel_user_n" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="User" target="Notification">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2540" y="470"/>
+              <mxPoint x="2540" y="1660"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_user_n_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_n">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_user_n_lm" value="*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_n">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- User -> UserSubscription -->
+        <mxCell id="rel_user_usub" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="User" target="UserSubscription">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2920" y="280"/>
+              <mxPoint x="2920" y="210"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_user_usub_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_usub">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_user_usub_lm" value="*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_usub">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- User -> Payment -->
+        <mxCell id="rel_user_pay" style="endArrow=open;startSize=14;endSize=14;html=1;rounded=0;strokeWidth=1;strokeColor=#1a1a1a;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.6;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="User" target="Payment">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2920" y="320"/>
+              <mxPoint x="2920" y="550"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_user_pay_l1" value="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_pay">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel_user_pay_lm" value="*" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1a1a1a;fontSize=12;fontStyle=1;" vertex="1" connectable="0" parent="rel_user_pay">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="15" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -92,14 +92,14 @@ export default function useSubscription() {
     let stopped = false;
     let pollTimer;
 
-    const finishPayment = async (payment) => {
+      const finishPayment = async (payment) => {
       if (["PAID", "SUCCESS"].includes(payment.status)) {
-        setCheckout(null);
+        // Keep checkout open to show success UI in dialog
+        setCheckout((current) =>
+          current ? { ...current, status: payment.status } : current,
+        );
         setProcessingPlanCode("");
-        setNotification({
-          type: "success",
-          message: "Thanh toán thành công! Gói cước của bạn đã được kích hoạt.",
-        });
+        // Reload subscription data
         await loadMySubscription();
         return true;
       }
@@ -175,6 +175,13 @@ export default function useSubscription() {
     setProcessingPlanCode("");
   }, [checkout?.status]);
 
+  // For creating a new payment after terminal states (EXPIRED, CANCELLED, etc.)
+  const resetPayment = useCallback(() => {
+    setCheckout(null);
+    setProcessingPlanCode("");
+    setRemainingSeconds(0);
+  }, []);
+
   const clearNotification = useCallback(() => setNotification(null), []);
   const totalPages = Math.ceil(plans.length / PAGE_SIZE);
   const paginatedPlans = useMemo(
@@ -238,6 +245,7 @@ export default function useSubscription() {
     purchasePlan,
     cancelPayment,
     dismissPayment,
+    resetPayment,
     clearNotification,
     loadMySubscription,
     currentPlanRank,
