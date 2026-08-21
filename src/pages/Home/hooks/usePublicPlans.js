@@ -20,7 +20,6 @@ function toPricingPlan(plan) {
     highlight: false,
     features: [
       formatStorage(plan.storageLimitMb),
-      `${plan.uploadLimit.toLocaleString("vi-VN")} lượt tải lên`,
       plan.aiChatLimit === null
         ? "Câu hỏi AI không giới hạn"
         : `${plan.aiChatLimit.toLocaleString("vi-VN")} câu hỏi AI`,
