@@ -18,56 +18,97 @@ export default function Subscription() {
 
   return (
     <UserLayout>
-      <SubscriptionHeader />
-      <SubscriptionUsageCard subscription={subscription.mySubscription} />
+      <Box
+        sx={{
+          maxWidth: 1200,
+          mx: "auto",
+          px: { xs: 2, md: 3 },
+          py: { xs: 3, md: 4 },
+        }}
+      >
+        <SubscriptionHeader />
+        <SubscriptionUsageCard subscription={subscription.mySubscription} />
 
-      {subscription.notification && (
-        <Alert
-          severity={subscription.notification.type}
-          onClose={subscription.clearNotification}
-          sx={{ mb: 3 }}
-        >
-          {subscription.notification.message}
-        </Alert>
-      )}
+        {subscription.notification && (
+          <Alert
+            severity={subscription.notification.type}
+            onClose={subscription.clearNotification}
+            sx={{
+              mb: 3,
+              borderRadius: "12px",
+              "& .MuiAlert-icon": { alignItems: "center" },
+            }}
+          >
+            {subscription.notification.message}
+          </Alert>
+        )}
 
-      {subscription.error && (
-        <Alert
-          severity="error"
-          action={
-            <Button color="inherit" onClick={subscription.loadPlans}>
-              Thử lại
-            </Button>
-          }
-          sx={{ mb: 3 }}
-        >
-          {subscription.error}
-        </Alert>
-      )}
+        {subscription.error && (
+          <Alert
+            severity="error"
+            action={
+              <Button color="inherit" onClick={subscription.loadPlans}>
+                Thử lại
+              </Button>
+            }
+            sx={{
+              mb: 3,
+              borderRadius: "12px",
+            }}
+          >
+            {subscription.error}
+          </Alert>
+        )}
 
-      {subscription.loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <>
-          <Typography fontWeight={700} sx={{ mb: 2 }}>
-            {subscription.allPlans.length} gói dịch vụ
-          </Typography>
-          <SubscriptionGrid subscription={subscription} />
-
-          {subscription.totalPages > 1 && (
-            <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-              <Pagination
-                page={subscription.page}
-                count={subscription.totalPages}
-                color="primary"
-                onChange={(_event, value) => subscription.setPage(value)}
+        {subscription.loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                mb: 3,
+                mt: 4,
+              }}
+            >
+              <Typography
+                fontWeight={700}
+                sx={{ fontSize: { xs: "1rem", md: "1.1rem" } }}
+              >
+                {subscription.allPlans.length} gói dịch vụ
+              </Typography>
+              <Box
+                sx={{
+                  flex: 1,
+                  height: 1,
+                  bgcolor: "var(--border-color)",
+                }}
               />
             </Box>
-          )}
-        </>
-      )}
+            <SubscriptionGrid subscription={subscription} />
+
+            {subscription.totalPages > 1 && (
+              <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+                <Pagination
+                  page={subscription.page}
+                  count={subscription.totalPages}
+                  color="primary"
+                  onChange={(_event, value) => subscription.setPage(value)}
+                  sx={{
+                    "& .MuiPaginationItem-root": {
+                      borderRadius: "8px",
+                    },
+                  }}
+                />
+              </Box>
+            )}
+          </>
+        )}
+      </Box>
 
       <PaymentDialog
         payment={subscription.checkout}
@@ -75,6 +116,7 @@ export default function Subscription() {
         cancelling={subscription.cancellingPayment}
         onCancel={subscription.cancelPayment}
         onDismiss={subscription.dismissPayment}
+        onCreateNew={subscription.resetPayment}
       />
     </UserLayout>
   );
