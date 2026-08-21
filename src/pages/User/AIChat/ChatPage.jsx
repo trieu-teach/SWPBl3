@@ -19,7 +19,6 @@ import {
   CHAT_MODE_LIBRARY,
   createLibraryContext,
 } from "./chatContext.js";
-import { getMySubscription } from "../../../api/subscription.api.js";
 
 const LIBRARY_BASE_PATH = "/ai-chat";
 const LIBRARY_PRESELECTION_KEY = "libraryDocumentPreselection";
@@ -270,7 +269,7 @@ function LibraryChatRuntime({ preselectedDocument }) {
 
   const handleConversationCompleted = useCallback(() => {
     void refreshSessions();
-    void getMySubscription().catch(() => null);
+    window.dispatchEvent(new Event("subscription:refresh"));
   }, [refreshSessions]);
 
   const conversationEnabled =
