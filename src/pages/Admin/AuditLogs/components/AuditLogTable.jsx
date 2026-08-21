@@ -264,7 +264,7 @@ export default function AuditLogTable({ audit }) {
             py: 1.5,
             borderBottom: "2px solid",
             borderColor: "divider",
-            bgcolor: "#fafafa",
+            bgcolor: "action.hover",
           }}
         >
           <Box sx={{ gridColumn: 1 }}>

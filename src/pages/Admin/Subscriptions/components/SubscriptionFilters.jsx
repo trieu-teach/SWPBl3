@@ -13,7 +13,7 @@ import {
 
 export default function SubscriptionFilters({ admin }) {
   const paidPlans =
-    admin.stats.plans?.filter((plan) => plan.code !== "FREE") || [];
+    admin.plans?.filter((plan) => plan.code !== "FREE") || [];
 
   return (
     <Card variant="outlined" sx={{ borderRadius: 3, mb: 2 }}>
