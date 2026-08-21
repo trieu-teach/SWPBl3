@@ -3,7 +3,6 @@ import { useEffect, useRef, useLayoutEffect } from "react";
 import ChatMessage from "./ChatMessage.jsx";
 import ChatEmptyState from "./ChatEmptyState.jsx";
 import ChatHistoryLoader from "./ChatHistoryLoader.jsx";
-import { isLibraryContext } from "../chatContext.js";
 
 function isNearBottom(element) {
   const distanceFromBottom =
@@ -25,7 +24,6 @@ export default function ChatMessageList({
 }) {
   const listRef = useRef(null);
   const shouldStickToBottomRef = useRef(true);
-  const inLibraryMode = isLibraryContext(chatContext);
   
   // Track previous scrollHeight for scroll preservation when prepending
   const prevScrollHeightRef = useRef(0);
@@ -92,14 +90,10 @@ export default function ChatMessageList({
           overscrollBehaviorY: "contain",
           p: { xs: 2, sm: 3 },
           display: "flex",
-          flexDirection: "column",
+          flexDirection: "column"
         }}
       >
-        <ChatEmptyState
-          chatContext={chatContext}
-          onSend={onSend}
-          isSending={isSending}
-        />
+        <ChatEmptyState chatContext={chatContext} />
       </Box>
     );
   }
@@ -123,15 +117,7 @@ export default function ChatMessageList({
         onLoad={onLoadOlderMessages}
       />
       
-      <Stack
-        spacing={2.25}
-        sx={{
-          width: "100%",
-          maxWidth: inLibraryMode ? 880 : 980,
-          minWidth: 0,
-          mx: "auto",
-        }}
-      >
+      <Stack spacing={2.25} sx={{ width: "100%", maxWidth: 980, minWidth: 0, mx: "auto" }}>
         {messages.map((message) => (
           <ChatMessage
             key={message.id}

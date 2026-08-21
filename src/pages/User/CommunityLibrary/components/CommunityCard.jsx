@@ -27,11 +27,9 @@ import {
   getFileTypeColors,
   normalizeTags,
 } from "../../DocumentLibrary/utils/document-formatters.js";
-import { canReportDocument } from "../../../../lib/moderation.js";
 
 export default function CommunityCard({
   document,
-  reported,
   actionId,
   onPreview,
   onDownload,
@@ -40,7 +38,6 @@ export default function CommunityCard({
 }) {
   const tags = normalizeTags(document.tags);
   const fileColors = getFileTypeColors(document);
-  const reportEligible = canReportDocument(document) && !reported;
   return (
     <Card
       variant="outlined"
@@ -174,18 +171,15 @@ export default function CommunityCard({
             >
               {document.saved ? "Bỏ lưu" : "Lưu"}
             </Button>
-            {(reportEligible || reported) && (
-              <Button
-                size="small"
-                color="error"
-                startIcon={<ReportProblemOutlined />}
-                onClick={() => onReport(document)}
-                disabled={reported}
-                sx={{ ml: "auto" }}
-              >
-                {reported ? "Đã báo cáo" : "Báo cáo"}
-              </Button>
-            )}
+            <Button
+              size="small"
+              color="error"
+              startIcon={<ReportProblemOutlined />}
+              onClick={() => onReport(document)}
+              sx={{ ml: "auto" }}
+            >
+              Báo cáo
+            </Button>
           </>
         )}
       </CardActions>

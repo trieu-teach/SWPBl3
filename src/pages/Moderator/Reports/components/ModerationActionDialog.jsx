@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Alert,
   Button,
@@ -5,31 +6,30 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  TextField,
   Typography,
 } from "@mui/material";
 
 const ACTION_COPY = {
   hide: {
-    title: "Xử lý và ẩn tài liệu",
-    consequence:
-      "Báo cáo sẽ được xử lý và tài liệu sẽ không còn khả dụng theo cách thông thường.",
-    color: "warning",
+    title: "Ẩn tài liệu",
+    consequence: "Tài liệu sẽ bị ẩn khỏi cộng đồng. Báo cáo vẫn cần được xử lý riêng.",
+    color: "error",
+  },
+  unhide: {
+    title: "Khôi phục tài liệu",
+    consequence: "Tài liệu sẽ hoạt động trở lại theo trạng thái công khai hiện tại.",
+    color: "success",
   },
   resolve: {
-    title: "Xử lý báo cáo",
-    consequence: "Báo cáo sẽ được đóng mà không thay đổi trạng thái tài liệu.",
+    title: "Đánh dấu đã xử lý",
+    consequence: "Báo cáo sẽ được đóng. Trạng thái tài liệu không tự động thay đổi.",
     color: "success",
   },
   dismiss: {
     title: "Bỏ qua báo cáo",
     consequence: "Báo cáo sẽ được đóng mà không thay đổi trạng thái tài liệu.",
-    color: "primary",
-  },
-  delete: {
-    title: "Xử lý và xóa tài liệu",
-    consequence:
-      "Tài liệu sẽ bị đánh dấu đã xóa. Hành động này xử lý báo cáo và thay đổi trạng thái tài liệu.",
-    color: "error",
+    color: "warning",
   },
 };
 
@@ -39,9 +39,11 @@ export default function ModerationActionDialog({
   onClose,
   onConfirm,
 }) {
+  const [reason, setReason] = useState("");
+  useEffect(() => setReason(""), [action]);
   if (!action) return null;
   const copy = ACTION_COPY[action.type];
-  if (!copy) return null;
+  const acceptsReason = action.type === "hide" || action.type === "unhide";
 
   return (
     <Dialog open onClose={loading ? undefined : onClose} fullWidth maxWidth="xs">
@@ -50,17 +52,20 @@ export default function ModerationActionDialog({
         <Typography sx={{ mb: 2 }}>
           Xác nhận thao tác với <strong>{action.documentTitle}</strong>?
         </Typography>
-        <Alert
-          severity={
-            action.type === "delete"
-              ? "error"
-              : action.type === "hide"
-                ? "warning"
-                : "info"
-          }
-        >
+        <Alert severity={action.type === "hide" ? "warning" : "info"} sx={{ mb: 2 }}>
           {copy.consequence}
         </Alert>
+        {acceptsReason && (
+          <TextField
+            fullWidth
+            multiline
+            minRows={3}
+            label="Lý do (không bắt buộc)"
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+            disabled={loading}
+          />
+        )}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={loading}>
@@ -69,7 +74,7 @@ export default function ModerationActionDialog({
         <Button
           variant="contained"
           color={copy.color}
-          onClick={onConfirm}
+          onClick={() => onConfirm(reason.trim())}
           disabled={loading}
         >
           {loading ? "Đang cập nhật..." : "Xác nhận"}

@@ -15,12 +15,9 @@ export function getModerationReports(params = {}) {
   return apiRequest(withQuery("/admin/reports", params));
 }
 
-export function resolveModerationReport(
-  id,
-  { status, action = "NONE" },
-) {
+export function resolveModerationReport(id, status) {
   return apiRequest(`/admin/reports/${id}/resolve`, {
     method: "PATCH",
-    body: { status, action },
+    body: { status, action: "NONE" },
   });
 }

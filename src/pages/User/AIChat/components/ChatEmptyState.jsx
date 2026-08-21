@@ -1,4 +1,4 @@
-import { Box, ButtonBase, Chip, Stack, Typography } from "@mui/material";
+import { Box, Chip, Stack, Typography } from "@mui/material";
 import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
 import { isLibraryContext } from "../chatContext.js";
 
@@ -9,24 +9,19 @@ const DOC_SUGGESTIONS = [
 ];
 
 const LIBRARY_SUGGESTIONS = [
-  "Tóm tắt tài liệu học tập của tôi",
-  "Giải thích một khái niệm khó",
-  "Tạo câu hỏi luyện tập",
-  "Gợi ý lộ trình ôn tập",
+  "Tóm tắt các tài liệu gần đây",
+  "Tìm các khái niệm chính",
+  "Gợi ý lộ trình học tập",
 ];
 
-export default function ChatEmptyState({
-  chatContext,
-  onSend,
-  isSending = false,
-}) {
+export default function ChatEmptyState({ chatContext }) {
   const isLibrary = isLibraryContext(chatContext);
-  const title = isLibrary
-    ? "Hôm nay mình có thể giúp bạn học gì?"
-    : "Bắt đầu hỏi AI";
+  
+  const title = isLibrary ? "Thư viện của bạn" : "Bắt đầu hỏi AI";
   const description = isLibrary
-    ? "Đặt câu hỏi, khám phá tài liệu hoặc cùng AI làm rõ những khái niệm khó."
+    ? "Hỏi AI về các tài liệu trong thư viện của bạn."
     : "Nhập câu hỏi để nhận gợi ý học tập, tóm tắt nội dung hoặc giải thích khái niệm theo cách dễ hiểu hơn.";
+  
   const suggestions = isLibrary ? LIBRARY_SUGGESTIONS : DOC_SUGGESTIONS;
 
   return (
@@ -37,12 +32,12 @@ export default function ChatEmptyState({
         justifyContent: "center",
         height: "100%",
         width: "100%",
-        pt: isLibrary ? { xs: 3, sm: 4 } : { xs: 4, sm: 6 },
-        pb: isLibrary ? { xs: 7, sm: 10 } : { xs: 4, sm: 6 },
+        py: { xs: 4, sm: 6 },
         px: 2,
       }}
     >
       <Stack
+        alignItems="center"
         sx={{
           maxWidth: 760,
           width: "100%",
@@ -52,42 +47,23 @@ export default function ChatEmptyState({
       >
         <Box
           sx={{
-            width: isLibrary ? 52 : 44,
-            height: isLibrary ? 52 : 44,
+            width: 44,
+            height: 44,
             display: "grid",
             placeItems: "center",
             mx: "auto",
-            mb: isLibrary ? 2 : 1.5,
-            borderRadius: 2.5,
-            bgcolor: "action.selected",
+            mb: 1.5,
+            borderRadius: 2,
+            bgcolor: "action.hover",
             color: "primary.main",
           }}
         >
-          <AutoAwesomeOutlined sx={{ fontSize: isLibrary ? 25 : 22 }} />
+          <AutoAwesomeOutlined sx={{ fontSize: 22 }} />
         </Box>
-
-        <Typography
-          component="h1"
-          variant="h5"
-          sx={{
-            fontWeight: 800,
-            fontSize: isLibrary ? { xs: "1.35rem", sm: "1.65rem" } : undefined,
-            letterSpacing: "-0.02em",
-            mb: 1,
-          }}
-        >
+        <Typography variant="h6" sx={{ fontWeight: 800, mb: 0.75 }}>
           {title}
         </Typography>
-        <Typography
-          color="text.secondary"
-          sx={{
-            maxWidth: isLibrary ? 560 : 520,
-            mx: "auto",
-            mb: isLibrary ? 3 : 2.5,
-            fontSize: isLibrary ? "0.94rem" : "0.9rem",
-            lineHeight: 1.65,
-          }}
-        >
+        <Typography color="text.secondary" sx={{ maxWidth: 520, mx: "auto", mb: 2.5, fontSize: "0.9rem" }}>
           {description}
         </Typography>
 

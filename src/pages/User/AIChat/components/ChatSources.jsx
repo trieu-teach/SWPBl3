@@ -14,11 +14,11 @@ function SourceItem({ source, index, onSourceSelect }) {
       type={isSelectable ? "button" : undefined}
       direction="row"
       spacing={1}
+      alignItems="flex-start"
       onClick={
         isSelectable ? () => onSourceSelect(source) : undefined
       }
       sx={{
-        alignItems: "flex-start",
         px: 1,
         py: 0.85,
         borderRadius: 1.5,
@@ -96,8 +96,9 @@ export default function ChatSources({ sources = [], onSourceSelect }) {
     <Box sx={{ mt: 1.4, pt: 1.25, borderTop: "1px solid", borderColor: "divider" }}>
       <Stack
         direction="row"
+        alignItems="center"
         spacing={0.75}
-        sx={{ mb: 0.75, alignItems: "center" }}
+        sx={{ mb: 0.75 }}
       >
         <Typography
           variant="caption"
