@@ -266,7 +266,11 @@ export default function App() {
                     />
                     <Route
                       path="/goi-dich-vu"
-                      element={<PaymentCallback />}
+                      element={
+                        <RequireAuth>
+                          <PaymentCallback />
+                        </RequireAuth>
+                      }
                     />
                     <Route
                       path="/admin/dashboard"

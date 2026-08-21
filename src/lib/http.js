@@ -20,6 +20,25 @@ export class ApiError extends Error {
   }
 }
 
+function getQuotaErrorMessage(code, details, rawMessage = "") {
+  if (
+    code === "STORAGE_LIMIT_EXCEEDED" ||
+    rawMessage.toLowerCase().includes("storage limit exceeded")
+  ) {
+    const parsedLimit = rawMessage.match(/allows\s+(\d+)\s+MB/i)?.[1];
+    const limit = details?.storageLimitMb ?? parsedLimit;
+    const suffix = Number.isFinite(Number(limit)) ? ` (${limit} MB)` : "";
+    return `Dung lượng lưu trữ đã đầy${suffix}. Vui lòng nâng cấp gói hoặc xóa bớt tài liệu cũ.`;
+  }
+  if (
+    code === "AI_CREDIT_LIMIT_EXCEEDED" ||
+    rawMessage.toLowerCase().includes("ai credit limit exceeded")
+  ) {
+    return "Bạn đã dùng hết hạn mức AI Credits. Hãy nâng cấp lên gói Pro hoặc Gold để tiếp tục sử dụng AI.";
+  }
+  return "";
+}
+
 export function getStoredAuthToken() {
   try {
     return localStorage.getItem("auth_token") || "";
@@ -102,16 +121,20 @@ apiClient.interceptors.response.use(
       clearStoredAuthToken();
       notifyUnauthorized();
     }
-    const message =
+    const code = error.response?.data?.error?.code;
+    const details = error.response?.data?.error?.details;
+    const rawMessage =
       error.response?.data?.error?.message ||
       error.response?.data?.message ||
       error.message ||
       "Request failed";
+    const message =
+      getQuotaErrorMessage(code, details, rawMessage) || rawMessage;
     throw new ApiError(
       message,
       error.response?.status || 0,
-      error.response?.data?.error?.code,
-      error.response?.data?.error?.details,
+      code,
+      details,
     );
   },
 );

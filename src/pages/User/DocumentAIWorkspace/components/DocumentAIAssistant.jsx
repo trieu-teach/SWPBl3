@@ -18,6 +18,7 @@ import {
   CHAT_MODE_DOCUMENT,
   createDocumentContext,
 } from "../../AIChat/chatContext.js";
+import { getMySubscription } from "../../../../api/subscription.api.js";
 import { useChatConversation } from "../../AIChat/hooks/useChatConversation.js";
 import { useRouteChatSession } from "../../AIChat/hooks/useRouteChatSession.js";
 import { useSessions } from "../../AIChat/hooks/useSessions.js";
@@ -105,6 +106,7 @@ export default function DocumentAIAssistant({
 
   const handleConversationCompleted = useCallback(() => {
     void refreshSessions();
+    void getMySubscription().catch(() => null);
   }, [refreshSessions]);
 
   const {

@@ -484,6 +484,7 @@ export function useChatConversation({
             sessionId: confirmedSessionId,
             messageId: confirmedMessageId,
             answerStatus: data.answerStatus,
+            usage: data.usage ?? null,
             isNewSession: !knownSessionId,
             context: cloneContextSnapshot(contextSnapshot),
           });
