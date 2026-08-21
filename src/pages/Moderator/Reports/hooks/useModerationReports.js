@@ -2,21 +2,22 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getAdminDocument,
   getAdminDocumentPreview,
-  setAdminDocumentHidden,
 } from "../../../../api/admin-documents.api.js";
 import {
   getModerationReports,
   resolveModerationReport,
 } from "../../../../api/moderation.api.js";
 import { useToast } from "../../../../components/Toast/ToastProvider.jsx";
+import {
+  getModerationRequestError,
+  normalizeModerationMeta,
+} from "../../../../lib/moderation.js";
 
-const EMPTY_META = {
-  page: 1,
-  limit: 20,
-  totalItems: 0,
-  totalPages: 0,
-  hasNext: false,
-  hasPrevious: false,
+const ACTION_PAYLOADS = {
+  dismiss: { status: "DISMISSED", action: "NONE" },
+  resolve: { status: "RESOLVED", action: "NONE" },
+  hide: { status: "RESOLVED", action: "HIDE_DOCUMENT" },
+  delete: { status: "RESOLVED", action: "DELETE_DOCUMENT" },
 };
 
 const OFFICE_EXTENSIONS = ["doc", "docx", "xls", "xlsx", "ppt", "pptx"];
@@ -26,7 +27,7 @@ export default function useModerationReports() {
   const [reports, setReports] = useState([]);
   const [status, setStatus] = useState("PENDING");
   const [page, setPage] = useState(1);
-  const [meta, setMeta] = useState(EMPTY_META);
+  const [meta, setMeta] = useState(() => normalizeModerationMeta());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedReport, setSelectedReport] = useState(null);
@@ -51,18 +52,34 @@ export default function useModerationReports() {
     try {
       const response = await getModerationReports(query);
       if (generation !== listGeneration.current) return;
-      setReports(response?.items || response?.data || []);
-      setMeta(response?.meta || EMPTY_META);
+      const nextReports = response?.items || response?.data || [];
+      const nextMeta = normalizeModerationMeta(response?.meta, {
+        page,
+        limit: 20,
+      });
+      setReports(nextReports);
+      setMeta(nextMeta);
+      if (page > 1 && nextReports.length === 0 && page > nextMeta.totalPages) {
+        setPage(Math.max(1, nextMeta.totalPages));
+      }
     } catch (requestError) {
       if (generation !== listGeneration.current) return;
-      setError(requestError.message || "Không thể tải hàng đợi báo cáo.");
+      setError(
+        getModerationRequestError(
+          requestError,
+          "Không thể tải hàng đợi báo cáo.",
+        ),
+      );
     } finally {
       if (generation === listGeneration.current) setLoading(false);
     }
-  }, [query]);
+  }, [page, query]);
 
   useEffect(() => {
     loadReports();
+    return () => {
+      listGeneration.current += 1;
+    };
   }, [loadReports]);
 
   async function loadSelectedDocument(report) {
@@ -89,7 +106,13 @@ export default function useModerationReports() {
       setDocument(response);
     } catch (requestError) {
       if (generation !== detailGeneration.current) return;
-      setDetailError(requestError.message || "Không thể tải chi tiết tài liệu.");
+      setDetailError(
+        getModerationRequestError(
+          requestError,
+          "Không thể tải chi tiết tài liệu.",
+          "Tài liệu không còn tồn tại hoặc không còn khả dụng.",
+        ),
+      );
     } finally {
       if (generation === detailGeneration.current) setDetailLoading(false);
     }
@@ -103,17 +126,22 @@ export default function useModerationReports() {
     loadSelectedDocument(report);
   }
 
-  function closeReport() {
-    if (acting) return;
+  function clearReportState() {
     detailGeneration.current += 1;
     previewGeneration.current += 1;
     selectedDocumentId.current = "";
+    setAction(null);
     setSelectedReport(null);
     setDocument(null);
     setDetailError("");
     setDetailLoading(false);
     setPreview(null);
     setPreviewLoading(false);
+  }
+
+  function closeReport() {
+    if (acting) return;
+    clearReportState();
   }
 
   async function openPreview() {
@@ -143,7 +171,13 @@ export default function useModerationReports() {
       });
     } catch (requestError) {
       if (generation === previewGeneration.current) {
-        toast.error(requestError.message || "Không thể xem trước tài liệu.");
+        toast.error(
+          getModerationRequestError(
+            requestError,
+            "Không thể xem trước tài liệu.",
+            "Tài liệu không còn tồn tại hoặc không còn khả dụng.",
+          ),
+        );
       }
     } finally {
       if (generation === previewGeneration.current) setPreviewLoading(false);
@@ -156,52 +190,42 @@ export default function useModerationReports() {
     closeReport();
   }
 
-  async function confirmAction(reason) {
+  async function confirmAction() {
     if (!action || !selectedReport) return;
+    const payload = ACTION_PAYLOADS[action.type];
+    if (!payload) return;
     setActing(true);
     try {
-      if (action.type === "hide" || action.type === "unhide") {
-        const hidden = action.type === "hide";
-        const result = await setAdminDocumentHidden(
-          selectedDocumentId.current,
-          hidden,
-          reason,
-        );
-        setDocument((current) =>
-          current ? { ...current, status: result.status } : current,
-        );
-        setSelectedReport((current) =>
-          current
-            ? {
-                ...current,
-                document: { ...current.document, status: result.status },
-              }
-            : current,
-        );
-        toast.success(hidden ? "Đã ẩn tài liệu." : "Đã khôi phục tài liệu.");
-        setAction(null);
-        await loadReports();
-        return;
-      }
-
-      const nextStatus = action.type === "dismiss" ? "DISMISSED" : "RESOLVED";
-      await resolveModerationReport(selectedReport.id, nextStatus);
+      const result = await resolveModerationReport(selectedReport.id, payload);
+      const successMessages = {
+        DISMISSED: "Đã bỏ qua báo cáo.",
+        NONE: "Đã xử lý báo cáo mà không thay đổi tài liệu.",
+        HIDE_DOCUMENT: `Đã xử lý báo cáo và chuyển tài liệu sang trạng thái ${result.documentStatus || "HIDDEN"}.`,
+        DELETE_DOCUMENT: `Đã xử lý báo cáo và đánh dấu tài liệu ${result.documentStatus || "DELETED"}.`,
+      };
       toast.success(
-        nextStatus === "DISMISSED"
-          ? "Đã bỏ qua báo cáo."
-          : "Đã đánh dấu báo cáo là đã xử lý.",
+        result.status === "DISMISSED"
+          ? successMessages.DISMISSED
+          : successMessages[result.action] || successMessages.NONE,
       );
-      setAction(null);
-      detailGeneration.current += 1;
-      selectedDocumentId.current = "";
-      setSelectedReport(null);
-      setDocument(null);
-      setDetailLoading(false);
-      setPreview(null);
-      setPreviewLoading(false);
+      clearReportState();
       await loadReports();
     } catch (requestError) {
-      toast.error(requestError.message || "Không thể hoàn tất thao tác kiểm duyệt.");
+      if (requestError.status === 409) {
+        clearReportState();
+        await loadReports();
+        toast.warning(
+          "Báo cáo đã được người khác xử lý. Danh sách đã được cập nhật.",
+        );
+        return;
+      }
+      toast.error(
+        getModerationRequestError(
+          requestError,
+          "Không thể hoàn tất thao tác kiểm duyệt.",
+          "Báo cáo không còn tồn tại.",
+        ),
+      );
     } finally {
       setActing(false);
     }

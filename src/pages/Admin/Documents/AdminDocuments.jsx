@@ -1,4 +1,5 @@
 import DocumentPreviewDialog from "../../User/DocumentLibrary/components/DocumentPreviewDialog.jsx";
+import ModeratorLayout from "../../Moderator/Layout/ModeratorLayout.jsx";
 import AdminLayout from "../Layout/AdminLayout.jsx";
 import AdminDocumentDetailDialog from "./components/AdminDocumentDetailDialog.jsx";
 import AdminDocumentsFilters from "./components/AdminDocumentsFilters.jsx";
@@ -7,17 +8,18 @@ import AdminDocumentsTable from "./components/AdminDocumentsTable.jsx";
 import ModerationDialog from "./components/ModerationDialog.jsx";
 import useAdminDocuments from "./hooks/useAdminDocuments.js";
 
-export default function AdminDocuments() {
+export default function AdminDocuments({ role = "ADMIN" }) {
   const admin = useAdminDocuments();
+  const Layout = role === "MODERATOR" ? ModeratorLayout : AdminLayout;
 
   return (
-    <AdminLayout>
+    <Layout>
       <AdminDocumentsHeader />
       <AdminDocumentsFilters admin={admin} />
       <AdminDocumentsTable admin={admin} />
       <AdminDocumentDetailDialog
         document={admin.detail}
-        onClose={() => admin.setDetail(null)}
+        onClose={admin.closeDetail}
         onPreview={admin.openPreview}
         onAction={admin.setAction}
       />
@@ -29,8 +31,8 @@ export default function AdminDocuments() {
       />
       <DocumentPreviewDialog
         preview={admin.preview}
-        onClose={() => admin.setPreview(null)}
+        onClose={admin.closePreview}
       />
-    </AdminLayout>
+    </Layout>
   );
 }
