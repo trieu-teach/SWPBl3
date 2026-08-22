@@ -273,57 +273,59 @@ export default function useReports() {
   // === FILTER ACTIONS (Auto-apply) ===
   
   function updateDraftRange(field, value) {
-    setDraftRange((prev) => ({ ...prev, [field]: value }));
-    applyFilter(field === "from" || field === "to" ? "date" : "all");
+    const newRange = { ...draftRange, [field]: value };
+    setDraftRange(newRange);
+    applyFilter(newRange);
   }
 
   function setDraftPresetRange(from, to) {
-    setDraftRange({ from: from || "", to: to || "" });
-    applyFilter("preset");
+    const newRange = { from: from || "", to: to || "" };
+    setDraftRange(newRange);
+    applyFilter(newRange);
   }
 
-  function applyFilter(trigger = "manual") {
+  function applyFilter(newRange = draftRange) {
     switch (selectedTarget) {
       case "all":
-        setUploadRange(draftRange);
+        setUploadRange(newRange);
         setUploadGroupBy(draftGroupBy);
-        setDownloadedRange(draftRange);
+        setDownloadedRange(newRange);
         setDownloadedLimit(draftLimit);
-        setSavedRange(draftRange);
+        setSavedRange(newRange);
         setSavedLimit(draftLimit);
-        setStatsRange(draftRange);
-        setHeaviestRange(draftRange);
+        setStatsRange(newRange);
+        setHeaviestRange(newRange);
         setHeaviestLimit(draftLimit);
-        setContributorsRange(draftRange);
+        setContributorsRange(newRange);
         setContributorsLimit(draftLimit);
-        setUploadersRange(draftRange);
+        setUploadersRange(newRange);
         setUploadersLimit(draftLimit);
         break;
       case "upload":
-        setUploadRange(draftRange);
+        setUploadRange(newRange);
         setUploadGroupBy(draftGroupBy);
         break;
       case "downloaded":
-        setDownloadedRange(draftRange);
+        setDownloadedRange(newRange);
         setDownloadedLimit(draftLimit);
         break;
       case "saved":
-        setSavedRange(draftRange);
+        setSavedRange(newRange);
         setSavedLimit(draftLimit);
         break;
       case "stats":
-        setStatsRange(draftRange);
+        setStatsRange(newRange);
         break;
       case "heaviest":
-        setHeaviestRange(draftRange);
+        setHeaviestRange(newRange);
         setHeaviestLimit(draftLimit);
         break;
       case "contributors":
-        setContributorsRange(draftRange);
+        setContributorsRange(newRange);
         setContributorsLimit(draftLimit);
         break;
       case "uploaders":
-        setUploadersRange(draftRange);
+        setUploadersRange(newRange);
         setUploadersLimit(draftLimit);
         break;
       default:
@@ -333,7 +335,7 @@ export default function useReports() {
 
   function handleTargetChange(target) {
     setSelectedTarget(target);
-    applyFilter("target");
+    applyFilter(draftRange);
   }
 
   function handleGroupByChange(value) {

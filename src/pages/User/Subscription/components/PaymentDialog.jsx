@@ -184,13 +184,15 @@ export default function PaymentDialog({
   };
 
   // Extract bank info from BE response
+  // Backend returns flat fields: bankAcc, bankName, accountName
+  // Support both flat and nested bankInfo for backwards compatibility
   const bankInfo = payment?.bankInfo || {};
   const qrUrl = payment?.qrUrl;
   const amount = payment?.amount;
   const invoiceNumber = payment?.invoiceNumber;
-  const bankName = bankInfo.bankName;
-  const accountNumber = bankInfo.accountNumber;
-  const accountHolder = bankInfo.accountHolder;
+  const bankName = payment?.bankName || bankInfo?.bankName;
+  const accountNumber = payment?.bankAcc || bankInfo?.accountNumber;
+  const accountHolder = payment?.accountName || bankInfo?.accountHolder;
 
   return (
     <Dialog
@@ -247,95 +249,65 @@ export default function PaymentDialog({
           />
         ) : /* PENDING STATE - QR Code + Countdown */
         isPending && !isExpired ? (
-          <Stack spacing={2.5}>
-            <Box
-              sx={{
-                mx: "auto",
-                width: "min(100%, 300px)",
-                p: 1.5,
-                borderRadius: 2,
-                bgcolor: "white",
-                border: "1px solid var(--border-color)",
-              }}
-            >
-              {qrUrl ? (
-                <Box
-                  component="img"
-                  src={qrUrl}
-                  alt={`VietQR cho đơn ${invoiceNumber}`}
-                  sx={{ display: "block", width: "100%", aspectRatio: "1", objectFit: "contain" }}
-                />
-              ) : (
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    aspectRatio: "1",
-                    bgcolor: "#f5f5f5",
-                  }}
-                >
-                  <CircularProgress />
-                </Box>
-              )}
+          <Stack spacing={2.5} alignItems="center">
+
+            {/* ========================
+                QR SECTION
+                ======================== */}
+            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5, py: 1 }}>
+              {/* QR Code */}
+              <Box
+                component="img"
+                src={qrUrl}
+                alt={`VietQR cho đơn ${invoiceNumber}`}
+                sx={{
+                  width: 260,
+                  height: 260,
+                  objectFit: "contain",
+                }}
+              />
             </Box>
 
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 1,
-                color: remainingSeconds <= 30 ? "error.main" : "warning.main",
-              }}
-            >
-              <AccessTimeOutlined />
-              <Typography fontWeight={800} fontSize="1.15rem">
+            {/* Countdown */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+              <AccessTimeOutlined sx={{ fontSize: 18, color: remainingSeconds <= 30 ? "error.main" : "text.secondary" }} />
+              <Typography fontWeight={700} fontSize="1rem" color={remainingSeconds <= 30 ? "error.main" : "text.primary"}>
                 {formatCountdown(remainingSeconds)}
               </Typography>
             </Box>
 
-            <Box>
+            {/* ========================
+                PAYMENT INFO
+                ======================== */}
+            <Box sx={{ width: "100%", pt: 1 }}>
               <PaymentRow label="Ngân hàng" value={bankName} onCopy={copy} />
               <Divider />
-              <PaymentRow
-                label="Số tài khoản"
-                value={accountNumber}
-                copyValue={accountNumber}
-                onCopy={copy}
-              />
+              <PaymentRow label="Số tài khoản" value={accountNumber} copyValue={accountNumber} onCopy={copy} />
               <Divider />
               <PaymentRow label="Chủ tài khoản" value={accountHolder} onCopy={copy} />
               <Divider />
-              <PaymentRow
-                label="Số tiền"
-                value={formatMoney(amount)}
-                copyValue={amount}
-                emphasize
-                onCopy={copy}
-              />
+              <PaymentRow label="Số tiền" value={formatMoney(amount)} copyValue={amount} emphasize onCopy={copy} />
               <Divider />
-              <PaymentRow
-                label="Nội dung chuyển khoản"
-                value={invoiceNumber}
-                copyValue={invoiceNumber}
-                emphasize
-                onCopy={copy}
-              />
+              <PaymentRow label="Nội dung CK" value={invoiceNumber} copyValue={invoiceNumber} emphasize onCopy={copy} />
             </Box>
 
+            {/* Copy Toast */}
             {copied && (
-              <Alert severity="success" icon={<CheckCircleOutline />}>
+              <Alert severity="success" icon={<CheckCircleOutline />} sx={{ width: "100%" }}>
                 Đã sao chép.
               </Alert>
             )}
-            <Alert severity="warning">
+
+            {/* Warning */}
+            <Alert severity="warning" sx={{ width: "100%" }}>
               Vui lòng chuyển đúng số tiền và giữ nguyên nội dung chuyển khoản để hệ thống tự động kích hoạt gói.
             </Alert>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
-              <CircularProgress size={18} />
+
+            {/* Waiting Status */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <CircularProgress size={14} />
               <Typography variant="body2" color="text.secondary">
-                Đang chờ ngân hàng xác nhận thanh toán...
+                Đang chờ ngân hàng xác nhận...
               </Typography>
             </Box>
           </Stack>

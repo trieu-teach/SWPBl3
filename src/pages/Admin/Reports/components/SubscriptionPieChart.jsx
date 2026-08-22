@@ -1,7 +1,5 @@
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
   Skeleton,
 } from "@mui/material";
@@ -11,7 +9,6 @@ import {
   Cell,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
 import AssessmentOutlined from "@mui/icons-material/AssessmentOutlined";
 
@@ -33,24 +30,24 @@ const CustomTooltipContent = ({ active, payload }) => {
         border: "1px solid",
         borderColor: "divider",
         borderRadius: 2,
-        p: 2,
+        p: 1.5,
         boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-        minWidth: 160,
+        minWidth: 140,
       }}
     >
-      <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary", display: "block", mb: 0.5 }}>
+      <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary", display: "block", mb: 0.25 }}>
         {name}
       </Typography>
       <Typography variant="body2" sx={{ color: "text.primary" }}>
         <strong style={{ color: "#8b5cf6" }}>{value}</strong> lượt mua
       </Typography>
       <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
-        <strong style={{ color: "#6b7280" }}>{(percent * 100).toFixed(1)}%</strong> tổng
+        <strong>{(percent * 100).toFixed(1)}%</strong> tổng
       </Typography>
       {revenue > 0 && (
         <Box sx={{ mt: 0.5, pt: 0.5, borderTop: "1px solid", borderColor: "divider" }}>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            <strong style={{ color: "#22c55e" }}>{revenue.toLocaleString("vi-VN")}đ</strong> doanh thu
+            <strong style={{ color: "#22c55e" }}>{revenue.toLocaleString("vi-VN")}đ</strong>
           </Typography>
         </Box>
       )}
@@ -71,7 +68,7 @@ const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent
       fill="white"
       textAnchor="middle"
       dominantBaseline="central"
-      fontSize={13}
+      fontSize={11}
       fontWeight={700}
     >
       {`${(percent * 100).toFixed(0)}%`}
@@ -79,75 +76,40 @@ const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent
   );
 };
 
-const renderLegend = ({ payload }) => (
-  <Box
-    sx={{
-      display: "flex",
-      flexWrap: "wrap",
-      justifyContent: "center",
-      gap: 3,
-      mt: 2,
-      px: 2,
-    }}
-  >
-    {payload.map((entry, index) => (
-      <Box key={`legend-${index}`} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <Box
-          sx={{
-            width: 12,
-            height: 12,
-            borderRadius: "50%",
-            bgcolor: entry.color,
-          }}
-        />
-        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-          {entry.value}
-        </Typography>
-        <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
-          {entry.payload?.value || 0}
-        </Typography>
-      </Box>
-    ))}
-  </Box>
-);
-
-function LoadingState() {
-  return (
-    <Card variant="outlined" sx={{ borderRadius: 3 }}>
-      <CardContent sx={{ p: 3 }}>
-        <Box sx={{ display: "flex", gap: 4, mb: 3 }}>
+export default function SubscriptionPieChart({ data, loading }) {
+  if (loading) {
+    return (
+      <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        <Box sx={{ display: "flex", gap: 3, mb: 2 }}>
           {[1, 2].map((i) => (
             <Box key={i}>
-              <Skeleton width={100} height={14} />
-              <Skeleton width={80} height={40} sx={{ mt: 0.5 }} />
+              <Skeleton width={80} height={12} />
+              <Skeleton width={60} height={32} sx={{ mt: 0.25 }} />
             </Box>
           ))}
         </Box>
-        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: 280 }}>
-          <Skeleton variant="circular" width={200} height={200} />
+        <Box sx={{ flex: 1, display: "flex", gap: 2 }}>
+          <Skeleton variant="circular" width={140} height={140} sx={{ mx: "auto" }} />
+          <Box sx={{ flex: 1 }}>
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} variant="rounded" width="100%" height={40} sx={{ mb: 1 }} />
+            ))}
+          </Box>
         </Box>
-      </CardContent>
-    </Card>
-  );
-}
+      </Box>
+    );
+  }
 
-function EmptyState() {
-  return (
-    <Card variant="outlined" sx={{ borderRadius: 3 }}>
-      <CardContent
-        sx={{
-          py: 6,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          textAlign: "center",
-        }}
-      >
+  const plans = data?.plans || [];
+  const totals = data?.totals || {};
+
+  if (!plans.length || totals.purchaseCount === 0) {
+    return (
+      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", py: 4 }}>
         <Box
           sx={{
-            width: 80,
-            height: 80,
+            width: 60,
+            height: 60,
             borderRadius: "50%",
             bgcolor: "action.hover",
             display: "flex",
@@ -156,29 +118,16 @@ function EmptyState() {
             mb: 2,
           }}
         >
-          <AssessmentOutlined sx={{ fontSize: 36, color: "grey.400" }} />
+          <AssessmentOutlined sx={{ fontSize: 28, color: "grey.400" }} />
         </Box>
-        <Typography variant="h6" sx={{ color: "text.secondary", fontWeight: 600 }}>
+        <Typography variant="body2" sx={{ color: "text.secondary", fontWeight: 500 }}>
           Chưa có dữ liệu subscription
         </Typography>
-        <Typography variant="body2" sx={{ color: "text.disabled", mt: 0.5, maxWidth: 280 }}>
+        <Typography variant="caption" sx={{ color: "text.disabled", mt: 0.5, textAlign: "center" }}>
           Không có lượt mua nào trong khoảng thời gian đã chọn
         </Typography>
-      </CardContent>
-    </Card>
-  );
-}
-
-export default function SubscriptionPieChart({ data, loading }) {
-  if (loading) {
-    return <LoadingState />;
-  }
-
-  const plans = data?.plans || [];
-  const totals = data?.totals || {};
-
-  if (!plans.length || totals.purchaseCount === 0) {
-    return <EmptyState />;
+      </Box>
+    );
   }
 
   const chartData = plans.map((plan) => ({
@@ -191,170 +140,146 @@ export default function SubscriptionPieChart({ data, loading }) {
   const totalRevenue = plans.reduce((sum, p) => sum + (p.revenue || 0), 0);
 
   return (
-    <Card variant="outlined" sx={{ borderRadius: 3 }}>
-      <CardContent sx={{ p: 3 }}>
-        {/* Summary Stats */}
-        <Box
-          sx={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: { xs: 3, md: 5 },
-            mb: 3,
-            pb: 3,
-            borderBottom: "1px solid",
-            borderColor: "divider",
-          }}
-        >
-          <Box>
-            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 500 }}>
-              TỔNG LƯỢT MUA
-            </Typography>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 800,
-                color: "#8b5cf6",
-                fontSize: { xs: "1.75rem", md: "2.25rem" },
-              }}
-            >
-              {totals.purchaseCount.toLocaleString("vi-VN")}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 500 }}>
-              TỔNG DOANH THU
-            </Typography>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 700,
-                color: "#22c55e",
-                fontSize: { xs: "1.5rem", md: "2rem" },
-              }}
-            >
-              {totalRevenue.toLocaleString("vi-VN")}đ
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 500 }}>
-              SỐ GÓI
-            </Typography>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 700,
-                color: "text.primary",
-                fontSize: { xs: "1.5rem", md: "2rem" },
-              }}
-            >
-              {plans.length}
-            </Typography>
-          </Box>
+    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+      {/* Summary Stats */}
+      <Box
+        sx={{
+          display: "flex",
+          gap: { xs: 2, md: 3 },
+          mb: 2,
+          pb: 2,
+          borderBottom: "1px solid",
+          borderColor: "divider",
+          flexShrink: 0,
+        }}
+      >
+        <Box>
+          <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 500, fontSize: "0.65rem" }}>
+            TỔNG LƯỢT MUA
+          </Typography>
+          <Typography
+            sx={{
+              fontWeight: 800,
+              color: "#8b5cf6",
+              fontSize: "1.5rem",
+              lineHeight: 1.1,
+            }}
+          >
+            {totals.purchaseCount.toLocaleString("vi-VN")}
+          </Typography>
+        </Box>
+        <Box>
+          <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 500, fontSize: "0.65rem" }}>
+            DOANH THU
+          </Typography>
+          <Typography
+            sx={{
+              fontWeight: 700,
+              color: "#22c55e",
+              fontSize: "1.25rem",
+              lineHeight: 1.1,
+            }}
+          >
+            {totalRevenue.toLocaleString("vi-VN")}đ
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Donut + Legend */}
+      <Box
+        sx={{
+          flex: 1,
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+          gap: 2,
+          alignItems: "center",
+          minHeight: 180,
+        }}
+      >
+        {/* Donut Chart */}
+        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+          <ResponsiveContainer width="100%" height={180}>
+            <PieChart>
+              <Pie
+                data={chartData}
+                cx="50%"
+                cy="50%"
+                innerRadius={50}
+                outerRadius={80}
+                paddingAngle={3}
+                dataKey="value"
+                labelLine={false}
+                label={renderCustomLabel}
+                key={`pie-chart-${data?.length || 0}`}
+              >
+                {chartData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={PLAN_COLORS[entry.code] || DEFAULT_COLORS[index % DEFAULT_COLORS.length]}
+                    stroke="transparent"
+                  />
+                ))}
+              </Pie>
+              <Tooltip
+                content={<CustomTooltipContent />}
+                contentStyle={{ background: "transparent", border: "none", padding: 0 }}
+                wrapperStyle={{ background: "transparent" }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
         </Box>
 
-        {/* Pie Chart + Legend */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1.2fr) minmax(280px, 1fr)" },
-            gap: { xs: 3, md: 4 },
-            alignItems: "center",
-            minHeight: 280,
-          }}
-        >
-          {/* Donut Chart */}
-          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={75}
-                  outerRadius={115}
-                  paddingAngle={3}
-                  dataKey="value"
-                  labelLine={false}
-                  label={renderCustomLabel}
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={PLAN_COLORS[entry.code] || DEFAULT_COLORS[index % DEFAULT_COLORS.length]}
-                      stroke="transparent"
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  content={<CustomTooltipContent />}
-                  contentStyle={{ background: "transparent", border: "none", padding: 0 }}
-                  wrapperStyle={{ background: "transparent" }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </Box>
-
-          {/* Legend Cards */}
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minWidth: 0 }}>
-            {chartData.map((plan, index) => {
-              const color = PLAN_COLORS[plan.code] || DEFAULT_COLORS[index % DEFAULT_COLORS.length];
-              const percent = totals.purchaseCount > 0 ? (plan.value / totals.purchaseCount * 100) : 0;
-              return (
-                <Box
-                  key={plan.code}
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    p: { xs: 1.5, sm: 2 },
-                    borderRadius: 2,
-                    bgcolor: "action.hover",
-                    border: "1px solid",
-                    borderColor: "divider",
-                    transition: "all 0.2s",
-                    "&:hover": {
-                      bgcolor: "action.selected",
-                    },
-                  }}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
-                    <Box
-                      sx={{
-                        width: 14,
-                        height: 14,
-                        borderRadius: "50%",
-                        bgcolor: color,
-                        flexShrink: 0,
-                      }}
-                    />
-                    <Typography
-                      variant="body2"
-                      sx={{ fontWeight: 600, color: "text.primary", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}
-                    >
-                      {plan.name}
+        {/* Legend Cards */}
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 0 }}>
+          {chartData.map((plan, index) => {
+            const color = PLAN_COLORS[plan.code] || DEFAULT_COLORS[index % DEFAULT_COLORS.length];
+            const percent = totals.purchaseCount > 0 ? (plan.value / totals.purchaseCount * 100) : 0;
+            return (
+              <Box
+                key={plan.code}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  p: 1,
+                  borderRadius: 1.5,
+                  bgcolor: "action.hover",
+                  border: "1px solid",
+                  borderColor: "divider",
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0, flex: 1 }}>
+                  <Box
+                    sx={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      bgcolor: color,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Typography
+                    variant="caption"
+                    sx={{ fontWeight: 600, color: "text.primary", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                  >
+                    {plan.name}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexShrink: 0 }}>
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                    {percent.toFixed(1)}%
+                  </Typography>
+                  <Box sx={{ textAlign: "right", minWidth: 40 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: color }}>
+                      {plan.value}
                     </Typography>
-                  </Box>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                      {percent.toFixed(1)}%
-                    </Typography>
-                    <Box sx={{ textAlign: "right", minWidth: { xs: 50, sm: 60 } }}>
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: color }}>
-                        {plan.value}
-                      </Typography>
-                      {plan.revenue > 0 && (
-                        <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                          {plan.revenue.toLocaleString("vi-VN")}đ
-                        </Typography>
-                      )}
-                    </Box>
                   </Box>
                 </Box>
-              );
-            })}
-          </Box>
+              </Box>
+            );
+          })}
         </Box>
-      </CardContent>
-    </Card>
+      </Box>
+    </Box>
   );
 }
