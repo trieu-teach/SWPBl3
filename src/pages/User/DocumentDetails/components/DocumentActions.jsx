@@ -20,6 +20,7 @@ import {
   SmartToyOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
+import DocumentRatingButtons from "../../../../components/DocumentRating/DocumentRatingButtons.jsx";
 
 export default function DocumentActions({ details }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -102,6 +103,26 @@ export default function DocumentActions({ details }) {
           Tài liệu công khai sẽ được gửi duyệt trước khi xuất hiện trong cộng
           đồng.
         </Typography>
+        {document.visibility === "PUBLIC" && (
+          <>
+            <Divider sx={{ my: 3 }} />
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+            >
+              <Typography fontWeight={700} variant="body2">
+                Đánh giá tài liệu
+              </Typography>
+              <DocumentRatingButtons
+                documentId={documentId}
+                helpfulRating={document.helpfulRating}
+                totalRatings={document.ratingCount || document.totalRatings}
+                showStats
+              />
+            </Stack>
+          </>
+        )}
         <Divider sx={{ my: 3 }} />
         <Button
           fullWidth
