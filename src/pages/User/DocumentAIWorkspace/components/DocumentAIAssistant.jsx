@@ -68,6 +68,12 @@ export default function DocumentAIAssistant({
     hasMore: sessionsHasMore,
     loadMore: loadMoreSessions,
     refresh: refreshSessions,
+    renameSession,
+    deleteSession,
+    renamingSessionId,
+    deletingSessionId,
+    actionError: sessionActionError,
+    clearActionError: clearSessionActionError,
   } = useSessions({
     mode: CHAT_MODE_DOCUMENT,
     documentId: normalizedDocumentId,
@@ -99,8 +105,9 @@ export default function DocumentAIAssistant({
   const handleSessionCreated = useCallback(
     (confirmedSessionId) => {
       acceptCreatedSession(confirmedSessionId);
+      void refreshSessions();
     },
-    [acceptCreatedSession],
+    [acceptCreatedSession, refreshSessions],
   );
 
   const handleConversationCompleted = useCallback(() => {
@@ -121,6 +128,7 @@ export default function DocumentAIAssistant({
     sendMessage,
     retryMessage,
     loadOlderMessages,
+    abort,
     reset: resetConversation,
   } = useChatConversation({
     context: documentChatContext,
@@ -128,6 +136,7 @@ export default function DocumentAIAssistant({
     enabled: conversationEnabled,
     onSessionCreated: handleSessionCreated,
     onConversationCompleted: handleConversationCompleted,
+    onSessionUnavailable: startNewChat,
   });
 
   const handleSend = useCallback(
@@ -159,6 +168,15 @@ export default function DocumentAIAssistant({
     return startNewChat();
   }, [scopeEnabled, resetConversation, startNewChat]);
 
+  const handleDeleteSession = useCallback(async (sessionId) => {
+    const deleted = await deleteSession(sessionId);
+    if (deleted && sessionId === (validatedSessionId ?? requestedSessionId)) {
+      resetConversation();
+      startNewChat();
+    }
+    return deleted;
+  }, [deleteSession, requestedSessionId, resetConversation, startNewChat, validatedSessionId]);
+
   const handleOpenSessions = useCallback(() => {
     if (scopeEnabled) setSessionsOpen(true);
   }, [scopeEnabled]);
@@ -186,9 +204,7 @@ export default function DocumentAIAssistant({
       >
         <Stack
           direction="row"
-          alignItems="center"
-          gap={1.5}
-          sx={{ px: { xs: 2, sm: 2.5 }, py: 1.5, flexWrap: "wrap" }}
+          sx={{ px: { xs: 2, sm: 2.5 }, py: 1.5, flexWrap: "wrap", alignItems: "center", gap: 1.5 }}
         >
           <Box
             sx={{
@@ -280,6 +296,7 @@ export default function DocumentAIAssistant({
           onInputChange={setInputValue}
           onSend={handleSend}
           onRetry={handleRetryMessage}
+          onStop={abort}
           onSourceSelect={onSourceSelect}
           isSending={isSending}
           error={conversationError}
@@ -304,6 +321,12 @@ export default function DocumentAIAssistant({
         onSelectSession={handleSelectSession}
         onNewChat={handleNewChat}
         onLoadMore={loadMoreSessions}
+        onRenameSession={renameSession}
+        onDeleteSession={handleDeleteSession}
+        renamingSessionId={renamingSessionId}
+        deletingSessionId={deletingSessionId}
+        actionError={sessionActionError}
+        onClearActionError={clearSessionActionError}
       />
     </>
   );

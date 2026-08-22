@@ -17,10 +17,10 @@ export default function ChatHeader({
   return (
     <Stack
       direction={{ xs: "column", sm: "row" }}
-      alignItems={{ xs: "flex-start", sm: "center" }}
-      justifyContent="space-between"
-      gap={1}
       sx={{
+        alignItems: { xs: "flex-start", sm: "center" },
+        justifyContent: "space-between",
+        gap: 1,
         px: { xs: 2, sm: 3 },
         py: 1.25,
         minHeight: { sm: 62 },
@@ -34,7 +34,7 @@ export default function ChatHeader({
           {inLibraryMode ? "Thư viện của bạn" : "Trợ lý tài liệu"}
         </Typography>
         {inDocumentMode && chatContext.document?.title && (
-          <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mt: 0.25 }}>
+          <Stack direction="row" spacing={0.5} sx={{ mt: 0.25, alignItems: "center" }}>
             <DescriptionOutlined
               sx={{ fontSize: "0.85rem", color: "text.secondary" }}
             />
@@ -70,7 +70,7 @@ export default function ChatHeader({
         )}
       </Stack>
       {inLibraryMode && (
-        <Stack direction="row" spacing={0.75} flexWrap="wrap">
+        <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap" }}>
           <Button
             size="small"
             startIcon={<FolderOpenOutlined />}

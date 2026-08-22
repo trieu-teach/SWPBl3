@@ -37,8 +37,8 @@ export default function ChatEmptyState({ chatContext }) {
       }}
     >
       <Stack
-        alignItems="center"
         sx={{
+          alignItems: "center",
           maxWidth: 760,
           width: "100%",
           mx: "auto",

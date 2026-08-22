@@ -1,6 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { getDocuments } from "../../../../api/documents.api.js";
-import { normalizeDocumentList } from "../../DocumentLibrary/utils/document-formatters.js";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getAiChatDocuments } from "../../../../api/chat.api.js";
+import { getDocument, getSubjects } from "../../../../api/documents.api.js";
+import {
+  mergeAiDocumentMetadata,
+  normalizeAiDocument,
+} from "../libraryDocumentMetadata.js";
 
 const PAGE_LIMIT = 20;
 
@@ -23,6 +27,24 @@ function responseHasMore(result, targetPage) {
   if (totalPages > 0) return targetPage < totalPages;
 
   return result.items.length === PAGE_LIMIT;
+}
+
+async function hydrateMissingDocumentMetadata(items) {
+  return Promise.all(
+    items.map(async (item) => {
+      const document = normalizeAiDocument(item);
+      if (!document?.id || document.subjectId) return document;
+
+      try {
+        const detail = await getDocument(document.id);
+        return mergeAiDocumentMetadata(document, detail);
+      } catch {
+        // Older servers did not include subject metadata in /chat/documents.
+        // Keep the AI item usable even if its compatibility lookup fails.
+        return document;
+      }
+    }),
+  );
 }
 
 function useDocumentSource(source, search) {
@@ -58,16 +80,16 @@ function useDocumentSource(source, search) {
 
       try {
         const query = {
+          source,
           search,
           page: targetPage,
           limit: PAGE_LIMIT,
-          sortBy: "createdAt",
-          sortOrder: "desc",
-          ...(source === "owned"
-            ? { ownerOnly: true }
-            : { savedOnly: true }),
         };
-        const result = normalizeDocumentList(await getDocuments(query));
+        const response = await getAiChatDocuments(query);
+        const result = Array.isArray(response)
+          ? { items: response, meta: {} }
+          : { items: response?.items ?? [], meta: response?.meta ?? {} };
+        result.items = await hydrateMissingDocumentMetadata(result.items);
         if (!isCurrentRequest()) return false;
 
         setDocuments((current) =>
@@ -131,15 +153,51 @@ function useDocumentSource(source, search) {
 }
 
 export default function useLibraryDocuments() {
+  const [source, setSource] = useState("all");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const owned = useDocumentSource("owned", search);
-  const savedSource = useDocumentSource("saved", search);
+  const [subjects, setSubjects] = useState([]);
+  const [subjectsLoading, setSubjectsLoading] = useState(true);
+  const [subjectsError, setSubjectsError] = useState("");
+  const current = useDocumentSource(source, search);
+  const availableSubjects = useMemo(() => {
+    const subjectsById = new Map();
+    subjects.forEach((subject) => {
+      if (subject?.id) subjectsById.set(subject.id, subject);
+    });
+    current.documents.forEach((document) => {
+      if (!document?.subjectId || subjectsById.has(document.subjectId)) return;
+      subjectsById.set(document.subjectId, {
+        id: document.subjectId,
+        name: document.subject || "Không xác định",
+      });
+    });
+    return [...subjectsById.values()].sort((left, right) =>
+      (left.name || "").localeCompare(right.name || "", "vi"),
+    );
+  }, [current.documents, subjects]);
 
-  const ownedIds = new Set(owned.documents.map((document) => document.id));
-  const savedDocuments = savedSource.documents.filter(
-    (document) => !ownedIds.has(document.id),
-  );
+  useEffect(() => {
+    let active = true;
+    setSubjectsLoading(true);
+    setSubjectsError("");
+    getSubjects()
+      .then((response) => {
+        if (!active) return;
+        setSubjects(Array.isArray(response) ? response : response?.items ?? []);
+      })
+      .catch((requestError) => {
+        if (!active) return;
+        setSubjectsError(requestError?.message || "Không thể tải danh sách môn học.");
+      })
+      .finally(() => {
+        if (active) setSubjectsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const applySearch = useCallback(
     (event) => {
@@ -150,13 +208,14 @@ export default function useLibraryDocuments() {
   );
 
   return {
+    source,
+    setSource,
     searchInput,
     setSearchInput,
     applySearch,
-    owned,
-    saved: {
-      ...savedSource,
-      documents: savedDocuments,
-    },
+    current,
+    subjects: availableSubjects,
+    subjectsLoading,
+    subjectsError,
   };
 }

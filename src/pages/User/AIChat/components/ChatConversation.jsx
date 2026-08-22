@@ -9,6 +9,7 @@ export default function ChatConversation({
   onInputChange,
   onSend,
   onRetry,
+  onStop,
   onSourceSelect,
   isSending = false,
   error = null,
@@ -61,6 +62,7 @@ export default function ChatConversation({
           isSending={messageActionsDisabled}
           onRetry={onRetry}
           onSend={onSend}
+          onStop={onStop}
           onSourceSelect={onSourceSelect}
           hasMoreHistory={hasMoreHistory}
           isLoadingOlderMessages={isLoadingOlderMessages}
