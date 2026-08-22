@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getChatSessions } from "../../../../api/chat.api.js";
+import {
+  deleteChatSession,
+  getChatSessions,
+  renameChatSession,
+} from "../../../../api/chat.api.js";
 import {
   CHAT_MODE_DOCUMENT,
   CHAT_MODE_LIBRARY,
@@ -74,6 +78,9 @@ export function useSessions(options = LEGACY_SESSION_OPTIONS) {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [dataScopeKey, setDataScopeKey] = useState(null);
+  const [renamingSessionId, setRenamingSessionId] = useState(null);
+  const [deletingSessionId, setDeletingSessionId] = useState(null);
+  const [actionError, setActionError] = useState("");
 
   const generationRef = useRef(0);
   const activeScopeRef = useRef(null);
@@ -202,6 +209,46 @@ export function useSessions(options = LEGACY_SESSION_OPTIONS) {
   }, [scope, fetchPage]);
 
   const scopeMatches = Boolean(scope && dataScopeKey === scope.key);
+  const clearActionError = useCallback(() => setActionError(""), []);
+
+  const renameSession = useCallback(async (sessionId, title) => {
+    const normalizedTitle = title.trim();
+    if (!sessionId || !normalizedTitle || renamingSessionId) return false;
+    setRenamingSessionId(sessionId);
+    setActionError("");
+    try {
+      const updated = await renameChatSession(sessionId, normalizedTitle);
+      setSessions((current) =>
+        current.map((session) =>
+          session.id === sessionId
+            ? { ...session, ...updated, title: updated?.title ?? normalizedTitle }
+            : session,
+        ),
+      );
+      return true;
+    } catch (requestError) {
+      setActionError(requestError?.message || "Không thể đổi tên cuộc trò chuyện.");
+      return false;
+    } finally {
+      setRenamingSessionId(null);
+    }
+  }, [renamingSessionId]);
+
+  const deleteSession = useCallback(async (sessionId) => {
+    if (!sessionId || deletingSessionId) return false;
+    setDeletingSessionId(sessionId);
+    setActionError("");
+    try {
+      await deleteChatSession(sessionId);
+      setSessions((current) => current.filter((session) => session.id !== sessionId));
+      return true;
+    } catch (requestError) {
+      setActionError(requestError?.message || "Không thể xóa cuộc trò chuyện.");
+      return false;
+    } finally {
+      setDeletingSessionId(null);
+    }
+  }, [deletingSessionId]);
 
   return {
     sessions: scopeMatches ? sessions : [],
@@ -212,5 +259,11 @@ export function useSessions(options = LEGACY_SESSION_OPTIONS) {
     hasMore: scopeMatches ? hasMore : false,
     loadMore,
     refresh,
+    renameSession,
+    deleteSession,
+    renamingSessionId,
+    deletingSessionId,
+    actionError,
+    clearActionError,
   };
 }

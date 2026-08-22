@@ -19,11 +19,8 @@ export const CHAT_MODE_DOCUMENT = "ASK_THIS_DOCUMENT";
 export const CHAT_MODE_LIBRARY = "ASK_MY_LIBRARY";
 
 const LIBRARY_FILTER_FIELDS = [
-  "subjectId",
-  "subjectIds",
   "categoryId",
   "fileType",
-  "documentIds",
 ];
 
 function normalizeDocumentId(value) {
@@ -48,6 +45,60 @@ function normalizeLibraryFilters(filters) {
     }
   }
 
+  const subjectId = normalizeDocumentId(filters.subjectId);
+  const subjectIds = Array.isArray(filters.subjectIds)
+    ? [...new Set(filters.subjectIds.map(normalizeDocumentId).filter(Boolean))]
+    : [];
+  const documentIds = Array.isArray(filters.documentIds)
+    ? [...new Set(filters.documentIds.map(normalizeDocumentId).filter(Boolean))]
+    : [];
+
+  // A subject scope and an explicit document scope are mutually exclusive.
+  // Explicit documents are the narrowest scope and therefore win.
+  if (documentIds.length > 0) {
+    normalized.documentIds = documentIds;
+  } else if (subjectIds.length > 0) {
+    normalized.subjectIds = subjectIds;
+  } else if (subjectId) {
+    normalized.subjectId = subjectId;
+  }
+
+  if (normalized.subjectIds) {
+    const subjectIdsSet = new Set(normalized.subjectIds);
+    const subjectsMeta = Array.isArray(filters._subjectsMeta)
+      ? filters._subjectsMeta
+      : [];
+    normalized._subjectsMeta = subjectsMeta
+      .map((subject) => {
+        const id = normalizeDocumentId(subject?.id);
+        if (!id || !subjectIdsSet.has(id)) return null;
+        return {
+          id,
+          name:
+            typeof subject?.name === "string" && subject.name.trim()
+              ? subject.name.trim()
+              : "Môn học đã chọn",
+        };
+      })
+      .filter(Boolean);
+  } else if (
+    normalized.subjectId &&
+    filters._subjectMeta &&
+    typeof filters._subjectMeta === "object" &&
+    !Array.isArray(filters._subjectMeta)
+  ) {
+    const metaId = normalizeDocumentId(filters._subjectMeta.id);
+    if (metaId === normalized.subjectId) {
+      normalized._subjectMeta = {
+        id: metaId,
+        name:
+          typeof filters._subjectMeta.name === "string" && filters._subjectMeta.name.trim()
+            ? filters._subjectMeta.name.trim()
+            : "Môn học đã chọn",
+      };
+    }
+  }
+
   // Temporary display metadata for the current document-picker UI.
   if (
     normalized.documentIds &&
@@ -57,10 +108,146 @@ function normalizeLibraryFilters(filters) {
     normalized._documentMeta = filters._documentMeta.map((document) => ({
       id: document.id,
       title: document.title,
+      available: document.available !== false,
+      unavailableReason: document.unavailableReason ?? null,
     }));
   }
 
   return Object.keys(normalized).length > 0 ? normalized : null;
+}
+
+export function setLibrarySubjectScope(subject) {
+  return setLibrarySubjectScopes(subject ? [subject] : []);
+}
+
+export function setLibrarySubjectScopes(subjects) {
+  const uniqueSubjects = new Map();
+  (Array.isArray(subjects) ? subjects : []).forEach((subject) => {
+    const id = normalizeDocumentId(subject?.id);
+    if (!id) return;
+    uniqueSubjects.set(id, {
+      id,
+      name:
+        typeof subject?.name === "string" && subject.name.trim()
+          ? subject.name.trim()
+          : "Môn học đã chọn",
+    });
+  });
+
+  const normalizedSubjects = [...uniqueSubjects.values()];
+  if (normalizedSubjects.length === 0) return createLibraryContext(null);
+
+  return createLibraryContext({
+    subjectIds: normalizedSubjects.map((subject) => subject.id),
+    _subjectsMeta: normalizedSubjects,
+  });
+}
+
+export function filterLibraryDocumentsBySubjects(
+  documents,
+  selectedSubjectIds,
+) {
+  const source = Array.isArray(documents) ? documents : [];
+  const selectedIds = new Set(
+    (Array.isArray(selectedSubjectIds) ? selectedSubjectIds : [])
+      .map(normalizeDocumentId)
+      .filter(Boolean),
+  );
+  if (selectedIds.size === 0) return source;
+  return source.filter((document) => selectedIds.has(document?.subjectId));
+}
+
+export function toggleLibraryDocumentScope(context, document, shouldSelect) {
+  const documentId = normalizeDocumentId(document?.id);
+  if (!documentId) return context;
+
+  const filters = context?.libraryFilters ?? {};
+  const currentIds = Array.isArray(filters.documentIds)
+    ? filters.documentIds
+    : [];
+  const currentMeta = Array.isArray(filters._documentMeta)
+    ? filters._documentMeta
+    : [];
+  const selected = currentIds.includes(documentId);
+  const nextSelected = shouldSelect ?? !selected;
+  const nextIds = nextSelected
+    ? [...new Set([...currentIds, documentId])]
+    : currentIds.filter((id) => id !== documentId);
+  const metaById = new Map(
+    currentMeta
+      .filter((item) => normalizeDocumentId(item?.id))
+      .map((item) => [item.id, item]),
+  );
+
+  if (nextSelected) {
+    metaById.set(documentId, {
+      id: documentId,
+      title:
+        typeof document?.title === "string" && document.title.trim()
+          ? document.title.trim()
+          : metaById.get(documentId)?.title || "Tài liệu",
+      available: document?.available !== false,
+      unavailableReason: document?.unavailableReason ?? null,
+    });
+  } else {
+    metaById.delete(documentId);
+  }
+
+  return createLibraryContext(
+    nextIds.length > 0
+      ? {
+          documentIds: nextIds,
+          _documentMeta: nextIds.map((id) => metaById.get(id)).filter(Boolean),
+        }
+      : null,
+  );
+}
+
+export function getLibraryScopePresentation(context) {
+  const filters = context?.libraryFilters;
+  const documentIds = Array.isArray(filters?.documentIds)
+    ? filters.documentIds
+    : [];
+  if (documentIds.length > 0) {
+    return {
+      type: "documents",
+      documentIds,
+      label: `${documentIds.length} tài liệu đã chọn`,
+    };
+  }
+
+  const subjectIds = Array.isArray(filters?.subjectIds)
+    ? filters.subjectIds
+    : [];
+  if (subjectIds.length > 0) {
+    const subjects = Array.isArray(filters?._subjectsMeta)
+      ? filters._subjectsMeta
+      : [];
+    const subjectName = subjects.find(
+      (subject) => subject.id === subjectIds[0],
+    )?.name;
+    return {
+      type: "subjects",
+      subjectIds,
+      subjects,
+      label:
+        subjectIds.length === 1
+          ? `Môn học: ${subjectName || "Môn học đã chọn"}`
+          : `${subjectIds.length} môn học đã chọn`,
+    };
+  }
+
+  const subjectId = normalizeDocumentId(filters?.subjectId);
+  if (subjectId) {
+    return {
+      type: "subject",
+      subjectId,
+      subjectName: filters?._subjectMeta?.name || "Môn học đã chọn",
+      label: `Môn học: ${filters?._subjectMeta?.name || "Môn học đã chọn"}`,
+    };
+  }
+
+  return { type: "all", label: "Toàn bộ thư viện" };
 }
 
 // ── Factory functions ──────────────────────────────────────────────────────────
@@ -174,5 +361,7 @@ export function isLibraryContext(context) {
  * @property {string | undefined} [categoryId]
  * @property {string | undefined} [fileType]
  * @property {string[] | undefined} [documentIds]
+ * @property {{ id: string, name: string } | undefined} [_subjectMeta] - Temporary UI compatibility
+ * @property {{ id: string, name: string }[] | undefined} [_subjectsMeta] - Multi-subject display metadata
  * @property {{ id: string, title: string }[] | undefined} [_documentMeta] - Temporary UI compatibility
  */

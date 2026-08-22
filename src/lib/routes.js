@@ -8,7 +8,7 @@
   profile: "/profile",
   documents: "/documents",
   uploadDocument: "/documents/upload",
-  aiChat: "/ai-chat",
+  aiChat: "/hoi-ai",
   community: "/community",
   savedDocuments: "/saved-documents",
   adminDashboard: "/admin/dashboard",

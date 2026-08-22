@@ -35,7 +35,7 @@ export default function DocumentActions({ details }) {
         ? document.title.trim()
         : document?.fileName || "Tài liệu";
 
-    navigate("/ai-chat", {
+    navigate("/hoi-ai", {
       state: {
         libraryDocumentPreselection: {
           id: documentId,

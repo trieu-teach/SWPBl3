@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  createChatSession,
   getChatErrorMessage,
   getChatMessages,
   getHistoryErrorMessage,
   mapHistoryMessage,
 } from "../../../../api/chat.api.js";
+import { getChatErrorPresentation } from "../../../../api/chat.errors.js";
+import { createChatRequestId } from "../../../../api/chat.request-id.js";
 import {
   askDocumentStream,
   askLibraryStream,
@@ -109,6 +112,7 @@ function createRequestSnapshot(question, context, sessionId) {
     question,
     context: cloneContextSnapshot(context),
     sessionId: normalizeId(sessionId),
+    requestId: createChatRequestId(),
   };
 }
 
@@ -163,6 +167,7 @@ export function useChatConversation({
   enabled = true,
   onSessionCreated,
   onConversationCompleted,
+  onSessionUnavailable,
 } = {}) {
   const scope = useMemo(
     () => createConversationScope(context, enabled),
@@ -195,10 +200,12 @@ export function useChatConversation({
   const historyRequestRef = useRef(null);
   const onSessionCreatedRef = useRef(onSessionCreated);
   const onConversationCompletedRef = useRef(onConversationCompleted);
+  const onSessionUnavailableRef = useRef(onSessionUnavailable);
 
   latestScopeRef.current = scope;
   onSessionCreatedRef.current = onSessionCreated;
   onConversationCompletedRef.current = onConversationCompleted;
+  onSessionUnavailableRef.current = onSessionUnavailable;
 
   const invalidateHistory = useCallback(() => {
     historyGenerationRef.current += 1;
@@ -398,25 +405,65 @@ export function useChatConversation({
       activeScopeRef.current?.key === streamRequest.scopeKey;
 
     try {
-      const { question, context: contextSnapshot } = requestSnapshot;
-      const knownSessionId = requestSnapshot.sessionId;
+      const { question, context: contextSnapshot, requestId } = requestSnapshot;
+      let knownSessionId = requestSnapshot.sessionId;
+      const createdNewSession = !knownSessionId;
+
+      if (!knownSessionId) {
+        const createdSession = await createChatSession({
+          mode: contextSnapshot.mode,
+          documentId:
+            contextSnapshot.mode === CHAT_MODE_DOCUMENT
+              ? contextSnapshot.documentId
+              : undefined,
+          documentIds:
+            contextSnapshot.mode === CHAT_MODE_LIBRARY
+              ? contextSnapshot.libraryFilters?.documentIds
+              : undefined,
+          signal: requestController.signal,
+        });
+        knownSessionId = normalizeId(createdSession?.id);
+        if (!knownSessionId) throw new Error("Không nhận được sessionId hợp lệ.");
+
+        requestSnapshot.sessionId = knownSessionId;
+        confirmedSessionRef.current = {
+          scopeKey: requestScope.key,
+          sessionId: knownSessionId,
+        };
+        activeSessionIdRef.current = knownSessionId;
+        setOwner({ scopeKey: requestScope.key, sessionId: knownSessionId });
+        setMessages((current) =>
+          current.map((message) =>
+            message.id === targetMessageId
+              ? { ...message, requestSnapshot: { ...requestSnapshot }, sessionId: knownSessionId }
+              : message,
+          ),
+        );
+        notify(onSessionCreatedRef.current, knownSessionId, { createdSession });
+      }
+
       const stream =
         contextSnapshot.mode === CHAT_MODE_DOCUMENT
           ? askDocumentStream({
               documentId: contextSnapshot.documentId,
               question,
               sessionId: knownSessionId,
+              requestId,
               signal: requestController.signal,
             })
           : askLibraryStream({
               question,
               sessionId: knownSessionId,
+              requestId,
               limit: 5,
+              // The backend accepts subjectIds/documentIds in filters.
+              // chat.stream sanitizes display-only metadata before sending.
               filters: contextSnapshot.libraryFilters,
               signal: requestController.signal,
             });
 
       let receivedDone = false;
+      let receivedDelta = false;
 
       for await (const event of stream) {
         if (!isValidStreamRequest() || requestController.signal.aborted) {
@@ -443,7 +490,7 @@ export function useChatConversation({
               message.id === targetMessageId
                 ? {
                     ...message,
-                    content: data.answer,
+                    content: receivedDelta ? message.content : data.answer,
                     status: "complete",
                     streamPhase: "COMPLETED",
                     backendMessageId: confirmedMessageId,
@@ -463,33 +510,24 @@ export function useChatConversation({
             ),
           );
 
-          if (!knownSessionId) {
-            confirmedSessionRef.current = {
-              scopeKey: requestScope.key,
-              sessionId: confirmedSessionId,
-            };
-            activeSessionIdRef.current = confirmedSessionId;
-            setOwner({
-              scopeKey: requestScope.key,
-              sessionId: confirmedSessionId,
-            });
-            notify(
-              onSessionCreatedRef.current,
-              confirmedSessionId,
-              { messageId: confirmedMessageId },
-            );
-          }
-
           notify(onConversationCompletedRef.current, {
             sessionId: confirmedSessionId,
             messageId: confirmedMessageId,
             answerStatus: data.answerStatus,
             usage: data.usage ?? null,
-            isNewSession: !knownSessionId,
+            isNewSession: createdNewSession,
             context: cloneContextSnapshot(contextSnapshot),
           });
           continue;
         }
+
+        if (type === "sources" && !Array.isArray(data)) {
+          throw new Error("Danh sách nguồn từ AI không hợp lệ.");
+        }
+        if (type === "delta" && typeof data?.text !== "string") {
+          throw new Error("Dữ liệu phản hồi AI không hợp lệ.");
+        }
+        if (type === "delta") receivedDelta = true;
 
         setMessages((current) => {
           const message = current.find((item) => item.id === targetMessageId);
@@ -545,8 +583,8 @@ export function useChatConversation({
         return false;
       }
 
-      const errorMessage =
-        getChatErrorMessage(requestError) || FALLBACK_SEND_ERROR;
+      const errorPresentation = getChatErrorPresentation(requestError);
+      const errorMessage = getChatErrorMessage(requestError) || FALLBACK_SEND_ERROR;
       setMessages((current) =>
         current.map((message) => {
           if (message.id !== targetMessageId) return message;
@@ -563,13 +601,18 @@ export function useChatConversation({
               : {}),
             ...(typeof requestError.retryable === "boolean"
               ? { streamRetryable: requestError.retryable }
-              : {}),
+              : { streamRetryable: errorPresentation.retryable === true }),
+            errorActionLabel: errorPresentation.actionLabel,
+            errorActionPath: errorPresentation.actionPath,
             createdAt: formatTime(new Date()),
           };
         }),
       );
       setError(errorMessage);
       setStatus("error");
+      if (errorPresentation.resetSession) {
+        notify(onSessionUnavailableRef.current, requestSnapshot.sessionId);
+      }
       return false;
     } finally {
       if (ownsStreamRequest()) {
@@ -656,6 +699,7 @@ export function useChatConversation({
       if (
         !failedMessage ||
         failedMessage.status !== "error" ||
+        failedMessage.streamRetryable !== true ||
         !requestSnapshot?.question?.trim() ||
         !retryScope ||
         retryScope.key !== activeScope?.key ||

@@ -14,9 +14,12 @@ import {
   ChatBubbleOutlineOutlined,
   CloseOutlined,
 } from "@mui/icons-material";
+import { useState } from "react";
 import ConversationItem, {
   ConversationItemSkeleton,
 } from "./ConversationItem.jsx";
+import DeleteSessionDialog from "./DeleteSessionDialog.jsx";
+import RenameSessionDialog from "./RenameSessionDialog.jsx";
 
 const DRAWER_WIDTH = 360;
 const DRAWER_TITLE_ID = "chat-session-drawer-title";
@@ -35,7 +38,15 @@ export default function ChatSessionDrawer({
   onSelectSession,
   onNewChat,
   onLoadMore,
+  onRenameSession,
+  onDeleteSession,
+  renamingSessionId = null,
+  deletingSessionId = null,
+  actionError = "",
+  onClearActionError,
 }) {
+  const [renameTarget, setRenameTarget] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const sessionItems = Array.isArray(sessions) ? sessions : [];
   const initialLoading = loading && sessionItems.length === 0;
   const canSelectSession = typeof onSelectSession === "function";
@@ -65,6 +76,30 @@ export default function ChatSessionDrawer({
     onLoadMore();
   }
 
+  async function handleRename(title) {
+    if (!renameTarget || !onRenameSession) return;
+    const renamed = await onRenameSession(renameTarget.id, title);
+    if (renamed) setRenameTarget(null);
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget || !onDeleteSession) return;
+    const deleted = await onDeleteSession(deleteTarget.id);
+    if (deleted) setDeleteTarget(null);
+  }
+
+  function openRenameDialog(session) {
+    onClearActionError?.();
+    setDeleteTarget(null);
+    setRenameTarget(session);
+  }
+
+  function openDeleteDialog(session) {
+    onClearActionError?.();
+    setRenameTarget(null);
+    setDeleteTarget(session);
+  }
+
   return (
     <Drawer
       anchor="right"
@@ -72,9 +107,11 @@ export default function ChatSessionDrawer({
       open={Boolean(open)}
       onClose={handleClose}
       ModalProps={{ keepMounted: true }}
-      PaperProps={{
-        component: "aside",
-        "aria-labelledby": DRAWER_TITLE_ID,
+      slotProps={{
+        paper: {
+          component: "aside",
+          "aria-labelledby": DRAWER_TITLE_ID,
+        },
       }}
       sx={{
         "& .MuiDrawer-paper": {
@@ -88,9 +125,8 @@ export default function ChatSessionDrawer({
       <Stack sx={{ height: "100%", minHeight: 0 }}>
         <Stack
           direction="row"
-          alignItems="center"
           spacing={1}
-          sx={{ px: 2, py: 1.5, flexShrink: 0 }}
+          sx={{ px: 2, py: 1.5, flexShrink: 0, alignItems: "center" }}
         >
           <ChatBubbleOutlineOutlined color="action" />
           <Typography
@@ -138,7 +174,7 @@ export default function ChatSessionDrawer({
           )}
 
           {!initialLoading && !error && sessionItems.length === 0 && (
-            <Stack alignItems="center" spacing={1} sx={{ px: 3, py: 6 }}>
+            <Stack spacing={1} sx={{ px: 3, py: 6, alignItems: "center" }}>
               <ChatBubbleOutlineOutlined
                 sx={{ fontSize: 44, color: "text.disabled" }}
               />
@@ -159,6 +195,8 @@ export default function ChatSessionDrawer({
                 session={session}
                 isActive={session.id === activeSessionId}
                 onSelect={handleSelectSession}
+                onRename={openRenameDialog}
+                onDelete={openDeleteDialog}
               />
             ))}
 
@@ -182,6 +220,28 @@ export default function ChatSessionDrawer({
           )}
         </Box>
       </Stack>
+      <RenameSessionDialog
+        open={Boolean(renameTarget)}
+        session={renameTarget}
+        loading={renamingSessionId === renameTarget?.id}
+        error={actionError}
+        onClose={() => {
+          onClearActionError?.();
+          setRenameTarget(null);
+        }}
+        onConfirm={handleRename}
+      />
+      <DeleteSessionDialog
+        open={Boolean(deleteTarget)}
+        session={deleteTarget}
+        loading={deletingSessionId === deleteTarget?.id}
+        error={actionError}
+        onClose={() => {
+          onClearActionError?.();
+          setDeleteTarget(null);
+        }}
+        onConfirm={handleDelete}
+      />
     </Drawer>
   );
 }

@@ -112,6 +112,8 @@ apiClient.interceptors.response.use(
       throw new ApiError(
         data.error?.message || "Request failed",
         response.status,
+        data.error?.code,
+        data.error?.details,
       );
     }
     return data;
@@ -142,6 +144,7 @@ apiClient.interceptors.response.use(
 export async function apiRequest(path, options = {}) {
   const { body, headers, ...rest } = options;
   const config = {
+    ...rest,
     url: path,
     method: rest.method || "GET",
     headers: { ...headers },

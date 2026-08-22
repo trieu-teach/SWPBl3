@@ -266,13 +266,14 @@ export default function App() {
                       }
                     />
                     <Route
-                      path="/ai-chat"
+                      path="/hoi-ai"
                       element={
                         <RequireAuth>
                           <ChatPage />
                         </RequireAuth>
                       }
                     />
+                    <Route path="/ai-chat" element={<Navigate to="/hoi-ai" replace />} />
                     <Route
                       path="/community"
                       element={
@@ -299,6 +300,7 @@ export default function App() {
                         </RequireAuth>
                       }
                     />
+                    <Route path="/bang-gia" element={<Navigate to="/subscription" replace />} />
                     <Route
                       path="/goi-dich-vu"
                       element={

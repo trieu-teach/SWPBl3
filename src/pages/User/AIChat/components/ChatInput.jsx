@@ -1,13 +1,13 @@
 import {
   Alert,
   Box,
-  CircularProgress,
   IconButton,
   Paper,
   TextField,
   Tooltip,
 } from "@mui/material";
 import SendRounded from "@mui/icons-material/SendRounded";
+import StopRounded from "@mui/icons-material/StopRounded";
 import { isLibraryContext } from "../chatContext.js";
 
 export default function ChatInput({
@@ -15,15 +15,16 @@ export default function ChatInput({
   value,
   onChange,
   onSend,
+  onStop,
   isSending,
   error,
 }) {
-  const isDisabled = !value.trim() || isSending;
+  const isDisabled = !value.trim();
 
   function handleKeyDown(event) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      if (!isDisabled) onSend();
+      if (!isDisabled && !isSending) onSend();
     }
   }
 
@@ -83,7 +84,7 @@ export default function ChatInput({
           size="small"
           variant="standard"
           disabled={isSending}
-          inputProps={{ "aria-label": "Nhập câu hỏi cho AI" }}
+          slotProps={{ htmlInput: { "aria-label": "Nhập câu hỏi cho AI" } }}
           sx={{
             "& .MuiInputBase-root": {
               alignItems: "flex-end",
@@ -94,14 +95,14 @@ export default function ChatInput({
             },
           }}
         />
-        <Tooltip title={isSending ? "Đang gửi" : "Gửi"}>
+        <Tooltip title={isSending ? "Dừng tạo câu trả lời" : "Gửi"}>
           <span>
             <IconButton
               type="button"
               color="primary"
-              onClick={onSend}
-              disabled={isDisabled}
-              aria-label={isSending ? "Đang gửi câu hỏi" : "Gửi câu hỏi"}
+              onClick={isSending ? onStop : onSend}
+              disabled={isSending ? typeof onStop !== "function" : isDisabled}
+              aria-label={isSending ? "Dừng tạo câu trả lời" : "Gửi câu hỏi"}
               sx={{
                 width: 38,
                 height: 38,
@@ -116,7 +117,7 @@ export default function ChatInput({
               }}
             >
               {isSending ? (
-                <CircularProgress size={18} color="inherit" />
+                <StopRounded sx={{ fontSize: 20 }} />
               ) : (
                 <SendRounded sx={{ fontSize: 19 }} />
               )}
