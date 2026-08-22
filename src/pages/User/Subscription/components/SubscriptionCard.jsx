@@ -44,7 +44,7 @@ const FEATURES = [
 const PLAN_COLORS = {
   STUDENT: { primary: "#6366f1", light: "#e0e7ff", lightDark: "#312e81" },
   PRO: { primary: "#6366f1", light: "#e0e7ff", lightDark: "#312e81" },
-  GOLD: { primary: "#f59e0b", light: "#fef3c7", lightDark: "#78350f" },
+  GOLD: { primary: "#6366f1", light: "#e0e7ff", lightDark: "#312e81" },
 };
 
 export default function SubscriptionCard({
@@ -152,15 +152,6 @@ export default function SubscriptionCard({
         </Box>
       )}
 
-      {/* Gold accent top bar */}
-      {planKey === "GOLD" && (
-        <Box
-          sx={{
-            height: 4,
-            background: `linear-gradient(90deg, ${planColors.primary} 0%, #fbbf24 100%)`,
-          }}
-        />
-      )}
 
       <CardContent
         sx={{
