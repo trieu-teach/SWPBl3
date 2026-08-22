@@ -20,6 +20,7 @@ import {
   CheckCircle,
 } from "@mui/icons-material";
 import { useColorMode } from "../../App.jsx";
+import { resetPassword, verifyResetCode } from "../../api/auth.api";
 import "./Login.css";
 
 export default function ResetPassword() {
@@ -116,11 +117,19 @@ export default function ResetPassword() {
     if (password !== confirmPassword) { setError("Mật khẩu xác nhận không khớp."); return; }
     setLoading(true);
     try {
-      const { resetPassword } = await import("../../api/auth.api");
-      await resetPassword(token, password, confirmPassword);
+      await resetPassword(token, password);
       setSuccess(true);
     } catch (err) {
-      setError(err?.message || "Không thể đặt lại. Liên kết có thể đã hết hạn.");
+      const code = err?.code || "";
+      let msg = "Không thể đặt lại. Liên kết có thể đã hết hạn.";
+      if (code === "auth/expired-action-code") {
+        msg = "Liên kết đã hết hạn. Vui lòng yêu cầu gửi lại.";
+      } else if (code === "auth/invalid-action-code") {
+        msg = "Liên kết không hợp lệ. Vui lòng yêu cầu gửi lại.";
+      } else if (code === "auth/weak-password") {
+        msg = "Mật khẩu quá yếu (tối thiểu 6 ký tự).";
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }
