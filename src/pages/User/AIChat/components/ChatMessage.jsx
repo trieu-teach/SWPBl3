@@ -22,11 +22,16 @@ import PersonOutlineOutlined from "@mui/icons-material/PersonOutlineOutlined";
 import ReplayRounded from "@mui/icons-material/ReplayRounded";
 import CheckRounded from "@mui/icons-material/CheckRounded";
 import ContentCopyRounded from "@mui/icons-material/ContentCopyRounded";
+import ThumbUpOutlined from "@mui/icons-material/ThumbUpOutlined";
+import ThumbUpRounded from "@mui/icons-material/ThumbUpRounded";
+import ThumbDownOutlined from "@mui/icons-material/ThumbDownOutlined";
+import ThumbDownRounded from "@mui/icons-material/ThumbDownRounded";
 import { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import ChatSources from "./ChatSources.jsx";
 import { splitMarkdownBlocks } from "../markdownTables.js";
+import { rateChatMessage } from "../../../../api/rating.api.js";
 
 const markdownComponents = {
   p: ({ children }) => (
@@ -202,11 +207,32 @@ export default function ChatMessage({
   onSourceSelect,
 }) {
   const [copied, setCopied] = useState(false);
+  const [ratedHelpful, setRatedHelpful] = useState(message.isHelpful ?? null);
+  const [isRating, setIsRating] = useState(false);
   const isUser = message.role === "user";
   const isLoading = message.status === "loading";
   const isError = message.status === "error";
   const isComplete = message.status === "complete";
   const hasSources = !isUser && message.sources?.length > 0;
+
+  async function handleRate(isHelpful) {
+    const targetMessageId = message.backendMessageId || message.id;
+    if (!targetMessageId || isRating) return;
+
+    // Optimistic UI updates: button state changes to Active immediately when clicked
+    const previous = ratedHelpful;
+    setRatedHelpful(isHelpful);
+    setIsRating(true);
+
+    try {
+      await rateChatMessage(targetMessageId, isHelpful);
+    } catch {
+      // Rollback to previous state on failure
+      setRatedHelpful(previous);
+    } finally {
+      setIsRating(false);
+    }
+  }
 
   async function copyMessage() {
     try {
@@ -392,6 +418,60 @@ export default function ChatMessage({
                 {copied ? <CheckRounded sx={{ fontSize: 15 }} /> : <ContentCopyRounded sx={{ fontSize: 15 }} />}
               </IconButton>
             </Tooltip>
+          )}
+          {!isUser && isComplete && (message.backendMessageId || message.id) && (
+            <>
+              <Tooltip title="Hữu ích">
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleRate(true)}
+                    disabled={isRating}
+                    aria-label="Đánh giá hữu ích"
+                    sx={{
+                      p: 0.5,
+                      color: ratedHelpful === true ? "primary.main" : "text.secondary",
+                      bgcolor: ratedHelpful === true ? "action.selected" : "transparent",
+                      "&:hover": {
+                        bgcolor: "action.hover",
+                        color: ratedHelpful === true ? "primary.main" : "primary.light",
+                      },
+                    }}
+                  >
+                    {ratedHelpful === true ? (
+                      <ThumbUpRounded sx={{ fontSize: 14 }} />
+                    ) : (
+                      <ThumbUpOutlined sx={{ fontSize: 14 }} />
+                    )}
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip title="Không hữu ích">
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleRate(false)}
+                    disabled={isRating}
+                    aria-label="Đánh giá không hữu ích"
+                    sx={{
+                      p: 0.5,
+                      color: ratedHelpful === false ? "error.main" : "text.secondary",
+                      bgcolor: ratedHelpful === false ? "action.selected" : "transparent",
+                      "&:hover": {
+                        bgcolor: "action.hover",
+                        color: ratedHelpful === false ? "error.main" : "error.light",
+                      },
+                    }}
+                  >
+                    {ratedHelpful === false ? (
+                      <ThumbDownRounded sx={{ fontSize: 14 }} />
+                    ) : (
+                      <ThumbDownOutlined sx={{ fontSize: 14 }} />
+                    )}
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </>
           )}
         </Stack>
 
