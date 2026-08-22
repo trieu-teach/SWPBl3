@@ -501,25 +501,6 @@ export default function Profile() {
                 Đổi mật khẩu
               </Button>
             </Box>
-
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                p: 2,
-                borderRadius: "var(--radius-md)",
-                bgcolor: "action.hover",
-              }}
-            >
-              <Box>
-                <Typography sx={{ fontWeight: 600, mb: 0.25 }}>Xác thực hai yếu tố</Typography>
-                <Typography sx={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
-                  Bảo vệ tài khoản với 2FA
-                </Typography>
-              </Box>
-              <Chip label="Chưa bật" size="small" sx={{ fontWeight: 600 }} />
-            </Box>
           </Box>
         </CardContent>
       </Card>

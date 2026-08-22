@@ -1,9 +1,6 @@
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
-  Chip,
   Skeleton,
   useTheme,
 } from "@mui/material";
@@ -30,9 +27,9 @@ const CustomTooltipContent = ({ active, payload, showStorage }) => {
         border: "1px solid",
         borderColor: "divider",
         borderRadius: 2,
-        p: 2,
+        p: 1.5,
         boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-        maxWidth: 320,
+        maxWidth: 280,
       }}
     >
       <Typography
@@ -41,7 +38,7 @@ const CustomTooltipContent = ({ active, payload, showStorage }) => {
           fontWeight: 700,
           color: "text.primary",
           display: "block",
-          mb: 0.5,
+          mb: 0.25,
         }}
       >
         {fullName}
@@ -49,9 +46,9 @@ const CustomTooltipContent = ({ active, payload, showStorage }) => {
       <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 0.5 }}>
         {email}
       </Typography>
-      <Box sx={{ mt: 1.5, pt: 1, borderTop: "1px solid", borderColor: "divider" }}>
+      <Box sx={{ mt: 1, pt: 1, borderTop: "1px solid", borderColor: "divider" }}>
         <Typography variant="body2" sx={{ fontWeight: 600 }}>
-          <strong style={{ color: "#6366f1", fontSize: "1.1rem" }}>{documentCount}</strong> tài liệu
+          <strong style={{ color: "#6366f1" }}>{documentCount}</strong> tài liệu
         </Typography>
         {showStorage && storageUsedBytes != null && (
           <Typography variant="caption" sx={{ color: "text.secondary", mt: 0.25, display: "block" }}>
@@ -75,29 +72,6 @@ function truncateText(text, maxLength) {
   return text.slice(0, maxLength - 3) + "...";
 }
 
-function EmptyState({ message }) {
-  return (
-    <Card variant="outlined" sx={{ borderRadius: 3 }}>
-      <CardContent
-        sx={{
-          height: 300,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Typography color="text.secondary" variant="body1">
-          {message}
-        </Typography>
-        <Typography color="text.disabled" variant="body2" sx={{ mt: 0.5 }}>
-          Thử thay đổi khoảng thời gian lọc
-        </Typography>
-      </CardContent>
-    </Card>
-  );
-}
-
 export default function TopUsersChart({
   data,
   loading,
@@ -110,31 +84,40 @@ export default function TopUsersChart({
 
   if (loading) {
     return (
-      <Card variant="outlined" sx={{ borderRadius: 3 }}>
-        <CardContent sx={{ p: 3 }}>
-          <Box sx={{ display: "flex", gap: 3, mb: 3 }}>
-            {[1, 2, 3].map((i) => (
-              <Box key={i}>
-                <Skeleton width={80} height={14} />
-                <Skeleton width={60} height={32} sx={{ mt: 0.5 }} />
-              </Box>
-            ))}
-          </Box>
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} variant="rounded" width="100%" height={48} sx={{ mb: 1 }} />
+      <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        <Box sx={{ display: "flex", gap: 3, mb: 2 }}>
+          {[1, 2, 3].map((i) => (
+            <Box key={i}>
+              <Skeleton width={60} height={12} />
+              <Skeleton width={50} height={28} sx={{ mt: 0.25 }} />
+            </Box>
           ))}
-        </CardContent>
-      </Card>
+        </Box>
+        <Box sx={{ flex: 1 }}>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton key={i} variant="rounded" width="100%" height={36} sx={{ mb: 0.75 }} />
+          ))}
+        </Box>
+      </Box>
     );
   }
 
   if (!data || data.length === 0) {
-    return <EmptyState message="Không có dữ liệu người dùng" />;
+    return (
+      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", py: 4 }}>
+        <Typography color="text.secondary" variant="body2">
+          Không có dữ liệu người dùng
+        </Typography>
+        <Typography color="text.disabled" variant="caption" sx={{ mt: 0.5 }}>
+          Thử thay đổi khoảng thời gian lọc
+        </Typography>
+      </Box>
+    );
   }
 
   const chartData = data.map((item, index) => ({
     ...item,
-    shortName: truncateText(item.fullName, 35),
+    shortName: truncateText(item.fullName, 30),
     fullName: item.fullName || "Người dùng không tên",
     metricValue: Math.round(Number(item[metricKey] ?? 0)),
     rank: index + 1,
@@ -147,75 +130,77 @@ export default function TopUsersChart({
   const maxValue = Math.max(...chartData.map((d) => d.metricValue));
 
   return (
-    <Card variant="outlined" sx={{ borderRadius: 3 }}>
-      <CardContent sx={{ p: 3 }}>
-        {/* Summary Stats */}
-        <Box
-          sx={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: { xs: 3, md: 5 },
-            mb: 3,
-            pb: 3,
-            borderBottom: "1px solid",
-            borderColor: "divider",
-          }}
-        >
+    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+      {/* Summary Stats */}
+      <Box
+        sx={{
+          display: "flex",
+          gap: { xs: 2, md: 3 },
+          mb: 2,
+          pb: 2,
+          borderBottom: "1px solid",
+          borderColor: "divider",
+          flexShrink: 0,
+          flexWrap: "wrap",
+        }}
+      >
+        <Box>
+          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: "0.65rem" }}>
+            TỔNG
+          </Typography>
+          <Typography
+            sx={{
+              fontWeight: 800,
+              color: barColor,
+              fontSize: "1.5rem",
+              lineHeight: 1.1,
+            }}
+          >
+            {totalValue.toLocaleString("vi-VN")}
+          </Typography>
+        </Box>
+        <Box>
+          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: "0.65rem" }}>
+            NGƯỜI DÙNG
+          </Typography>
+          <Typography
+            sx={{
+              fontWeight: 700,
+              color: "text.primary",
+              fontSize: "1.25rem",
+              lineHeight: 1.1,
+            }}
+          >
+            {data.length}
+          </Typography>
+        </Box>
+        {showStorage && totalStorage > 0 && (
           <Box>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-              TỔNG {metricLabel.toUpperCase()}
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: "0.65rem" }}>
+              DUNG LƯỢNG
             </Typography>
             <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 800,
-                color: barColor,
-                fontSize: { xs: "1.75rem", md: "2.25rem" },
-              }}
-            >
-              {totalValue.toLocaleString("vi-VN")}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-              NGƯỜI DÙNG
-            </Typography>
-            <Typography
-              variant="h4"
               sx={{
                 fontWeight: 700,
                 color: "text.primary",
-                fontSize: { xs: "1.5rem", md: "2rem" },
+                fontSize: "1rem",
+                lineHeight: 1.1,
               }}
             >
-              {data.length}
+              {formatFileSize(totalStorage)}
             </Typography>
           </Box>
-          {showStorage && totalStorage > 0 && (
-            <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                TỔNG DUNG LƯỢNG
-              </Typography>
-              <Typography
-                variant="h4"
-                sx={{
-                  fontWeight: 700,
-                  color: "text.primary",
-                  fontSize: { xs: "1.25rem", md: "1.5rem" },
-                }}
-              >
-                {formatFileSize(totalStorage)}
-              </Typography>
-            </Box>
-          )}
-        </Box>
+        )}
+      </Box>
 
-        {/* Chart */}
-        <ResponsiveContainer width="100%" height={Math.max(300, chartData.length * 52)}>
+      {/* Chart - stretches to fill available space */}
+      <Box sx={{ flex: 1, minHeight: 160 }}>
+        <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={chartData}
             layout="vertical"
-            margin={{ top: 8, right: 80, left: 8, bottom: 8 }}
+            margin={{ top: 2, right: 60, left: 2, bottom: 2 }}
+            key={`bar-chart-${data?.length || 0}`}
           >
             <CartesianGrid
               strokeDasharray="3 3"
@@ -224,7 +209,7 @@ export default function TopUsersChart({
             />
             <XAxis
               type="number"
-              tick={{ fontSize: 12, fill: theme.palette.text.secondary }}
+              tick={{ fontSize: 10, fill: theme.palette.text.secondary }}
               tickLine={false}
               axisLine={{ stroke: theme.palette.divider }}
               tickFormatter={formatXAxisTick}
@@ -234,10 +219,10 @@ export default function TopUsersChart({
             <YAxis
               type="category"
               dataKey="shortName"
-              tick={{ fontSize: 12, fill: theme.palette.text.primary }}
+              tick={{ fontSize: 10, fill: theme.palette.text.primary }}
               tickLine={false}
               axisLine={false}
-              width={200}
+              width={130}
             />
             <RechartsTooltip
               content={<CustomTooltipContent showStorage={showStorage} />}
@@ -252,8 +237,8 @@ export default function TopUsersChart({
             />
             <Bar
               dataKey="metricValue"
-              radius={[0, 6, 6, 0]}
-              maxBarSize={36}
+              radius={[0, 4, 4, 0]}
+              maxBarSize={28}
             >
               {chartData.map((entry, index) => (
                 <Cell
@@ -265,61 +250,59 @@ export default function TopUsersChart({
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+      </Box>
 
-        {/* Storage Column for Top Uploaders */}
-        {showStorage && (
-          <Box sx={{ mt: 3, pt: 2, borderTop: "1px solid", borderColor: "divider" }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
-              Chi tiết dung lượng tài liệu
-            </Typography>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              {chartData.slice(0, 5).map((item, index) => (
-                <Box
-                  key={item.userId || index}
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    p: 1.5,
-                    bgcolor: "action.hover",
-                    borderRadius: 2,
-                  }}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <Chip
-                      label={`#${index + 1}`}
-                      size="small"
-                      sx={{
-                        height: 20,
-                        fontSize: "0.7rem",
-                        fontWeight: 700,
-                        bgcolor: barColor,
-                        color: "white",
-                      }}
-                    />
-                    <Box>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {item.fullName}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {item.email}
-                      </Typography>
-                    </Box>
+      {/* Storage Details for Top Uploaders */}
+      {showStorage && (
+        <Box sx={{ mt: 1.5, pt: 1.5, borderTop: "1px solid", borderColor: "divider", flexShrink: 0 }}>
+          <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 1 }}>
+            Chi tiết dung lượng
+          </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+            {chartData.slice(0, 5).map((item, index) => (
+              <Box
+                key={item.userId || index}
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  p: 1,
+                  bgcolor: "action.hover",
+                  borderRadius: 1,
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0, flex: 1 }}>
+                  <Box
+                    sx={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: "50%",
+                      bgcolor: barColor,
+                      color: "white",
+                      fontSize: "0.6rem",
+                      fontWeight: 700,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {index + 1}
                   </Box>
-                  <Box sx={{ textAlign: "right" }}>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      {formatFileSize(Number(item.storageUsedBytes ?? 0))}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {item.documentCount} tài liệu
-                    </Typography>
-                  </Box>
+                  <Typography variant="caption" sx={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {item.fullName}
+                  </Typography>
                 </Box>
-              ))}
-            </Box>
+                <Box sx={{ textAlign: "right", flexShrink: 0, ml: 1 }}>
+                  <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                    {formatFileSize(Number(item.storageUsedBytes ?? 0))}
+                  </Typography>
+                </Box>
+              </Box>
+            ))}
           </Box>
-        )}
-      </CardContent>
-    </Card>
+        </Box>
+      )}
+    </Box>
   );
 }
