@@ -10,6 +10,13 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import {
+  canAdminDecide,
+  canAdminHide,
+  canAdminUnhide,
+  getAdminDocumentModeration,
+  getAdminDocumentStatus,
+} from "../utils/admin-document-status.js";
 
 function Field({ label, value }) {
   return (
@@ -29,9 +36,11 @@ export default function AdminDocumentDetailDialog({
 }) {
   if (!document) return null;
 
-  const isPendingPublicDocument =
-    document.visibility === "PUBLIC" && document.moderationStatus === "PENDING";
-  const canToggleHidden = document.moderationStatus === "APPROVED";
+  const moderation = getAdminDocumentModeration(document);
+  const status = getAdminDocumentStatus(document.status);
+  const canDecide = canAdminDecide(document);
+  const canHide = canAdminHide(document);
+  const canUnhide = canAdminUnhide(document);
 
   return (
     <Dialog open onClose={onClose} fullWidth maxWidth="md">
@@ -52,19 +61,13 @@ export default function AdminDocumentDetailDialog({
           />
           <Chip
             size="small"
-            label={document.moderationStatus}
-            color={
-              document.moderationStatus === "APPROVED"
-                ? "success"
-                : document.moderationStatus === "REJECTED"
-                  ? "error"
-                  : "warning"
-            }
+            label={moderation.label}
+            color={moderation.color}
           />
           <Chip
             size="small"
-            label={document.status === "HIDDEN" ? "Đã ẩn" : "Hoạt động"}
-            color={document.status === "HIDDEN" ? "error" : "success"}
+            label={status.label}
+            color={status.color}
             variant="outlined"
           />
         </Stack>
@@ -113,7 +116,7 @@ export default function AdminDocumentDetailDialog({
       </DialogContent>
       <DialogActions sx={{ flexWrap: "wrap" }}>
         <Button onClick={() => onPreview(document)}>Xem file</Button>
-        {isPendingPublicDocument && (
+        {canDecide && (
           <>
             <Button
               color="success"
@@ -129,17 +132,17 @@ export default function AdminDocumentDetailDialog({
             </Button>
           </>
         )}
-        {canToggleHidden && (
+        {(canHide || canUnhide) && (
           <Button
-            color={document.status === "HIDDEN" ? "success" : "error"}
+            color={canUnhide ? "success" : "error"}
             onClick={() =>
               onAction({
-                type: document.status === "HIDDEN" ? "unhide" : "hide",
+                type: canUnhide ? "unhide" : "hide",
                 document,
               })
             }
           >
-            {document.status === "HIDDEN" ? "Khôi phục" : "Ẩn"}
+            {canUnhide ? "Khôi phục" : "Ẩn"}
           </Button>
         )}
         <Button onClick={onClose}>Đóng</Button>

@@ -23,6 +23,11 @@ import {
   RefreshOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
+import {
+  canAdminDecide,
+  getAdminDocumentModeration,
+  getAdminDocumentStatus,
+} from "../utils/admin-document-status.js";
 
 function formatSubmittedAt(value) {
   if (!value) return "—";
@@ -118,8 +123,12 @@ export default function AdminDocumentsTable({ admin }) {
                 </TableRow>
               )}
               {!admin.loading &&
-                admin.documents.map((document) => (
-                  <TableRow key={document.id} hover>
+                admin.documents.map((document) => {
+                  const moderation = getAdminDocumentModeration(document);
+                  const status = getAdminDocumentStatus(document.status);
+
+                  return (
+                    <TableRow key={document.id} hover>
                     <TableCell sx={{ maxWidth: 300 }}>
                       <Typography
                         fontWeight={700}
@@ -158,32 +167,16 @@ export default function AdminDocumentsTable({ admin }) {
                     <TableCell>
                       <Chip
                         size="small"
-                        label={
-                          document.moderationStatus === "APPROVED"
-                            ? "Đã duyệt"
-                            : document.moderationStatus === "REJECTED"
-                              ? "Từ chối"
-                              : "Chờ duyệt"
-                        }
-                        color={
-                          document.moderationStatus === "APPROVED"
-                            ? "success"
-                            : document.moderationStatus === "REJECTED"
-                              ? "error"
-                              : "warning"
-                        }
+                        label={moderation.label}
+                        color={moderation.color}
                         variant="outlined"
                       />
                     </TableCell>
                     <TableCell>
                       <Chip
                         size="small"
-                        label={
-                          document.status === "HIDDEN" ? "Đã ẩn" : "Hoạt động"
-                        }
-                        color={
-                          document.status === "HIDDEN" ? "error" : "success"
-                        }
+                        label={status.label}
+                        color={status.color}
                       />
                     </TableCell>
                     <TableCell align="right">
@@ -194,7 +187,7 @@ export default function AdminDocumentsTable({ admin }) {
                       </Tooltip>
                       <Tooltip
                         title={
-                          document.moderationStatus === "PENDING"
+                          canAdminDecide(document)
                             ? "Chi tiết và kiểm duyệt"
                             : "Xem chi tiết"
                         }
@@ -207,8 +200,9 @@ export default function AdminDocumentsTable({ admin }) {
                         </IconButton>
                       </Tooltip>
                     </TableCell>
-                  </TableRow>
-                ))}
+                    </TableRow>
+                  );
+                })}
             </TableBody>
           </Table>
         </TableContainer>
