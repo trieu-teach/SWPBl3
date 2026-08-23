@@ -9,6 +9,7 @@ import {
   resolveModerationReport,
 } from "../../../../api/moderation.api.js";
 import { useToast } from "../../../../components/Toast/ToastProvider.jsx";
+import { canUnhideModeratedDocument } from "../../../../lib/moderation.js";
 
 const EMPTY_META = {
   page: 1,
@@ -158,6 +159,13 @@ export default function useModerationReports() {
 
   async function confirmAction(reason) {
     if (!action || !selectedReport) return;
+    if (action.type === "unhide" && !canUnhideModeratedDocument(document)) {
+      setAction(null);
+      toast.warning(
+        "Tài liệu vẫn đang bị hệ thống kiểm duyệt giữ lại và không thể khôi phục từ báo cáo.",
+      );
+      return;
+    }
     setActing(true);
     try {
       if (action.type === "hide" || action.type === "unhide") {

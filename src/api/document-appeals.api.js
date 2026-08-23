@@ -22,3 +22,15 @@ export const createDocumentAppeal = (documentId, reason, description) =>
 
 export const getMyAppeals = (params) =>
   apiRequest(withQuery("/appeals", params));
+
+export const getAdminDocumentAppeals = (params) =>
+  apiRequest(withQuery("/admin/appeals", params));
+
+export const decideAdminDocumentAppeal = (appealId, status, reviewNote) =>
+  apiRequest(`/admin/appeals/${appealId}`, {
+    method: "PATCH",
+    body: {
+      status,
+      ...(reviewNote?.trim() ? { reviewNote: reviewNote.trim() } : {}),
+    },
+  });

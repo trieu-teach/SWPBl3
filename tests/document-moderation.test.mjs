@@ -6,12 +6,14 @@ import {
   DOCUMENT_MODERATION_STATUS,
   buildModerationKeywordIdMap,
   canDecideDocumentModeration,
+  canDecideDocumentAppeal,
   canHideModeratedDocument,
   canBanOwnerFromModerationReview,
   canUnhideModeratedDocument,
   getDocumentModerationFlagPresentation,
   getDocumentModerationStatusPresentation,
   getDocumentAppealState,
+  getDocumentAppealStatusPresentation,
   getOwnerModerationNotice,
   getUploadModerationOutcome,
   isQueuedDocumentModerationStatus,
@@ -220,6 +222,23 @@ test("only opens an appeal before the deadline for eligible statuses", () => {
   assert.equal(
     getDocumentAppealState({ moderationStatus: "APPROVED" }, now),
     "unavailable",
+  );
+});
+
+test("only allows pending appeals to receive a final decision", () => {
+  assert.equal(canDecideDocumentAppeal({ status: "PENDING" }), true);
+  for (const status of [
+    "UNDER_REVIEW",
+    "APPROVED",
+    "REJECTED",
+    "EXPIRED",
+    "CANCELLED",
+  ]) {
+    assert.equal(canDecideDocumentAppeal({ status }), false);
+  }
+  assert.equal(
+    getDocumentAppealStatusPresentation("APPROVED").label,
+    "Đã chấp nhận",
   );
 });
 

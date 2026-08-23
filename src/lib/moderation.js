@@ -162,6 +162,35 @@ export function getUploadModerationOutcome(document) {
   return "uploaded";
 }
 
+export const DOCUMENT_APPEAL_STATUS_OPTIONS = [
+  { value: "PENDING", label: "Chờ xử lý", color: "warning" },
+  { value: "UNDER_REVIEW", label: "Đang xem xét", color: "info" },
+  { value: "APPROVED", label: "Đã chấp nhận", color: "success" },
+  { value: "REJECTED", label: "Đã từ chối", color: "error" },
+  { value: "EXPIRED", label: "Đã hết hạn", color: "default" },
+  { value: "CANCELLED", label: "Đã hủy", color: "default" },
+];
+
+const appealStatusPresentation = Object.fromEntries(
+  DOCUMENT_APPEAL_STATUS_OPTIONS.map(({ value, label, color }) => [
+    value,
+    { label, color },
+  ]),
+);
+
+export function getDocumentAppealStatusPresentation(status) {
+  return (
+    appealStatusPresentation[status] || {
+      label: status || "—",
+      color: "default",
+    }
+  );
+}
+
+export function canDecideDocumentAppeal(appeal) {
+  return appeal?.status === "PENDING";
+}
+
 export const REPORT_REASON_OPTIONS = [
   { value: "SPAM", label: "Nội dung rác" },
   { value: "INAPPROPRIATE", label: "Nội dung không phù hợp" },
