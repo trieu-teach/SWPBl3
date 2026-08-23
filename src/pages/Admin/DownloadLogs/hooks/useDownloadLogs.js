@@ -66,9 +66,17 @@ export default function useDownloadLogs() {
     setFilters((current) => ({ ...current, [name]: value }));
   }
 
-  function updateSort(name, value) {
+  function toggleSort(field) {
     setPage(1);
-    setSort((current) => ({ ...current, [name]: value }));
+    setSort((current) => {
+      if (current.sortBy !== field) {
+        return { sortBy: field, sortOrder: "desc" };
+      }
+      if (current.sortOrder === "desc") {
+        return { sortBy: field, sortOrder: "asc" };
+      }
+      return INITIAL_SORT;
+    });
   }
 
   function resetFilters() {
@@ -102,7 +110,7 @@ export default function useDownloadLogs() {
     hasActiveFilters,
     setPage,
     updateFilter,
-    updateSort,
+    toggleSort,
     resetFilters,
     retry,
   };

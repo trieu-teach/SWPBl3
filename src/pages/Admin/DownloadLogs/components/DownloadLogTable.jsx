@@ -1,5 +1,6 @@
 import {
   Alert,
+  AlertTitle,
   Avatar,
   Box,
   Button,
@@ -10,6 +11,7 @@ import {
   DialogContent,
   IconButton,
   Pagination,
+  TableSortLabel,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -435,7 +437,7 @@ function DetailDialog({ log, open, onClose }) {
 // ─── Main Table Component ───────────────────────────────────────────────────────
 
 export default function DownloadLogTable({ download }) {
-  const { logs, loading, error, total, page, pageCount } = download;
+  const { logs, loading, error, total, page, pageCount, sort } = download;
   const [selectedLog, setSelectedLog] = useState(null);
 
   if (error) {
@@ -552,16 +554,42 @@ export default function DownloadLogTable({ download }) {
 
           {/* Lượt tải */}
           <Box sx={{ gridColumn: 5, textAlign: "center" }}>
-            <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ letterSpacing: "0.06em", textTransform: "uppercase", fontSize: "0.68rem" }}>
+            <TableSortLabel
+              active={sort.sortBy === "downloadCount"}
+              direction={
+                sort.sortBy === "downloadCount" ? sort.sortOrder : "desc"
+              }
+              onClick={() => download.toggleSort("downloadCount")}
+              sx={{
+                color: "text.secondary",
+                fontSize: "0.68rem",
+                fontWeight: 700,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+              }}
+            >
               Lượt tải
-            </Typography>
+            </TableSortLabel>
           </Box>
 
           {/* Thời gian */}
           <Box sx={{ gridColumn: 6 }}>
-            <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ letterSpacing: "0.06em", textTransform: "uppercase", fontSize: "0.68rem" }}>
+            <TableSortLabel
+              active={sort.sortBy === "downloadedAt"}
+              direction={
+                sort.sortBy === "downloadedAt" ? sort.sortOrder : "desc"
+              }
+              onClick={() => download.toggleSort("downloadedAt")}
+              sx={{
+                color: "text.secondary",
+                fontSize: "0.68rem",
+                fontWeight: 700,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+              }}
+            >
               Thời gian
-            </Typography>
+            </TableSortLabel>
           </Box>
 
           {/* Tác vụ */}

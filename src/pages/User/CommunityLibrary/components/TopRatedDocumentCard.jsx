@@ -124,7 +124,7 @@ export default function TopRatedDocumentCard({
               <Chip
                 size="small"
                 icon={<ThumbUpAltOutlined sx={{ fontSize: "14px !important" }} />}
-                label={`${helpfulPercent}% hữu ích`}
+                label={`${helpfulPercent}% đánh giá cao`}
                 color={helpfulPercent >= 80 ? "success" : "primary"}
                 variant="filled"
                 sx={{ fontWeight: 700, fontSize: "0.75rem" }}
@@ -203,7 +203,7 @@ export default function TopRatedDocumentCard({
             <Stack direction="row" alignItems="center" spacing={0.5}>
               <ThumbUpAltOutlined sx={{ fontSize: 16, color: "success.main" }} />
               <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                {helpfulPercent ?? 0}% hữu ích · {totalVotes} đánh giá
+                {helpfulPercent ?? 0}% đánh giá cao · {totalVotes} đánh giá
               </Typography>
             </Stack>
 

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  getAdminUserDetail,
   getAdminUsers,
   updateAdminUserRole,
   updateAdminUserStatus,
@@ -14,17 +15,20 @@ export default function useAdminUsers() {
   const [filters, setFilters] = useState(INITIAL_FILTERS);
   const [searchInput, setSearchInput] = useState("");
   const [page, setPage] = useState(1);
+  const [sort, setSort] = useState({ sortBy: "", sortOrder: "" });
   const [meta, setMeta] = useState({ totalItems: 0, totalPages: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState("");
   const [statusTarget, setStatusTarget] = useState(null);
   const [roleTarget, setRoleTarget] = useState(null);
   const [updating, setUpdating] = useState(false);
 
   const query = useMemo(
-    () => ({ ...filters, page, limit: 20 }),
-    [filters, page],
+    () => ({ ...filters, ...sort, page, limit: 20 }),
+    [filters, sort, page],
   );
 
   const load = useCallback(async () => {
@@ -59,6 +63,33 @@ export default function useAdminUsers() {
     setSearchInput("");
     setFilters(INITIAL_FILTERS);
     setPage(1);
+  }
+
+  function toggleSort() {
+    setPage(1);
+    setSort((current) => {
+      if (!current.sortBy) return { sortBy: "fullName", sortOrder: "asc" };
+      if (current.sortOrder === "asc") {
+        return { sortBy: "fullName", sortOrder: "desc" };
+      }
+      return { sortBy: "", sortOrder: "" };
+    });
+  }
+
+  async function openDetail(user) {
+    setSelectedUser(user);
+    setDetailLoading(true);
+    setDetailError("");
+    try {
+      const detail = await getAdminUserDetail(user.id);
+      setSelectedUser((current) => ({ ...current, ...detail }));
+    } catch (requestError) {
+      setDetailError(
+        requestError.message || "Không thể tải chi tiết người dùng.",
+      );
+    } finally {
+      setDetailLoading(false);
+    }
   }
 
   async function changeStatus(reason) {
@@ -125,10 +156,13 @@ export default function useAdminUsers() {
     filters,
     searchInput,
     page,
+    sort,
     meta,
     loading,
     error,
     selectedUser,
+    detailLoading,
+    detailError,
     statusTarget,
     roleTarget,
     updating,
@@ -137,6 +171,8 @@ export default function useAdminUsers() {
     updateFilter,
     search,
     resetFilters,
+    toggleSort,
+    openDetail,
     load,
     setSelectedUser,
     setStatusTarget,
