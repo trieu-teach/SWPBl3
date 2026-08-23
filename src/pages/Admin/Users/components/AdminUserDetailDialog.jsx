@@ -261,22 +261,6 @@ export default function AdminUserDetailDialog({
               <DetailRow label="Tổng chi tiêu" value={formatCurrency(user.transactions.totalSpent)} />
               <DetailRow label="Số giao dịch" value={user.transactions.orderCount} />
             </SummaryGrid>
-            <RecentItems
-              items={user.transactions.items}
-              emptyText="Chưa có giao dịch thanh toán."
-              renderItem={(transaction) => (
-                <Stack key={transaction.id} direction="row" justifyContent="space-between" gap={2} sx={{ py: 1.25 }}>
-                  <Box>
-                    <Typography fontWeight={650}>{transaction.planName} ({transaction.planCode})</Typography>
-                    <Typography variant="caption" color="text.secondary">{transaction.invoiceNumber}</Typography>
-                  </Box>
-                  <Box textAlign="right">
-                    <Typography>{formatCurrency(transaction.amount)}</Typography>
-                    <Typography variant="caption" color="text.secondary">{formatDate(transaction.paidAt || transaction.createdAt)}</Typography>
-                  </Box>
-                </Stack>
-              )}
-            />
           </>
         )}
 
