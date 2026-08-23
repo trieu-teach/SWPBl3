@@ -7,7 +7,6 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
-  Stack,
   Typography,
 } from "@mui/material";
 import {
@@ -54,31 +53,42 @@ export default function AdminDocumentDetailDialog({
     <Dialog open onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>Chi tiết tài liệu</DialogTitle>
       <DialogContent dividers>
-        <Typography variant="h6" fontWeight={750}>
-          {document.title}
-        </Typography>
-        <Typography color="text.secondary">{document.fileName}</Typography>
-        <Stack direction="row" gap={1} flexWrap="wrap" sx={{ my: 2 }}>
-          <Chip
-            size="small"
-            color={
-              document.visibility === "PUBLIC" ? "success" : "secondary"
-            }
-            variant="outlined"
-            label={document.visibility === "PUBLIC" ? "Công khai" : "Riêng tư"}
-          />
-          <Chip
-            size="small"
-            label={moderation.label}
-            color={moderation.color}
-          />
-          <Chip
-            size="small"
-            label={status.label}
-            color={status.color}
-            variant="outlined"
-          />
-        </Stack>
+        <Box sx={{ mb: 2.5 }}>
+          <Typography variant="h6" fontWeight={750}>
+            {document.title}
+          </Typography>
+          <Typography color="text.secondary" sx={{ mt: 0.75 }}>
+            {document.fileName}
+          </Typography>
+          <Box
+            sx={{
+              mt: 2,
+              display: "flex",
+              flexWrap: "wrap",
+              "& .MuiChip-root": { mr: 1, mb: 1 },
+            }}
+          >
+            <Chip
+              size="small"
+              color={
+                document.visibility === "PUBLIC" ? "success" : "secondary"
+              }
+              variant="outlined"
+              label={document.visibility === "PUBLIC" ? "Công khai" : "Riêng tư"}
+            />
+            <Chip
+              size="small"
+              label={moderation.label}
+              color={moderation.color}
+            />
+            <Chip
+              size="small"
+              label={status.label}
+              color={status.color}
+              variant="outlined"
+            />
+          </Box>
+        </Box>
         <Divider sx={{ mb: 2 }} />
         <Box
           sx={{

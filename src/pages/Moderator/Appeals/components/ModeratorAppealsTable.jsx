@@ -1,9 +1,9 @@
 import {
+  Box,
   Button,
   Chip,
   CircularProgress,
   Paper,
-  Stack,
   Table,
   TableBody,
   TableCell,
@@ -23,18 +23,39 @@ export default function ModeratorAppealsTable({ moderation }) {
   return (
     <Paper variant="outlined" sx={{ borderRadius: 3, overflow: "hidden" }}>
       {moderation.loading ? (
-        <Stack alignItems="center" gap={1.5} sx={{ py: 8 }}>
+        <Box
+          sx={{
+            minHeight: 240,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1.5,
+            textAlign: "center",
+          }}
+        >
           <CircularProgress size={30} />
           <Typography color="text.secondary">Đang tải khiếu nại...</Typography>
-        </Stack>
+        </Box>
       ) : moderation.appeals.length === 0 ? (
-        <Stack alignItems="center" gap={1} sx={{ py: 8, px: 2, textAlign: "center" }}>
+        <Box
+          sx={{
+            minHeight: 240,
+            px: 2,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
+            textAlign: "center",
+          }}
+        >
           <GavelOutlined color="disabled" sx={{ fontSize: 48 }} />
           <Typography fontWeight={750}>Không có khiếu nại ở trạng thái này</Typography>
           <Typography color="text.secondary">
             Chọn trạng thái khác hoặc thử tải lại danh sách.
           </Typography>
-        </Stack>
+        </Box>
       ) : (
         <TableContainer>
           <Table sx={{ minWidth: 860 }}>

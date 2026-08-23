@@ -37,7 +37,15 @@ export default function ModeratorAppeals() {
       </Stack>
 
       <Card variant="outlined" sx={{ p: 2, mb: 3, borderRadius: 3 }}>
-        <Stack direction={{ xs: "column", sm: "row" }} gap={1.25} justifyContent="flex-end">
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: "240px auto" },
+            columnGap: 2,
+            rowGap: 1.5,
+            justifyContent: { sm: "end" },
+          }}
+        >
           <FormControl size="small" sx={{ minWidth: 220 }}>
             <InputLabel>Trạng thái</InputLabel>
             <Select value={moderation.status} label="Trạng thái" onChange={(event) => moderation.changeStatus(event.target.value)}>
@@ -46,8 +54,15 @@ export default function ModeratorAppeals() {
               ))}
             </Select>
           </FormControl>
-          <Button variant="outlined" startIcon={<RefreshOutlined />} onClick={moderation.load}>Tải lại</Button>
-        </Stack>
+          <Button
+            variant="outlined"
+            startIcon={<RefreshOutlined />}
+            onClick={moderation.load}
+            sx={{ minHeight: 40, px: 2.5 }}
+          >
+            Tải lại
+          </Button>
+        </Box>
       </Card>
 
       {moderation.error && (
