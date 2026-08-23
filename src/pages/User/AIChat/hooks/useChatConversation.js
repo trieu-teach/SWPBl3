@@ -15,6 +15,7 @@ import {
 import {
   CHAT_MODE_DOCUMENT,
   CHAT_MODE_LIBRARY,
+  hasSelectedSource,
 } from "../chatContext.js";
 
 const HISTORY_PAGE_LIMIT = 50;
@@ -642,6 +643,15 @@ export function useChatConversation({
         : inputValue
       ).trim();
       if (!activeScope || !content || sendingRef.current) return false;
+
+      // Guard: block sending when in LIBRARY mode without any selected source.
+      // This is a hard check at the logic layer — do not rely on UI disabled state alone.
+      if (
+        activeScope.context.mode === CHAT_MODE_LIBRARY &&
+        !hasSelectedSource(activeScope.context.libraryFilters)
+      ) {
+        return false;
+      }
 
       const knownSessionId =
         suppliedSessionId ||
