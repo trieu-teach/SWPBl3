@@ -6,6 +6,7 @@ import FactCheckOutlined from "@mui/icons-material/FactCheckOutlined";
 import DownloadOutlined from "@mui/icons-material/DownloadOutlined";
 import FolderOpenOutlined from "@mui/icons-material/FolderOpenOutlined";
 import HistoryOutlined from "@mui/icons-material/HistoryOutlined";
+import GavelOutlined from "@mui/icons-material/GavelOutlined";
 import LocalOfferOutlined from "@mui/icons-material/LocalOfferOutlined";
 import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
 import ReportProblemOutlined from "@mui/icons-material/ReportProblemOutlined";
@@ -74,6 +75,11 @@ const MODERATOR_NAVIGATION = [
     label: "Hàng chờ tài liệu",
     path: "/moderator/moderation",
     icon: FactCheckOutlined,
+  },
+  {
+    label: "Khiếu nại",
+    path: "/moderator/appeals",
+    icon: GavelOutlined,
   },
   {
     label: "Báo cáo vi phạm",

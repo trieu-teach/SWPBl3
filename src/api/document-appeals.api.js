@@ -28,3 +28,17 @@ export function createDocumentAppeal(documentId, reason, description) {
 export function getMyAppeals(params = {}) {
   return apiRequest(withQuery("/appeals", params));
 }
+
+export function getModerationAppeals(params = {}) {
+  return apiRequest(withQuery("/admin/appeals", params));
+}
+
+export function decideModerationAppeal(id, status, reviewNote) {
+  return apiRequest(`/admin/appeals/${id}`, {
+    method: "PATCH",
+    body: {
+      status,
+      ...(reviewNote?.trim() ? { reviewNote: reviewNote.trim() } : {}),
+    },
+  });
+}
