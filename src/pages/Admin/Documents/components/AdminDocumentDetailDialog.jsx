@@ -33,6 +33,9 @@ export default function AdminDocumentDetailDialog({
   onClose,
   onPreview,
   onAction,
+  onClaim,
+  claimed,
+  loading,
 }) {
   if (!document) return null;
 
@@ -118,14 +121,25 @@ export default function AdminDocumentDetailDialog({
         <Button onClick={() => onPreview(document)}>Xem file</Button>
         {canDecide && (
           <>
+            {!claimed && (
+              <Button
+                variant="contained"
+                onClick={onClaim}
+                disabled={loading}
+              >
+                Nhận xử lý
+              </Button>
+            )}
             <Button
               color="success"
+              disabled={!claimed || loading}
               onClick={() => onAction({ type: "approve", document })}
             >
               Duyệt
             </Button>
             <Button
               color="error"
+              disabled={!claimed || loading}
               onClick={() => onAction({ type: "reject", document })}
             >
               Từ chối

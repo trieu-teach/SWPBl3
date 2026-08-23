@@ -28,6 +28,7 @@ export default function AdminDocumentsFilters({ admin }) {
           size="small"
           label="Quyền riêng tư"
           value={admin.filters.visibility}
+          disabled={admin.reviewQueueOnly}
           onChange={(event) =>
             admin.updateFilter("visibility", event.target.value)
           }
@@ -41,6 +42,7 @@ export default function AdminDocumentsFilters({ admin }) {
           size="small"
           label="Kiểm duyệt"
           value={admin.filters.moderationStatus}
+          disabled={admin.reviewQueueOnly}
           onChange={(event) =>
             admin.updateFilter("moderationStatus", event.target.value)
           }
@@ -57,6 +59,7 @@ export default function AdminDocumentsFilters({ admin }) {
           size="small"
           label="Tài liệu"
           value={admin.filters.status}
+          disabled={admin.reviewQueueOnly}
           onChange={(event) => admin.updateFilter("status", event.target.value)}
         >
           <MenuItem value="">Tất cả</MenuItem>
