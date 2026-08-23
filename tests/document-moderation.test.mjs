@@ -7,6 +7,7 @@ import {
   buildModerationKeywordIdMap,
   canDecideDocumentModeration,
   canHideModeratedDocument,
+  canBanOwnerFromModerationReview,
   canUnhideModeratedDocument,
   getDocumentModerationFlagPresentation,
   getDocumentModerationStatusPresentation,
@@ -169,4 +170,20 @@ test("maps matched keyword names to backend keyword ids", () => {
 
   assert.equal(ids["ma túy"], "keyword-1");
   assert.equal(ids.crack, "keyword-2");
+});
+
+test("only allows an admin-provided owner ban action for active accounts", () => {
+  assert.equal(
+    canBanOwnerFromModerationReview({ canBan: true, status: "ACTIVE" }),
+    true,
+  );
+  assert.equal(
+    canBanOwnerFromModerationReview({ canBan: false, status: "ACTIVE" }),
+    false,
+  );
+  assert.equal(
+    canBanOwnerFromModerationReview({ canBan: true, status: "BLOCKED" }),
+    false,
+  );
+  assert.equal(canBanOwnerFromModerationReview(null), false);
 });

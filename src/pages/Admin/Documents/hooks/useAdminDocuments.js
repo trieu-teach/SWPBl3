@@ -10,9 +10,11 @@ import {
   setAdminDocumentHidden,
 } from "../../../../api/admin-documents.api.js";
 import { getModerationKeywords } from "../../../../api/moderation-keywords.api.js";
+import { updateAdminUserStatus } from "../../../../api/admin-users.api.js";
 import { useToast } from "../../../../components/Toast/ToastProvider.jsx";
 import {
   buildModerationKeywordIdMap,
+  canBanOwnerFromModerationReview,
   canDecideDocumentModeration,
 } from "../../../../lib/moderation.js";
 
@@ -44,6 +46,7 @@ export default function useAdminDocuments() {
   const [acting, setActing] = useState(false);
   const [claimedDocumentId, setClaimedDocumentId] = useState("");
   const [moderationKeywordIds, setModerationKeywordIds] = useState({});
+  const [banTarget, setBanTarget] = useState(null);
 
   const query = useMemo(
     () => ({ ...filters, ...sort, page, limit: 20 }),
@@ -133,6 +136,42 @@ export default function useAdminDocuments() {
     setDetail(null);
     setClaimedDocumentId("");
     setModerationKeywordIds({});
+    setBanTarget(null);
+  }
+
+  function requestOwnerBan(ownerReview) {
+    if (!canBanOwnerFromModerationReview(ownerReview)) return;
+    setBanTarget({
+      id: ownerReview.ownerId,
+      status: ownerReview.status,
+      email: detail?.owner?.email || "tài khoản chủ tài liệu",
+      fullName: detail?.owner?.fullName,
+    });
+  }
+
+  async function banOwner(reason) {
+    if (!banTarget?.id) return;
+    setActing(true);
+    try {
+      await updateAdminUserStatus(
+        banTarget.id,
+        "BLOCKED",
+        reason?.trim(),
+      );
+      const refreshed = detail?.id
+        ? await getAdminDocument(detail.id)
+        : null;
+      if (refreshed) setDetail(refreshed);
+      setBanTarget(null);
+      await load();
+      toast.success("Đã khóa tài khoản chủ tài liệu.");
+    } catch (requestError) {
+      toast.error(
+        requestError.message || "Không thể khóa tài khoản chủ tài liệu.",
+      );
+    } finally {
+      setActing(false);
+    }
   }
 
   async function handleQueueConflict() {
@@ -269,6 +308,7 @@ export default function useAdminDocuments() {
     acting,
     claimedDocumentId,
     moderationKeywordIds,
+    banTarget,
     setSearchInput,
     setPage,
     updateFilter,
@@ -280,10 +320,13 @@ export default function useAdminDocuments() {
     closeDetail,
     claimDetail,
     exceptKeyword,
+    requestOwnerBan,
+    banOwner,
     openPreview,
     setDetail,
     setPreview,
     setAction,
+    setBanTarget,
     runAction,
   };
 }

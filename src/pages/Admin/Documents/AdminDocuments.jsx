@@ -5,6 +5,7 @@ import AdminDocumentsFilters from "./components/AdminDocumentsFilters.jsx";
 import AdminDocumentsHeader from "./components/AdminDocumentsHeader.jsx";
 import AdminDocumentsTable from "./components/AdminDocumentsTable.jsx";
 import ModerationDialog from "./components/ModerationDialog.jsx";
+import UserStatusDialog from "../Users/components/UserStatusDialog.jsx";
 import useAdminDocuments from "./hooks/useAdminDocuments.js";
 
 export default function AdminDocuments() {
@@ -25,12 +26,19 @@ export default function AdminDocuments() {
         onAction={admin.setAction}
         onClaim={admin.claimDetail}
         onExceptKeyword={admin.exceptKeyword}
+        onBanOwner={admin.requestOwnerBan}
       />
       <ModerationDialog
         action={admin.action}
         loading={admin.acting}
         onClose={() => admin.setAction(null)}
         onConfirm={admin.runAction}
+      />
+      <UserStatusDialog
+        user={admin.banTarget}
+        loading={admin.acting}
+        onClose={() => admin.setBanTarget(null)}
+        onConfirm={admin.banOwner}
       />
       <DocumentPreviewDialog
         preview={admin.preview}

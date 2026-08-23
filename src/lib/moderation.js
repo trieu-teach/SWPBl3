@@ -87,6 +87,10 @@ export function buildModerationKeywordIdMap(keywords) {
   );
 }
 
+export function canBanOwnerFromModerationReview(ownerReview) {
+  return ownerReview?.canBan === true && ownerReview.status === "ACTIVE";
+}
+
 export const REPORT_REASON_OPTIONS = [
   { value: "SPAM", label: "Nội dung rác" },
   { value: "INAPPROPRIATE", label: "Nội dung không phù hợp" },

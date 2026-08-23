@@ -14,6 +14,7 @@ import {
   Typography,
 } from "@mui/material";
 import {
+  canBanOwnerFromModerationReview,
   canDecideDocumentModeration,
   canHideModeratedDocument,
   canUnhideModeratedDocument,
@@ -41,6 +42,12 @@ function getMatchedKeywordName(value) {
   return value?.keyword || "";
 }
 
+function getOwnerRoleLabel(role) {
+  if (role === "ADMIN") return "Quản trị viên";
+  if (role === "MODERATOR") return "Kiểm duyệt viên";
+  return "Người dùng";
+}
+
 function Field({ label, value }) {
   return (
     <Box>
@@ -61,6 +68,7 @@ export default function AdminDocumentDetailDialog({
   onAction,
   onClaim,
   onExceptKeyword,
+  onBanOwner,
 }) {
   if (!document) return null;
 
@@ -79,6 +87,8 @@ export default function AdminDocumentDetailDialog({
   const matchedContexts = Array.isArray(document.matchedContexts)
     ? document.matchedContexts
     : [];
+  const ownerReview = document.ownerReview;
+  const canBanOwner = canBanOwnerFromModerationReview(ownerReview);
 
   return (
     <Dialog
@@ -178,6 +188,86 @@ export default function AdminDocumentDetailDialog({
             </Box>
           )}
         </Box>
+
+        {ownerReview && (
+          <Paper
+            variant="outlined"
+            sx={{
+              mt: 3,
+              p: 2,
+              borderRadius: 3,
+              borderColor:
+                document.severityBand === "CRITICAL"
+                  ? "error.main"
+                  : "warning.main",
+              bgcolor: "action.hover",
+            }}
+          >
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              alignItems={{ sm: "center" }}
+              justifyContent="space-between"
+              gap={1.5}
+            >
+              <Box>
+                <Typography variant="subtitle1" fontWeight={800}>
+                  Đánh giá chủ tài liệu
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Tóm tắt rủi ro của tài khoản sở hữu tài liệu này.
+                </Typography>
+              </Box>
+              <Stack direction="row" gap={1} flexWrap="wrap">
+                <Chip
+                  size="small"
+                  label={getOwnerRoleLabel(ownerReview.role)}
+                  variant="outlined"
+                />
+                <Chip
+                  size="small"
+                  label={
+                    ownerReview.status === "ACTIVE"
+                      ? "Tài khoản hoạt động"
+                      : "Tài khoản đã khóa"
+                  }
+                  color={
+                    ownerReview.status === "ACTIVE" ? "success" : "error"
+                  }
+                />
+              </Stack>
+            </Stack>
+
+            <Stack direction="row" gap={1} flexWrap="wrap" sx={{ mt: 2 }}>
+              {Object.entries(ownerReview.documentCounts || {}).map(
+                ([status, count]) => {
+                  const presentation =
+                    getDocumentModerationStatusPresentation(status);
+                  return (
+                    <Chip
+                      key={status}
+                      size="small"
+                      label={`${presentation.label}: ${count}`}
+                      color={presentation.color}
+                      variant="outlined"
+                    />
+                  );
+                },
+              )}
+            </Stack>
+
+            {canBanOwner && (
+              <Button
+                color="error"
+                variant="contained"
+                sx={{ mt: 2 }}
+                disabled={acting}
+                onClick={() => onBanOwner(ownerReview)}
+              >
+                Khóa tài khoản
+              </Button>
+            )}
+          </Paper>
+        )}
 
         {canDecide && (
           <Alert severity={claimed ? "success" : "info"} sx={{ mt: 3 }}>
