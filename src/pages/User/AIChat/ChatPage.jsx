@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Box, Paper } from "@mui/material";
 import UserLayout from "../Layout/UserLayout.jsx";
@@ -95,6 +95,9 @@ function persistSubjectScopes(scopes) {
   }
 }
 
+import useDocumentPreview from "./hooks/useDocumentPreview.js";
+import DocumentPreviewDialog from "../DocumentLibrary/components/DocumentPreviewDialog.jsx";
+
 function ChatPageLayout({
   chatContext,
   libraryScope,
@@ -124,6 +127,8 @@ function ChatPageLayout({
 }) {
   const [documentsOpen, setDocumentsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  
+  const { preview, loadingId, openPreview, closePreview } = useDocumentPreview();
 
   return (
     <UserLayout>
@@ -149,6 +154,7 @@ function ChatPageLayout({
           selectionLocked={selectionLocked}
           mobileOpen={documentsOpen}
           onMobileClose={() => setDocumentsOpen(false)}
+          onPreviewDocument={openPreview}
         />
 
         <Box
@@ -176,7 +182,9 @@ function ChatPageLayout({
             selectionLocked={selectionLocked}
           />
 
-          {children}
+          {typeof children === "function" 
+            ? children({ onPreviewDocument: openPreview, loadingPreviewId: loadingId }) 
+            : React.cloneElement(children, { onPreviewDocument: openPreview, loadingPreviewId: loadingId })}
         </Box>
       </Paper>
 
@@ -200,6 +208,8 @@ function ChatPageLayout({
         actionError={sessionActionError}
         onClearActionError={onClearSessionActionError}
       />
+      
+      <DocumentPreviewDialog preview={preview} onClose={closePreview} />
     </UserLayout>
   );
 }

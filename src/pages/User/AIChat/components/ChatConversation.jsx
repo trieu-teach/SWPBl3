@@ -20,6 +20,8 @@ export default function ChatConversation({
   onLoadOlder,
   disabled = false,
   sourceRequired = false,
+  onPreviewDocument,
+  loadingPreviewId,
 }) {
   const messageActionsDisabled = isSending || disabled;
 
@@ -72,6 +74,8 @@ export default function ChatConversation({
           onSend={onSend}
           onStop={onStop}
           onSourceSelect={onSourceSelect}
+          onPreviewDocument={onPreviewDocument}
+          loadingPreviewId={loadingPreviewId}
           hasMoreHistory={hasMoreHistory}
           isLoadingOlderMessages={isLoadingOlderMessages}
           onLoadOlderMessages={onLoadOlder}
