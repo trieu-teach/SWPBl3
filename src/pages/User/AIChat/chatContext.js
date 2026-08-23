@@ -10,6 +10,8 @@
  * No React dependency — importable from hooks, services, and components.
  */
 
+import { MAX_LIBRARY_DOCUMENTS } from "../../../api/chat.constants.js";
+
 // ── Mode constants ─────────────────────────────────────────────────────────────
 
 /** @type {"ASK_THIS_DOCUMENT"} */
@@ -170,6 +172,13 @@ export function toggleLibraryDocumentScope(context, document, shouldSelect) {
     : [];
   const selected = currentIds.includes(documentId);
   const nextSelected = shouldSelect ?? !selected;
+  if (
+    nextSelected &&
+    !selected &&
+    currentIds.length >= MAX_LIBRARY_DOCUMENTS
+  ) {
+    return context;
+  }
   const nextIds = nextSelected
     ? [...new Set([...currentIds, documentId])]
     : currentIds.filter((id) => id !== documentId);
@@ -248,6 +257,61 @@ export function getLibraryScopePresentation(context) {
   }
 
   return { type: "all", label: "Toàn bộ thư viện" };
+}
+
+/**
+ * True when libraryFilters contain at least one primary source selection
+ * (subjectId, subjectIds, or documentIds). categoryId and fileType are
+ * secondary filters and do NOT count as a source selection on their own.
+ *
+ * @param {LibraryFilters | null | undefined} libraryFilters
+ * @returns {boolean}
+ */
+export function hasSelectedSource(libraryFilters) {
+  if (!libraryFilters) return false;
+  return Boolean(
+    libraryFilters.subjectId ||
+      (libraryFilters.subjectIds && libraryFilters.subjectIds.length > 0) ||
+      (libraryFilters.documentIds && libraryFilters.documentIds.length > 0),
+  );
+}
+
+function getPrimaryLibrarySourceKey(context) {
+  const filters = context?.libraryFilters;
+  const documentIds = Array.isArray(filters?.documentIds)
+    ? filters.documentIds.map(normalizeDocumentId).filter(Boolean).sort()
+    : [];
+  if (documentIds.length > 0) {
+    return JSON.stringify(["documents", ...documentIds]);
+  }
+
+  const subjectIds = Array.isArray(filters?.subjectIds)
+    ? filters.subjectIds.map(normalizeDocumentId).filter(Boolean).sort()
+    : [];
+  const subjectId = normalizeDocumentId(filters?.subjectId);
+  if (subjectId) subjectIds.push(subjectId);
+
+  return JSON.stringify([
+    "subjects",
+    ...[...new Set(subjectIds)].sort(),
+  ]);
+}
+
+export function hasSameLibrarySource(currentContext, nextContext) {
+  return (
+    getPrimaryLibrarySourceKey(currentContext) ===
+    getPrimaryLibrarySourceKey(nextContext)
+  );
+}
+
+export function shouldStartNewLibraryChatOnSourceChange({
+  sessionId,
+  messages,
+} = {}) {
+  return Boolean(
+    normalizeDocumentId(sessionId) ||
+      (Array.isArray(messages) && messages.length > 0),
+  );
 }
 
 // ── Factory functions ──────────────────────────────────────────────────────────

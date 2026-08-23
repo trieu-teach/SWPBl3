@@ -4,9 +4,12 @@ import {
   createLibraryContext,
   filterLibraryDocumentsBySubjects,
   getLibraryScopePresentation,
+  hasSameLibrarySource,
   setLibrarySubjectScopes,
+  shouldStartNewLibraryChatOnSourceChange,
   toggleLibraryDocumentScope,
 } from "../src/pages/User/AIChat/chatContext.js";
+import { MAX_LIBRARY_DOCUMENTS } from "../src/api/chat.constants.js";
 
 test("selecting a document replaces the multi-subject AI scope", () => {
   const subjectContext = setLibrarySubjectScopes([
@@ -47,6 +50,24 @@ test("explicit documents take precedence over subject filters", () => {
   assert.deepEqual(context.libraryFilters.documentIds, ["document-1"]);
 });
 
+test("does not allow selecting a sixth explicit document", () => {
+  let context = createLibraryContext(null);
+  for (let index = 0; index < MAX_LIBRARY_DOCUMENTS; index += 1) {
+    context = toggleLibraryDocumentScope(context, {
+      id: `document-${index + 1}`,
+      title: `Document ${index + 1}`,
+    });
+  }
+
+  const unchanged = toggleLibraryDocumentScope(context, {
+    id: "document-6",
+    title: "Document 6",
+  });
+
+  assert.equal(unchanged, context);
+  assert.equal(unchanged.libraryFilters.documentIds.length, MAX_LIBRARY_DOCUMENTS);
+});
+
 test("filters the sidebar documents by every selected subject", () => {
   const documents = [
     { id: "document-1", subjectId: "subject-1" },
@@ -66,4 +87,35 @@ test("empty filters present the whole library scope", () => {
     type: "all",
     label: "Toàn bộ thư viện",
   });
+});
+
+test("compares library sources without depending on selection order or metadata", () => {
+  const current = createLibraryContext({
+    documentIds: ["document-2", "document-1"],
+    _documentMeta: [{ id: "document-2", title: "Old title" }],
+  });
+  const sameSource = createLibraryContext({
+    documentIds: ["document-1", "document-2"],
+    _documentMeta: [{ id: "document-1", title: "New title" }],
+  });
+  const differentSource = createLibraryContext({
+    documentIds: ["document-3"],
+  });
+
+  assert.equal(hasSameLibrarySource(current, sameSource), true);
+  assert.equal(hasSameLibrarySource(current, differentSource), false);
+});
+
+test("starts a new library chat when a source-bound conversation changes source", () => {
+  assert.equal(
+    shouldStartNewLibraryChatOnSourceChange({ sessionId: "session-1" }),
+    true,
+  );
+  assert.equal(
+    shouldStartNewLibraryChatOnSourceChange({
+      messages: [{ id: "pending-message" }],
+    }),
+    true,
+  );
+  assert.equal(shouldStartNewLibraryChatOnSourceChange(), false);
 });
