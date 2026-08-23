@@ -6,6 +6,17 @@ export const AI_STATUS = {
   MOCKED: { label: "Dữ liệu mẫu", color: "default" },
 };
 
+export const MODERATION_STATUS = {
+  PENDING: { label: "Chờ duyệt", color: "warning" },
+  APPROVED: { label: "Đã duyệt", color: "success" },
+  REJECTED: { label: "Bị từ chối", color: "error" },
+};
+
+export function getModerationStatus(document) {
+  if (document?.visibility !== "PUBLIC") return null;
+  return MODERATION_STATUS[document.moderationStatus] || null;
+}
+
 export function formatBytes(bytes) {
   const value = Number(bytes || 0);
   if (value < 1024 * 1024) {

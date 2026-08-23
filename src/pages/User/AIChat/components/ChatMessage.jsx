@@ -31,7 +31,7 @@ import { Link as RouterLink } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import ChatSources from "./ChatSources.jsx";
 import { splitMarkdownBlocks } from "../markdownTables.js";
-import { rateChatMessage } from "../../../../api/rating.api.js";
+import { useChatRating } from "../hooks/useChatRating.js";
 
 const markdownComponents = {
   p: ({ children }) => (
@@ -207,30 +207,28 @@ export default function ChatMessage({
   onSourceSelect,
 }) {
   const [copied, setCopied] = useState(false);
-  const [ratedHelpful, setRatedHelpful] = useState(message.isHelpful ?? null);
-  const [isRating, setIsRating] = useState(false);
   const isUser = message.role === "user";
   const isLoading = message.status === "loading";
   const isError = message.status === "error";
   const isComplete = message.status === "complete";
   const hasSources = !isUser && message.sources?.length > 0;
+  const targetMessageId = message.backendMessageId || message.id;
+  const {
+    rating: ratedHelpful,
+    isRating,
+    submitRating,
+  } = useChatRating({
+    messageId: targetMessageId,
+    initialRating: message.isHelpful ?? null,
+  });
 
   async function handleRate(isHelpful) {
-    const targetMessageId = message.backendMessageId || message.id;
     if (!targetMessageId || isRating) return;
 
-    // Optimistic UI updates: button state changes to Active immediately when clicked
-    const previous = ratedHelpful;
-    setRatedHelpful(isHelpful);
-    setIsRating(true);
-
     try {
-      await rateChatMessage(targetMessageId, isHelpful);
+      await submitRating(isHelpful);
     } catch {
-      // Rollback to previous state on failure
-      setRatedHelpful(previous);
-    } finally {
-      setIsRating(false);
+      // Hook tự khôi phục đánh giá trước đó khi API lỗi.
     }
   }
 

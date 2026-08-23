@@ -17,7 +17,6 @@ import {
   BookmarkOutlined,
   CloudDownloadOutlined,
   DescriptionOutlined,
-  PersonOutlineOutlined,
   ReportProblemOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
@@ -28,7 +27,7 @@ import {
   getFileTypeColors,
   normalizeTags,
 } from "../../DocumentLibrary/utils/document-formatters.js";
-import DocumentRatingButtons from "../../../../components/DocumentRating/DocumentRatingButtons.jsx";
+import DocumentRatingButtons from "./DocumentRatingButtons.jsx";
 
 export default function CommunityCard({
   document,
@@ -44,8 +43,8 @@ export default function CommunityCard({
     document.ownerPublicName ||
     document.owner?.fullName ||
     "Người chia sẻ";
-  const avatarUrl = document.ownerAvatarUrl || document.owner?.avatarUrl;
-
+  const ownerAvatarUrl =
+    document.ownerAvatarUrl || document.owner?.avatarUrl;
   return (
     <Card
       variant="outlined"
@@ -102,26 +101,15 @@ export default function CommunityCard({
           sx={{ mt: 2, minWidth: 0 }}
         >
           <Avatar
-            src={avatarUrl || undefined}
-            alt={ownerName}
-            sx={{
-              width: 32,
-              height: 32,
-              fontSize: 13,
-              fontWeight: 700,
-              flexShrink: 0,
-              bgcolor: "primary.light",
-              color: "primary.contrastText",
-            }}
+            src={ownerAvatarUrl || undefined}
+            sx={{ width: 32, height: 32, fontSize: 12, flexShrink: 0 }}
           >
-            {avatarUrl ? null : ownerName[0]?.toUpperCase() || (
-              <PersonOutlineOutlined sx={{ fontSize: 16 }} />
-            )}
+            {ownerName[0]}
           </Avatar>
           <Typography
             variant="body2"
             noWrap
-            sx={{ minWidth: 0, flex: 1, ml: 1, fontWeight: 600 }}
+            sx={{ minWidth: 0, flex: 1, ml: 1 }}
           >
             {ownerName}
           </Typography>
@@ -134,6 +122,15 @@ export default function CommunityCard({
           {formatBytes(document.fileSize)} · {formatDate(document.createdAt)} ·{" "}
           {document.viewCount || 0} lượt xem
         </Typography>
+        <Box sx={{ mt: 1 }}>
+          <DocumentRatingButtons
+            documentId={document.id}
+            initialUserRating={document.userRating ?? null}
+            helpfulRating={document.helpfulRating}
+            totalRatings={document.totalRatings ?? document.ratingCount}
+            showStats
+          />
+        </Box>
         {tags.length > 0 && (
           <Stack direction="row" gap={0.75} flexWrap="wrap" sx={{ mt: 1.5 }}>
             {tags.slice(0, 3).map((tag) => (
@@ -178,12 +175,6 @@ export default function CommunityCard({
             </IconButton>
           </span>
         </Tooltip>
-        <DocumentRatingButtons
-          documentId={document.id}
-          helpfulRating={document.helpfulRating}
-          totalRatings={document.ratingCount || document.totalRatings}
-          size="small"
-        />
         {!document.owned && (
           <>
             <Button

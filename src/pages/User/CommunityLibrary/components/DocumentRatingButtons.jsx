@@ -11,8 +11,8 @@ import ThumbUpOutlined from "@mui/icons-material/ThumbUpOutlined";
 import ThumbUpRounded from "@mui/icons-material/ThumbUpRounded";
 import ThumbDownOutlined from "@mui/icons-material/ThumbDownOutlined";
 import ThumbDownRounded from "@mui/icons-material/ThumbDownRounded";
-import { useRateDocument } from "../../hooks/useRating.js";
-import { useToast } from "../Toast/ToastProvider.jsx";
+import useDocumentRating from "../hooks/useDocumentRating.js";
+import { useToast } from "../../../../components/Toast/ToastProvider.jsx";
 
 export default function DocumentRatingButtons({
   documentId,
@@ -24,7 +24,7 @@ export default function DocumentRatingButtons({
   onRatingChanged,
 }) {
   const toast = useToast();
-  const { rateDocument, loading } = useRateDocument();
+  const { submitRating, loading } = useDocumentRating();
   const [userRating, setUserRating] = useState(initialUserRating);
 
   async function handleRate(isHelpful) {
@@ -34,7 +34,7 @@ export default function DocumentRatingButtons({
     setUserRating(isHelpful);
 
     try {
-      await rateDocument({ documentId, isHelpful });
+      await submitRating({ documentId, isHelpful });
       toast.success(
         isHelpful
           ? "Đã đánh giá tài liệu là hữu ích."
