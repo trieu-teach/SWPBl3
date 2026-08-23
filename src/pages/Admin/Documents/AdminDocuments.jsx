@@ -17,9 +17,14 @@ export default function AdminDocuments() {
       <AdminDocumentsTable admin={admin} />
       <AdminDocumentDetailDialog
         document={admin.detail}
-        onClose={() => admin.setDetail(null)}
+        acting={admin.acting}
+        claimed={admin.claimedDocumentId === admin.detail?.id}
+        moderationKeywordIds={admin.moderationKeywordIds}
+        onClose={admin.closeDetail}
         onPreview={admin.openPreview}
         onAction={admin.setAction}
+        onClaim={admin.claimDetail}
+        onExceptKeyword={admin.exceptKeyword}
       />
       <ModerationDialog
         action={admin.action}
