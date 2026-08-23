@@ -2,6 +2,7 @@ import AssessmentOutlined from "@mui/icons-material/AssessmentOutlined";
 import BookmarkOutlined from "@mui/icons-material/BookmarkOutlined";
 import DashboardOutlined from "@mui/icons-material/DashboardOutlined";
 import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
+import FactCheckOutlined from "@mui/icons-material/FactCheckOutlined";
 import DownloadOutlined from "@mui/icons-material/DownloadOutlined";
 import FolderOpenOutlined from "@mui/icons-material/FolderOpenOutlined";
 import HistoryOutlined from "@mui/icons-material/HistoryOutlined";
@@ -69,6 +70,11 @@ const ADMIN_NAVIGATION = [
 ];
 
 const MODERATOR_NAVIGATION = [
+  {
+    label: "Hàng chờ tài liệu",
+    path: "/moderator/moderation",
+    icon: FactCheckOutlined,
+  },
   {
     label: "Báo cáo vi phạm",
     path: "/moderator/reports",
