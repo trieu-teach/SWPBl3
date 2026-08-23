@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import { AuthProvider } from "./features/auth/AuthProvider.jsx";
 import { ToastProvider } from "./components/Toast/ToastProvider.jsx";
+import { NotificationProvider } from "./pages/User/Notifications/context/NotificationContext.jsx";
 import {
   GuestGuard,
   GuestRoute,
@@ -178,8 +179,9 @@ export default function App() {
         <ToastProvider>
           <BrowserRouter>
             <AuthProvider>
-              <Suspense fallback={<RouteLoadingFallback />}>
-                <Routes>
+              <NotificationProvider>
+                <Suspense fallback={<RouteLoadingFallback />}>
+                  <Routes>
                     {/* ── Public (chỉ Guest mới vào được) ── */}
                     <Route
                       path="/"
@@ -411,6 +413,7 @@ export default function App() {
                     />
                 </Routes>
               </Suspense>
+              </NotificationProvider>
             </AuthProvider>
           </BrowserRouter>
         </ToastProvider>
