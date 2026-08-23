@@ -2,13 +2,20 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   applyChatProgressEvent,
+  CANCELLED_CONTENT,
+  cancelAssistantMessage,
   completeAssistantMessage,
   createConversationScope,
   createMessage,
   createRequestSnapshot,
+  getChatRetryPolicy,
   parseChatDoneEvent,
   PENDING_CONTENT,
+  prepareRetryRequestSnapshot,
   prependUniqueMessages,
+  RETRY_DISABLED,
+  RETRY_REQUEST_ID_RENEW,
+  RETRY_REQUEST_ID_REUSE,
   validateChatProgressEvent,
 } from "../src/pages/User/AIChat/chatConversation.model.js";
 import {
@@ -173,4 +180,84 @@ test("prepends older history without duplicating message ids", () => {
       { id: "message-3" },
     ],
   );
+});
+
+test("reuses request ids only for recoverable transport interruptions", () => {
+  assert.deepEqual(
+    getChatRetryPolicy(
+      { name: "TypeError", message: "Failed to fetch" },
+      { retryable: true },
+    ),
+    {
+      retryable: true,
+      requestIdStrategy: RETRY_REQUEST_ID_REUSE,
+    },
+  );
+  assert.deepEqual(
+    getChatRetryPolicy(
+      { name: "ChatStreamError", message: "Stream incomplete" },
+      {},
+    ),
+    {
+      retryable: true,
+      requestIdStrategy: RETRY_REQUEST_ID_REUSE,
+    },
+  );
+});
+
+test("renews request ids after confirmed server-side failures", () => {
+  for (const error of [
+    { code: "STREAM_REQUEST_FAILED", retryable: true },
+    { status: 500 },
+  ]) {
+    assert.deepEqual(getChatRetryPolicy(error, { retryable: true }), {
+      retryable: true,
+      requestIdStrategy: RETRY_REQUEST_ID_RENEW,
+    });
+  }
+
+  const original = createRequestSnapshot(
+    "Question?",
+    createLibraryContext({ documentIds: ["document-1"] }),
+    "session-1",
+    "request-old",
+  );
+  const renewed = prepareRetryRequestSnapshot(
+    original,
+    RETRY_REQUEST_ID_RENEW,
+    "request-new",
+  );
+  assert.equal(renewed.requestId, "request-new");
+  assert.equal(original.requestId, "request-old");
+});
+
+test("disables retry for requests that are still pending", () => {
+  assert.deepEqual(
+    getChatRetryPolicy(
+      { code: "REQUEST_IN_PROGRESS", status: 409 },
+      { retryable: false },
+    ),
+    {
+      retryable: false,
+      requestIdStrategy: RETRY_DISABLED,
+    },
+  );
+});
+
+test("marks aborted output as display-only cancellation without retry", () => {
+  const pending = cancelAssistantMessage(
+    { content: PENDING_CONTENT, status: "loading" },
+    { createdAt: "10:03" },
+  );
+  assert.equal(pending.content, CANCELLED_CONTENT);
+  assert.equal(pending.status, "cancelled");
+  assert.equal(pending.streamRetryable, false);
+  assert.equal(pending.retryRequestIdStrategy, RETRY_DISABLED);
+
+  const partial = cancelAssistantMessage(
+    { content: "Partial answer", status: "streaming" },
+    { createdAt: "10:04" },
+  );
+  assert.match(partial.content, /^Partial answer/);
+  assert.match(partial.content, /AI có thể vẫn hoàn tất/);
 });

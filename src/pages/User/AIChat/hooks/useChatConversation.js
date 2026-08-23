@@ -13,17 +13,20 @@ import {
 } from "../../../../api/chat.stream.js";
 import {
   applyChatProgressEvent,
-  CANCELLED_CONTENT,
+  cancelAssistantMessage,
   cloneContextSnapshot,
   completeAssistantMessage,
   createConversationScope,
   createMessage,
   createRequestSnapshot,
   formatTime,
+  getChatRetryPolicy,
   normalizeId,
   parseChatDoneEvent,
   PENDING_CONTENT,
+  prepareRetryRequestSnapshot,
   prependUniqueMessages,
+  RETRY_DISABLED,
   validateChatProgressEvent,
 } from "../chatConversation.model.js";
 import {
@@ -118,16 +121,7 @@ export function useChatConversation({
             return message;
           }
 
-          const hasPartial =
-            message.content && message.content !== PENDING_CONTENT;
-          return {
-            ...message,
-            content: hasPartial ? message.content : CANCELLED_CONTENT,
-            status: "cancelled",
-            streamPhase: "CANCELLED",
-            errorDetail: undefined,
-            createdAt: formatTime(new Date()),
-          };
+          return cancelAssistantMessage(message);
         }),
       );
       setStatus("idle");
@@ -414,6 +408,10 @@ export function useChatConversation({
       }
 
       const errorPresentation = getChatErrorPresentation(requestError);
+      const retryPolicy = getChatRetryPolicy(
+        requestError,
+        errorPresentation,
+      );
       const errorMessage = getChatErrorMessage(requestError) || FALLBACK_SEND_ERROR;
       setMessages((current) =>
         current.map((message) => {
@@ -429,9 +427,8 @@ export function useChatConversation({
             ...(requestError.code !== undefined
               ? { streamErrorCode: requestError.code }
               : {}),
-            ...(typeof requestError.retryable === "boolean"
-              ? { streamRetryable: requestError.retryable }
-              : { streamRetryable: errorPresentation.retryable === true }),
+            streamRetryable: retryPolicy.retryable,
+            retryRequestIdStrategy: retryPolicy.requestIdStrategy,
             errorActionLabel: errorPresentation.actionLabel,
             errorActionPath: errorPresentation.actionPath,
             createdAt: formatTime(new Date()),
@@ -525,6 +522,7 @@ export function useChatConversation({
         (message) => message.id === assistantMessageId,
       );
       const requestSnapshot = failedMessage?.requestSnapshot;
+      const requestIdStrategy = failedMessage?.retryRequestIdStrategy;
       const retryScope = requestSnapshot
         ? createConversationScope(requestSnapshot.context, true)
         : null;
@@ -539,6 +537,8 @@ export function useChatConversation({
         !failedMessage ||
         failedMessage.status !== "error" ||
         failedMessage.streamRetryable !== true ||
+        !requestIdStrategy ||
+        requestIdStrategy === RETRY_DISABLED ||
         !requestSnapshot?.question?.trim() ||
         !retryScope ||
         retryScope.key !== activeScope?.key ||
@@ -546,6 +546,11 @@ export function useChatConversation({
       ) {
         return false;
       }
+
+      const retrySnapshot = prepareRetryRequestSnapshot(
+        requestSnapshot,
+        requestIdStrategy,
+      );
 
       setMessages((current) =>
         current.map((message) =>
@@ -556,6 +561,8 @@ export function useChatConversation({
                 errorDetail: undefined,
                 streamErrorCode: undefined,
                 streamRetryable: undefined,
+                retryRequestIdStrategy: undefined,
+                requestSnapshot: retrySnapshot,
                 status: "loading",
                 streamPhase: undefined,
                 createdAt: formatTime(new Date()),
@@ -567,7 +574,7 @@ export function useChatConversation({
       setStatus("sending");
       sendingRef.current = true;
 
-      return executeRequest(assistantMessageId, requestSnapshot);
+      return executeRequest(assistantMessageId, retrySnapshot);
     },
     [messages, suppliedSessionId, executeRequest],
   );

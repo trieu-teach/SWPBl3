@@ -5,7 +5,11 @@ import {
 } from "./chatContext.js";
 
 export const PENDING_CONTENT = "Đang suy nghĩ...";
-export const CANCELLED_CONTENT = "Phản hồi đã dừng.";
+export const CANCELLED_CONTENT =
+  "Đã dừng hiển thị phản hồi. AI có thể vẫn hoàn tất và lưu câu trả lời.";
+export const RETRY_REQUEST_ID_REUSE = "reuse";
+export const RETRY_REQUEST_ID_RENEW = "renew";
+export const RETRY_DISABLED = "disabled";
 
 const INVALID_DONE_ERROR =
   "Phản hồi hoàn tất từ AI không hợp lệ. Vui lòng thử lại.";
@@ -106,6 +110,68 @@ export function createRequestSnapshot(
   };
 }
 
+function isLikelyNetworkError(error) {
+  if (error?.status === 0) return true;
+  if (error?.name !== "TypeError") return false;
+  return /fetch|network|load failed/i.test(error?.message ?? "");
+}
+
+export function getChatRetryPolicy(error, errorPresentation = {}) {
+  if (error?.code === "REQUEST_IN_PROGRESS") {
+    return {
+      retryable: false,
+      requestIdStrategy: RETRY_DISABLED,
+    };
+  }
+
+  if (
+    error?.code === "STREAM_REQUEST_FAILED" ||
+    Number(error?.status) >= 500
+  ) {
+    return {
+      retryable: true,
+      requestIdStrategy: RETRY_REQUEST_ID_RENEW,
+    };
+  }
+
+  if (
+    isLikelyNetworkError(error) ||
+    (error?.name === "ChatStreamError" && !error?.code)
+  ) {
+    return {
+      retryable: true,
+      requestIdStrategy: RETRY_REQUEST_ID_REUSE,
+    };
+  }
+
+  if (errorPresentation.retryable === true || error?.retryable === true) {
+    return {
+      retryable: true,
+      requestIdStrategy: RETRY_REQUEST_ID_RENEW,
+    };
+  }
+
+  return {
+    retryable: false,
+    requestIdStrategy: RETRY_DISABLED,
+  };
+}
+
+export function prepareRetryRequestSnapshot(
+  requestSnapshot,
+  requestIdStrategy,
+  renewedRequestId,
+) {
+  return {
+    ...requestSnapshot,
+    context: cloneContextSnapshot(requestSnapshot.context),
+    requestId:
+      requestIdStrategy === RETRY_REQUEST_ID_RENEW
+        ? renewedRequestId ?? createChatRequestId()
+        : requestSnapshot.requestId,
+  };
+}
+
 function createMessageId() {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
     return crypto.randomUUID();
@@ -134,6 +200,25 @@ export function createMessage({
     content,
     status,
     retryOf,
+    createdAt,
+  };
+}
+
+export function cancelAssistantMessage(
+  message,
+  { createdAt = formatTime(new Date()) } = {},
+) {
+  const hasPartial = message.content && message.content !== PENDING_CONTENT;
+  return {
+    ...message,
+    content: hasPartial
+      ? `${message.content}\n\n_${CANCELLED_CONTENT}_`
+      : CANCELLED_CONTENT,
+    status: "cancelled",
+    streamPhase: "CANCELLED",
+    streamRetryable: false,
+    retryRequestIdStrategy: RETRY_DISABLED,
+    errorDetail: undefined,
     createdAt,
   };
 }
