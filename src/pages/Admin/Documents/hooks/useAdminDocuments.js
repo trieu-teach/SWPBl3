@@ -11,6 +11,8 @@ import {
   removeKeywordException,
   setAdminDocumentHidden,
 } from "../../../../api/admin-documents.api.js";
+import { getAdminModerationKeywords } from "../../../../api/admin-moderation-keywords.api.js";
+import { updateAdminUserStatus } from "../../../../api/admin-users.api.js";
 import { useToast } from "../../../../components/Toast/ToastProvider.jsx";
 
 const INITIAL_FILTERS = {
@@ -39,6 +41,7 @@ export default function useAdminDocuments() {
   const [acting, setActing] = useState(false);
   const [reviewQueueOnly, setReviewQueueOnly] = useState(false);
   const [claimedDocumentId, setClaimedDocumentId] = useState(null);
+  const [moderationKeywords, setModerationKeywords] = useState([]);
 
   const query = useMemo(
     () => ({ ...filters, ...sort, page, limit: 20 }),
@@ -118,7 +121,26 @@ export default function useAdminDocuments() {
   async function openDetail(document) {
     setActing(true);
     try {
-      setDetail(await getAdminDocument(document.id));
+      const documentDetail = await getAdminDocument(document.id);
+      setDetail(documentDetail);
+
+      if (documentDetail?.matchedKeywords?.length) {
+        try {
+          const keywordCatalog = await getAdminModerationKeywords();
+          setModerationKeywords(
+            Array.isArray(keywordCatalog)
+              ? keywordCatalog
+              : keywordCatalog?.items || keywordCatalog?.data || [],
+          );
+        } catch {
+          setModerationKeywords([]);
+          toast.warning(
+            "Không tải được mã từ khóa. Bạn vẫn có thể xem nội dung bị phát hiện.",
+          );
+        }
+      } else {
+        setModerationKeywords([]);
+      }
     } catch (requestError) {
       toast.error(requestError.message || "Không thể tải chi tiết tài liệu.");
     } finally {
@@ -167,34 +189,81 @@ export default function useAdminDocuments() {
   }
 
   async function createKeywordException(keywordId, reason = "") {
-    if (!detail) return;
+    if (!detail) return false;
     setActing(true);
 
     try {
       await addKeywordException(detail.id, keywordId, reason);
       await refreshDetail(detail.id);
       toast.success("Đã bỏ qua từ khóa cho tài liệu này và quét lại nội dung.");
+      return true;
     } catch (requestError) {
       if (!handleReviewConflict(requestError)) {
         toast.error(requestError.message || "Không thể thêm ngoại lệ từ khóa.");
       }
+      return false;
     } finally {
       setActing(false);
     }
   }
 
   async function deleteKeywordException(keywordId) {
-    if (!detail) return;
+    if (!detail) return false;
     setActing(true);
 
     try {
       await removeKeywordException(detail.id, keywordId);
       await refreshDetail(detail.id);
       toast.success("Đã xóa ngoại lệ từ khóa và quét lại nội dung.");
+      return true;
     } catch (requestError) {
       if (!handleReviewConflict(requestError)) {
         toast.error(requestError.message || "Không thể xóa ngoại lệ từ khóa.");
       }
+      return false;
+    } finally {
+      setActing(false);
+    }
+  }
+
+  async function blockDocumentOwner(reason) {
+    const ownerReview = detail?.ownerReview;
+    if (!ownerReview?.canBan || !ownerReview.ownerId) return false;
+    setActing(true);
+
+    try {
+      await updateAdminUserStatus(
+        ownerReview.ownerId,
+        "BLOCKED",
+        reason.trim(),
+      );
+      setDetail((current) =>
+        current
+          ? {
+              ...current,
+              ownerReview: current.ownerReview
+                ? {
+                    ...current.ownerReview,
+                    status: "BLOCKED",
+                    canBan: false,
+                  }
+                : null,
+            }
+          : current,
+      );
+      toast.success("Đã khóa tài khoản chủ tài liệu.");
+
+      try {
+        await refreshDetail(detail.id);
+      } catch {
+        toast.warning(
+          "Tài khoản đã được khóa nhưng chưa tải lại được chi tiết tài liệu.",
+        );
+      }
+      return true;
+    } catch (requestError) {
+      toast.error(requestError.message || "Không thể khóa tài khoản.");
+      return false;
     } finally {
       setActing(false);
     }
@@ -277,6 +346,7 @@ export default function useAdminDocuments() {
     acting,
     reviewQueueOnly,
     claimedDocumentId,
+    moderationKeywords,
     setSearchInput,
     setPage,
     updateFilter,
@@ -289,6 +359,7 @@ export default function useAdminDocuments() {
     claimDetail,
     createKeywordException,
     deleteKeywordException,
+    blockDocumentOwner,
     openPreview,
     setDetail,
     setPreview,

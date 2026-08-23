@@ -23,6 +23,9 @@ export default function AdminDocuments() {
         onClaim={admin.claimDetail}
         claimed={admin.claimedDocumentId === admin.detail?.id}
         loading={admin.acting}
+        keywordCatalog={admin.moderationKeywords}
+        onAddKeywordException={admin.createKeywordException}
+        onBlockOwner={admin.blockDocumentOwner}
       />
       <ModerationDialog
         action={admin.action}

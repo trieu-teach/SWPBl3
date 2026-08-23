@@ -17,6 +17,8 @@ import {
   getAdminDocumentModeration,
   getAdminDocumentStatus,
 } from "../utils/admin-document-status.js";
+import AdminKeywordMatchesPanel from "./AdminKeywordMatchesPanel.jsx";
+import AdminDocumentOwnerReviewPanel from "./AdminDocumentOwnerReviewPanel.jsx";
 
 function Field({ label, value }) {
   return (
@@ -36,6 +38,9 @@ export default function AdminDocumentDetailDialog({
   onClaim,
   claimed,
   loading,
+  keywordCatalog,
+  onAddKeywordException,
+  onBlockOwner,
 }) {
   if (!document) return null;
 
@@ -116,6 +121,18 @@ export default function AdminDocumentDetailDialog({
             </Box>
           )}
         </Box>
+        <AdminKeywordMatchesPanel
+          document={document}
+          keywordCatalog={keywordCatalog}
+          claimed={claimed}
+          loading={loading}
+          onAddException={onAddKeywordException}
+        />
+        <AdminDocumentOwnerReviewPanel
+          document={document}
+          loading={loading}
+          onBlockOwner={onBlockOwner}
+        />
       </DialogContent>
       <DialogActions sx={{ flexWrap: "wrap" }}>
         <Button onClick={() => onPreview(document)}>Xem file</Button>
