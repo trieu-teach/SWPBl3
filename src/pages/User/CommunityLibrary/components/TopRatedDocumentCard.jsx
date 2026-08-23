@@ -1,29 +1,47 @@
 import {
   Avatar,
   Box,
+  Button,
   Card,
+  CardActions,
   CardContent,
   Chip,
+  CircularProgress,
   Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
 import {
-  AutoAwesomeOutlined,
+  BookmarkBorderOutlined,
+  BookmarkOutlined,
   CloudDownloadOutlined,
   DescriptionOutlined,
   PersonOutlineOutlined,
-  StarRounded,
   ThumbUpAltOutlined,
+  VisibilityOutlined,
 } from "@mui/icons-material";
+import { useEffect, useState } from "react";
 import {
   displayFileType,
   formatDate,
   getFileTypeColors,
-} from "../../pages/User/DocumentLibrary/utils/document-formatters.js";
-import DocumentRatingButtons from "../DocumentRating/DocumentRatingButtons.jsx";
+} from "../../DocumentLibrary/utils/document-formatters.js";
+import DocumentRatingButtons from "./DocumentRatingButtons.jsx";
 
-export default function TopRatedDocumentCard({ document, onPreview }) {
+const rankColors = {
+  1: { color: "#b45309", background: "rgba(245, 158, 11, 0.16)" },
+  2: { color: "#64748b", background: "rgba(148, 163, 184, 0.16)" },
+  3: { color: "#a16207", background: "rgba(180, 83, 9, 0.13)" },
+};
+
+export default function TopRatedDocumentCard({
+  document,
+  rank,
+  onPreview,
+  onSave,
+  actionId,
+}) {
+  const [isSaved, setIsSaved] = useState(Boolean(document.saved));
   const fileColors = getFileTypeColors(document);
   const ownerName =
     document.ownerPublicName ||
@@ -36,13 +54,20 @@ export default function TopRatedDocumentCard({ document, onPreview }) {
       ? Math.round(Number(document.helpfulRating) * 100)
       : null;
 
-  const relevancePercent =
-    document.relevanceScore !== undefined && document.relevanceScore !== null
-      ? Math.round(Number(document.relevanceScore) * 100)
-      : null;
-
   const totalVotes =
     document.ratingCount ?? document.totalRatings ?? 0;
+  const rankColor = rankColors[rank] || rankColors[3];
+  const isSaving = actionId === `save-${document.id}`;
+
+  useEffect(() => {
+    setIsSaved(Boolean(document.saved));
+  }, [document.saved]);
+
+  async function handleSave() {
+    if (!onSave || isSaving) return;
+    const succeeded = await onSave({ ...document, saved: isSaved });
+    if (succeeded) setIsSaved((current) => !current);
+  }
 
   return (
     <Card
@@ -84,11 +109,22 @@ export default function TopRatedDocumentCard({ document, onPreview }) {
           </Box>
 
           <Stack direction="row" spacing={1} alignItems="center" sx={{ ml: "auto" }}>
+            {rank && (
+              <Chip
+                size="small"
+                label={`#${rank}`}
+                sx={{
+                  color: rankColor.color,
+                  bgcolor: rankColor.background,
+                  fontWeight: 800,
+                }}
+              />
+            )}
             {helpfulPercent !== null && (
               <Chip
                 size="small"
                 icon={<ThumbUpAltOutlined sx={{ fontSize: "14px !important" }} />}
-                label={`${helpfulPercent}%`}
+                label={`${helpfulPercent}% hữu ích`}
                 color={helpfulPercent >= 80 ? "success" : "primary"}
                 variant="filled"
                 sx={{ fontWeight: 700, fontSize: "0.75rem" }}
@@ -163,49 +199,22 @@ export default function TopRatedDocumentCard({ document, onPreview }) {
             borderColor: "divider",
           }}
         >
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-            flexWrap="wrap"
-            gap={1}
-          >
+          <Stack direction="row" alignItems="center" flexWrap="wrap" gap={1.5}>
+            <Stack direction="row" alignItems="center" spacing={0.5}>
+              <ThumbUpAltOutlined sx={{ fontSize: 16, color: "success.main" }} />
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                {helpfulPercent ?? 0}% hữu ích · {totalVotes} đánh giá
+              </Typography>
+            </Stack>
+
             <Tooltip title="Lượt tải về">
               <Stack direction="row" alignItems="center" spacing={0.5}>
                 <CloudDownloadOutlined sx={{ fontSize: 16, color: "text.secondary" }} />
                 <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                  {document.downloadCount || 0}
+                  {document.downloadCount || 0} lượt tải
                 </Typography>
               </Stack>
             </Tooltip>
-
-            {totalVotes > 0 && (
-              <Tooltip title="Tổng số lượt đánh giá">
-                <Stack direction="row" alignItems="center" spacing={0.5}>
-                  <StarRounded sx={{ fontSize: 16, color: "warning.main" }} />
-                  <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                    {totalVotes} lượt
-                  </Typography>
-                </Stack>
-              </Tooltip>
-            )}
-
-            {relevancePercent !== null && (
-              <Tooltip title="Độ liên quan trích dẫn AI">
-                <Chip
-                  size="small"
-                  variant="outlined"
-                  icon={<AutoAwesomeOutlined sx={{ fontSize: "13px !important" }} />}
-                  label={`${relevancePercent}% AI`}
-                  sx={{
-                    height: 22,
-                    fontSize: "0.7rem",
-                    borderColor: "primary.light",
-                    color: "primary.main",
-                  }}
-                />
-              </Tooltip>
-            )}
           </Stack>
 
           {/* Quick Rate & Date Footer */}
@@ -220,6 +229,7 @@ export default function TopRatedDocumentCard({ document, onPreview }) {
             </Typography>
             <DocumentRatingButtons
               documentId={document.id}
+              initialUserRating={document.userRating ?? null}
               helpfulRating={document.helpfulRating}
               totalRatings={totalVotes}
               size="small"
@@ -227,6 +237,43 @@ export default function TopRatedDocumentCard({ document, onPreview }) {
           </Stack>
         </Box>
       </CardContent>
+      <CardActions
+        sx={{
+          px: 2.5,
+          py: 1.25,
+          gap: 0.5,
+          borderTop: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        <Button
+          size="small"
+          startIcon={<VisibilityOutlined />}
+          onClick={() => onPreview?.(document)}
+          disabled={!onPreview || actionId === `preview-${document.id}`}
+        >
+          Xem
+        </Button>
+
+        {!document.owned && onSave && (
+          <Button
+            size="small"
+            startIcon={
+              isSaving ? (
+                <CircularProgress size={16} />
+              ) : isSaved ? (
+                <BookmarkOutlined />
+              ) : (
+                <BookmarkBorderOutlined />
+              )
+            }
+            onClick={handleSave}
+            disabled={isSaving}
+          >
+            {isSaved ? "Bỏ lưu" : "Lưu"}
+          </Button>
+        )}
+      </CardActions>
     </Card>
   );
 }

@@ -14,9 +14,9 @@ import {
   ArrowForwardIosOutlined,
   CloudDownloadOutlined,
   EmojiEventsOutlined,
-  StarRounded,
+  ThumbUpAltOutlined,
 } from "@mui/icons-material";
-import { useTopRatedDocuments } from "../../hooks/useRating.js";
+import useTopRatedDocuments from "../hooks/useTopRatedDocuments.js";
 import TopRatedDocumentCard from "./TopRatedDocumentCard.jsx";
 
 const gridSx = {
@@ -29,11 +29,13 @@ const gridSx = {
   gap: 2.5,
 };
 
-export default function TopRatedDocumentsWidget({
-  title = "Tài liệu đánh giá cao nhất",
+export default function TopRatedDocumentsSection({
+  title = "Tài liệu được cộng đồng đánh giá cao",
   initialSortBy = "rating",
   limit = 6,
   onPreview,
+  onSave,
+  actionId,
   showControls = true,
   variant = "paper", // "paper" | "plain"
 }) {
@@ -46,12 +48,12 @@ export default function TopRatedDocumentsWidget({
     sortBy,
     setSortBy,
     nextPage,
-    prevPage,
+    previousPage,
     reload,
   } = useTopRatedDocuments({
-    page: 1,
-    limit,
-    sortBy: initialSortBy,
+    initialPage: 1,
+    initialLimit: limit,
+    initialSortBy,
   });
 
   const Wrapper = variant === "paper" ? Paper : Box;
@@ -93,8 +95,8 @@ export default function TopRatedDocumentsWidget({
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {meta.totalItems > 0
-                ? `${meta.totalItems} tài liệu nổi bật trong cộng đồng`
-                : "Các tài liệu được cộng đồng bình chọn hữu ích nhất"}
+                ? `${meta.totalItems} tài liệu nổi bật · Dựa trên phản hồi hữu ích của người học`
+                : "Dựa trên phản hồi hữu ích của người học"}
             </Typography>
           </Box>
         </Stack>
@@ -111,17 +113,17 @@ export default function TopRatedDocumentsWidget({
             <ButtonGroup size="small" variant="outlined">
               <Button
                 variant={sortBy === "rating" ? "contained" : "outlined"}
-                startIcon={<StarRounded sx={{ fontSize: 16 }} />}
+                startIcon={<ThumbUpAltOutlined sx={{ fontSize: 16 }} />}
                 onClick={() => setSortBy("rating")}
               >
-                Điểm đánh giá
+                Hữu ích nhất
               </Button>
               <Button
                 variant={sortBy === "downloadCount" ? "contained" : "outlined"}
                 startIcon={<CloudDownloadOutlined sx={{ fontSize: 16 }} />}
                 onClick={() => setSortBy("downloadCount")}
               >
-                Lượt tải
+                Tải nhiều
               </Button>
             </ButtonGroup>
 
@@ -134,7 +136,7 @@ export default function TopRatedDocumentsWidget({
                 size="small"
                 variant="outlined"
                 disabled={!meta.hasPrevious && page <= 1}
-                onClick={prevPage}
+                onClick={previousPage}
                 aria-label="Trang trước"
                 sx={{ minWidth: 36, px: 1 }}
               >
@@ -200,11 +202,14 @@ export default function TopRatedDocumentsWidget({
         </Box>
       ) : (
         <Box sx={gridSx}>
-          {items.map((document) => (
+          {items.map((document, index) => (
             <TopRatedDocumentCard
               key={document.id}
               document={document}
+              rank={(page - 1) * limit + index + 1}
               onPreview={onPreview}
+              onSave={onSave}
+              actionId={actionId}
             />
           ))}
         </Box>

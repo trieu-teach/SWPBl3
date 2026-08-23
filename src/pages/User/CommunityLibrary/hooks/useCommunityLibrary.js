@@ -147,10 +147,12 @@ export default function useCommunityLibrary() {
           ? "Đã bỏ tài liệu khỏi danh sách đã lưu."
           : "Đã lưu tài liệu để xem lại sau.",
       );
+      return true;
     } catch (requestError) {
       const message = requestError.message || "Không thể cập nhật tài liệu đã lưu.";
       setError(message);
       toast.error(message);
+      return false;
     } finally {
       setActionId("");
     }

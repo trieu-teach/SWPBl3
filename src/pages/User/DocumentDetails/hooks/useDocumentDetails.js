@@ -178,6 +178,24 @@ export default function useDocumentDetails() {
     }
   }
 
+  async function resubmitForReview() {
+    setSaving(true);
+    setError("");
+    setSuccess("");
+    try {
+      const updated = await updateDocumentVisibility(id, "PUBLIC");
+      setDocument(updated);
+      setSuccess("Tài liệu đã được gửi duyệt lại.");
+      toast.success("Đã gửi tài liệu để kiểm duyệt lại.");
+    } catch (requestError) {
+      const message = requestError.message || "Không thể gửi duyệt lại.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function openFile(mode) {
     setError("");
     try {
@@ -238,6 +256,7 @@ export default function useDocumentDetails() {
     updateField,
     save,
     changeVisibility,
+    resubmitForReview,
     openFile,
     remove,
     openDeleteDialog,

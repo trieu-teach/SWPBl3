@@ -17,10 +17,10 @@ import {
 import {
   CloudDownloadOutlined,
   DeleteOutlined,
+  SendOutlined,
   SmartToyOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
-import DocumentRatingButtons from "../../../../components/DocumentRating/DocumentRatingButtons.jsx";
 
 export default function DocumentActions({ details }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -103,26 +103,23 @@ export default function DocumentActions({ details }) {
           Tài liệu công khai sẽ được gửi duyệt trước khi xuất hiện trong cộng
           đồng.
         </Typography>
-        {document.visibility === "PUBLIC" && (
-          <>
-            <Divider sx={{ my: 3 }} />
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-            >
-              <Typography fontWeight={700} variant="body2">
-                Đánh giá tài liệu
+        {document.visibility === "PUBLIC" &&
+          document.moderationStatus === "REJECTED" && (
+            <Stack spacing={1} sx={{ mt: 2 }}>
+              <Typography variant="caption" color="error.main">
+                Hãy lưu nội dung đã chỉnh sửa trước khi gửi duyệt lại.
               </Typography>
-              <DocumentRatingButtons
-                documentId={documentId}
-                helpfulRating={document.helpfulRating}
-                totalRatings={document.ratingCount || document.totalRatings}
-                showStats
-              />
+              <Button
+                fullWidth
+                variant="outlined"
+                startIcon={<SendOutlined />}
+                onClick={details.resubmitForReview}
+                disabled={details.saving}
+              >
+                Gửi duyệt lại
+              </Button>
             </Stack>
-          </>
-        )}
+          )}
         <Divider sx={{ my: 3 }} />
         <Button
           fullWidth

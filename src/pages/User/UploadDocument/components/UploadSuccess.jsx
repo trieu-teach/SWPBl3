@@ -1,8 +1,12 @@
-import { Button, Paper, Stack, Typography } from "@mui/material";
-import { CheckCircleOutlined } from "@mui/icons-material";
+import { Alert, Button, Paper, Stack, Typography } from "@mui/material";
+import { CheckCircleOutlined, ScheduleOutlined } from "@mui/icons-material";
 import { Link } from "react-router-dom";
 
 export default function UploadSuccess({ document, fallbackTitle, onReset }) {
+  const awaitingModeration =
+    document.visibility === "PUBLIC" &&
+    (!document.moderationStatus || document.moderationStatus === "PENDING");
+
   return (
     <Paper
       variant="outlined"
@@ -25,6 +29,16 @@ export default function UploadSuccess({ document, fallbackTitle, onReset }) {
         “{document.title || fallbackTitle}” đã được lưu. Hệ thống đang trích
         xuất nội dung cho tìm kiếm và AI.
       </Typography>
+      {awaitingModeration && (
+        <Alert
+          severity="info"
+          icon={<ScheduleOutlined />}
+          sx={{ mt: 3, textAlign: "left" }}
+        >
+          <strong>Đang chờ kiểm duyệt.</strong> Tài liệu chỉ xuất hiện trong
+          Cộng đồng sau khi được duyệt.
+        </Alert>
+      )}
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={1.5}
