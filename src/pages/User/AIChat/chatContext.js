@@ -250,6 +250,23 @@ export function getLibraryScopePresentation(context) {
   return { type: "all", label: "Toàn bộ thư viện" };
 }
 
+/**
+ * True when libraryFilters contain at least one primary source selection
+ * (subjectId, subjectIds, or documentIds). categoryId and fileType are
+ * secondary filters and do NOT count as a source selection on their own.
+ *
+ * @param {LibraryFilters | null | undefined} libraryFilters
+ * @returns {boolean}
+ */
+export function hasSelectedSource(libraryFilters) {
+  if (!libraryFilters) return false;
+  return Boolean(
+    libraryFilters.subjectId ||
+      (libraryFilters.subjectIds && libraryFilters.subjectIds.length > 0) ||
+      (libraryFilters.documentIds && libraryFilters.documentIds.length > 0),
+  );
+}
+
 // ── Factory functions ──────────────────────────────────────────────────────────
 
 /**
