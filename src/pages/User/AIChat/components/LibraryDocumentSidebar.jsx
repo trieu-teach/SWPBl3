@@ -7,13 +7,18 @@ import {
   CircularProgress,
   Divider,
   Drawer,
+  FormControl,
   IconButton,
   InputAdornment,
+  InputLabel,
   List,
   ListItem,
+  MenuItem,
+  Select,
   Stack,
   TextField,
-  Tooltip,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import {
@@ -21,117 +26,110 @@ import {
   DescriptionOutlined,
   SearchOutlined,
   UploadFileOutlined,
-  VisibilityOutlined,
 } from "@mui/icons-material";
 import { Link } from "react-router-dom";
-import { MAX_SELECTED_DOCUMENTS } from "../../../../api/chat.api.js";
+import { filterLibraryDocumentsBySubjects } from "../chatContext.js";
 
 const SIDEBAR_WIDTH = 328;
-const SELECTABLE_AI_STATUSES = new Set(["COMPLETED", "MOCKED"]);
-
+const ALL_SUBJECTS_VALUE = "__all_subjects__";
 function isSelectable(document) {
-  return (
-    document?.status === "ACTIVE" &&
-    SELECTABLE_AI_STATUSES.has(document?.aiStatus)
-  );
+  return document?.aiUsable === true;
 }
 
 function statusLabel(document) {
-  if (document?.status !== "ACTIVE") return "Không khả dụng";
-  if (document?.aiStatus === "PROCESSING") return "Đang xử lý";
-  if (document?.aiStatus === "PENDING") return "Chờ xử lý";
-  if (document?.aiStatus === "FAILED") return "Không khả dụng cho AI";
-  if (document?.aiStatus === "MOCKED") return "Dữ liệu mẫu";
-  return document?.aiStatus === "COMPLETED" ? "Sẵn sàng" : "Chưa sẵn sàng";
+  if (document?.aiUsable) return "Sẵn sàng";
+  if (document?.unavailableReason === "ACCESS_REVOKED") return "Đã thu hồi quyền";
+  if (document?.qualityStatus === "UNREADABLE") return "Không thể đọc";
+  if (document?.extractionStatus === "PROCESSING") return "Đang xử lý";
+  if (document?.extractionStatus === "PENDING") return "Chờ xử lý";
+  if (document?.extractionStatus === "FAILED") return "Trích xuất lỗi";
+  return document?.unavailableReason || "Không khả dụng";
 }
 
 function DocumentRow({
   document,
   selected,
-  selectionLimitReached,
   onToggle,
-  onPreview,
-  previewing,
+  selectionLocked,
 }) {
   const selectable = isSelectable(document);
   const selectionDisabled =
-    (!selectable && !selected) || (!selected && selectionLimitReached);
+    selectionLocked || (!selectable && !selected);
   const extension =
-    document.fileName?.split(".").pop()?.toUpperCase() || "FILE";
+    document.fileName?.split(".").pop()?.toUpperCase() ||
+    document.fileType?.split("/").pop()?.toUpperCase() ||
+    "FILE";
 
   return (
     <ListItem
       disableGutters
-      sx={{ px: 1.5, py: 0.75, alignItems: "flex-start" }}
+      sx={{
+        mx: 1,
+        my: 0.25,
+        px: 0.75,
+        py: 0.65,
+        width: "auto",
+        alignItems: "flex-start",
+        borderRadius: 1.5,
+        bgcolor: selected ? "action.selected" : "transparent",
+        transition: "background-color 120ms ease",
+        "&:hover": { bgcolor: selected ? "action.selected" : "action.hover" },
+      }}
     >
       <Checkbox
         checked={selected}
         disabled={selectionDisabled}
         onChange={() => onToggle(document)}
         size="small"
-        inputProps={{ "aria-label": `Chọn ${document.title}` }}
-        sx={{ mt: 0.25, mr: 0.5 }}
+        slotProps={{ input: { "aria-label": `Chọn ${document.title}` } }}
+        sx={{ mt: 0.15, mr: 0.25, p: 0.75 }}
       />
       <DescriptionOutlined
-        sx={{ mt: 1, mr: 1, fontSize: 19, color: "text.secondary" }}
+        sx={{ mt: 0.85, mr: 0.9, fontSize: 18, color: "text.secondary" }}
       />
       <Box sx={{ minWidth: 0, flex: 1 }}>
-        <Button
-          variant="text"
-          color="inherit"
-          onClick={() => onPreview(document)}
-          disabled={previewing}
+        <Typography
+          component="span"
+          variant="body2"
           sx={{
-            minWidth: 0,
-            maxWidth: "100%",
-            justifyContent: "flex-start",
-            px: 0,
-            py: 0.25,
-            fontSize: "0.82rem",
+            display: "block",
             fontWeight: 700,
-            textAlign: "left",
-            textTransform: "none",
+            lineHeight: 1.35,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
           }}
         >
-          <Typography component="span" variant="body2" noWrap>
-            {document.title || document.fileName || "Tài liệu"}
-          </Typography>
-        </Button>
+          {document.title || "Tài liệu"}
+        </Typography>
         <Stack
           direction="row"
-          alignItems="center"
-          gap={0.75}
-          sx={{ minWidth: 0, mt: 0.25 }}
+          sx={{ minWidth: 0, mt: 0.25, alignItems: "center", gap: 0.65 }}
         >
           <Typography variant="caption" color="text.secondary">
             {extension}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {document.accessType === "SAVED" ? "Đã lưu" : "Sở hữu"}
           </Typography>
           <Chip
             label={statusLabel(document)}
             size="small"
             color={selectable ? "success" : "default"}
-            variant="outlined"
-            sx={{ height: 20, maxWidth: 150, fontSize: "0.66rem" }}
+            variant="filled"
+            sx={{
+              height: 19,
+              maxWidth: 150,
+              fontSize: "0.64rem",
+              bgcolor: selectable
+                ? "rgba(46, 125, 50, 0.08)"
+                : "action.hover",
+              color: selectable ? "success.dark" : "text.secondary",
+              "& .MuiChip-label": { px: 0.75 },
+            }}
           />
         </Stack>
       </Box>
-      <Tooltip title="Xem tài liệu">
-        <span>
-          <IconButton
-            size="small"
-            onClick={() => onPreview(document)}
-            disabled={previewing}
-            aria-label={`Xem ${document.title}`}
-            sx={{ ml: 0.5 }}
-          >
-            {previewing ? (
-              <CircularProgress size={17} />
-            ) : (
-              <VisibilityOutlined sx={{ fontSize: 18 }} />
-            )}
-          </IconButton>
-        </span>
-      </Tooltip>
     </ListItem>
   );
 }
@@ -140,23 +138,21 @@ function DocumentSection({
   title,
   source,
   selectedIds,
-  selectionLimitReached,
   onToggle,
-  onPreview,
-  previewingDocumentId,
+  selectionLocked,
 }) {
   return (
-    <Box component="section" sx={{ py: 1 }}>
+    <Box component="section" sx={{ py: 0.75 }}>
       <Typography
         variant="overline"
         color="text.secondary"
-        sx={{ display: "block", px: 2, fontWeight: 800 }}
+        sx={{ display: "block", px: 2, pb: 0.25, fontWeight: 800 }}
       >
         {title}
       </Typography>
 
       {source.loading && source.documents.length === 0 && (
-        <Stack direction="row" alignItems="center" gap={1} sx={{ px: 2, py: 2 }}>
+        <Stack direction="row" sx={{ px: 2, py: 2, alignItems: "center", gap: 1 }}>
           <CircularProgress size={17} />
           <Typography variant="caption" color="text.secondary">
             Đang tải tài liệu...
@@ -187,10 +183,8 @@ function DocumentSection({
               key={document.id}
               document={document}
               selected={selectedIds.has(document.id)}
-              selectionLimitReached={selectionLimitReached}
               onToggle={onToggle}
-              onPreview={onPreview}
-              previewing={previewingDocumentId === document.id}
+              selectionLocked={selectionLocked}
             />
           ))}
         </List>
@@ -217,19 +211,59 @@ function DocumentSection({
 
 function SidebarContent({
   library,
+  scope,
   selectedDocuments,
+  selectedSubjectIds,
   onToggleDocument,
-  onPreviewDocument,
-  previewingDocumentId,
+  onChangeSubjects,
   previewError,
   onClose,
   showCloseButton,
+  selectionLocked,
 }) {
   const selectedIds = new Set(
     selectedDocuments.map((document) => document.id),
   );
-  const selectionLimitReached =
-    selectedIds.size >= MAX_SELECTED_DOCUMENTS;
+  const subjectOptions = library.subjects;
+  const selectedSubjectsSet = new Set(selectedSubjectIds);
+  const subjectDocumentCounts = new Map();
+  library.current.documents.forEach((document) => {
+    if (!document?.subjectId) return;
+    subjectDocumentCounts.set(
+      document.subjectId,
+      (subjectDocumentCounts.get(document.subjectId) ?? 0) + 1,
+    );
+  });
+  const visibleSource = {
+    ...library.current,
+    documents: filterLibraryDocumentsBySubjects(
+      library.current.documents,
+      selectedSubjectIds,
+    ),
+  };
+  const scopeLabelId = showCloseButton
+    ? "ai-chat-subject-filter-label-mobile"
+    : "ai-chat-subject-filter-label-desktop";
+
+  function handleSubjectChange(event) {
+    const value = Array.isArray(event.target.value)
+      ? event.target.value
+      : String(event.target.value).split(",");
+    if (value.includes(ALL_SUBJECTS_VALUE)) {
+      onChangeSubjects?.([]);
+      return;
+    }
+    onChangeSubjects?.(value);
+  }
+
+  function renderSubjectSelection(selectedIds) {
+    if (selectedIds.length === 0) return "Tất cả môn học";
+    if (selectedIds.length === 1) {
+      return subjectOptions.find((subject) => subject.id === selectedIds[0])
+        ?.name || "1 môn học";
+    }
+    return `${selectedIds.length} môn học đã chọn`;
+  }
 
   return (
     <Stack
@@ -238,14 +272,13 @@ function SidebarContent({
         maxWidth: "100vw",
         height: "100%",
         minHeight: 0,
+        overflow: "hidden",
         bgcolor: "background.paper",
       }}
     >
       <Stack
         direction="row"
-        alignItems="center"
-        gap={1}
-        sx={{ px: 2, py: 1.5, flexShrink: 0 }}
+        sx={{ px: 2, py: 1.1, flexShrink: 0, alignItems: "center", gap: 0.85 }}
       >
         <DescriptionOutlined color="action" />
         <Box sx={{ minWidth: 0, flex: 1 }}>
@@ -253,9 +286,7 @@ function SidebarContent({
             Tài liệu
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            {selectedIds.size === 0
-              ? "Toàn bộ thư viện"
-              : `${selectedIds.size} tài liệu đã chọn`}
+            {scope.label}
           </Typography>
         </Box>
         {showCloseButton && (
@@ -265,65 +296,141 @@ function SidebarContent({
         )}
       </Stack>
 
-      <Box component="form" onSubmit={library.applySearch} sx={{ px: 2, pb: 1.5 }}>
+      <Box sx={{ px: 2, pb: 1.1 }}>
+        <FormControl fullWidth size="small" disabled={selectionLocked}>
+          <InputLabel id={scopeLabelId} shrink>
+            Lọc môn học
+          </InputLabel>
+          <Select
+            multiple
+            displayEmpty
+            notched
+            labelId={scopeLabelId}
+            value={selectedSubjectIds}
+            label="Lọc môn học"
+            onChange={handleSubjectChange}
+            renderValue={renderSubjectSelection}
+          >
+            <MenuItem value={ALL_SUBJECTS_VALUE}>
+              <Checkbox checked={selectedSubjectIds.length === 0} size="small" />
+              <Box sx={{ flex: 1 }}>Tất cả môn học</Box>
+              <Typography variant="caption" color="text.secondary">
+                {library.current.documents.length} file
+              </Typography>
+            </MenuItem>
+            {library.subjectsLoading && (
+              <MenuItem disabled>Đang tải môn học...</MenuItem>
+            )}
+            {subjectOptions.map((subject) => (
+              <MenuItem key={subject.id} value={subject.id}>
+                <Checkbox
+                  checked={selectedSubjectsSet.has(subject.id)}
+                  size="small"
+                />
+                <Box
+                  component="span"
+                  sx={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}
+                >
+                  {subject.name || "Môn học"}
+                </Box>
+                <Typography variant="caption" color="text.secondary">
+                  {subjectDocumentCounts.get(subject.id) ?? 0} file
+                </Typography>
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        {library.subjectsError && (
+          <Alert severity="warning" sx={{ mt: 0.75, py: 0, fontSize: "0.72rem" }}>
+            Không thể tải danh sách môn học.
+          </Alert>
+        )}
+      </Box>
+
+      <Box component="form" onSubmit={library.applySearch} sx={{ px: 2, pb: 1.1 }}>
         <TextField
           fullWidth
           size="small"
           value={library.searchInput}
           onChange={(event) => library.setSearchInput(event.target.value)}
           placeholder="Tìm tài liệu..."
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchOutlined fontSize="small" />
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchOutlined fontSize="small" />
+                </InputAdornment>
+              ),
+            },
           }}
         />
       </Box>
 
-      <Box sx={{ px: 2, pb: 1.5 }}>
-        <Typography variant="caption" color="text.secondary">
-          Phạm vi áp dụng cho câu hỏi tiếp theo.
-        </Typography>
-        {selectionLimitReached && (
-          <Alert severity="info" sx={{ mt: 1, py: 0, fontSize: "0.72rem" }}>
-            Đã chọn tối đa {MAX_SELECTED_DOCUMENTS} tài liệu.
-          </Alert>
-        )}
-        {previewError && (
-          <Alert severity="error" sx={{ mt: 1, py: 0, fontSize: "0.72rem" }}>
-            {previewError}
-          </Alert>
-        )}
+      <Box sx={{ px: 2, pb: 1.1 }}>
+        <ToggleButtonGroup
+          exclusive
+          fullWidth
+          size="small"
+          value={library.source}
+          onChange={(_, value) => value && library.setSource(value)}
+          aria-label="Nguồn tài liệu"
+        >
+          <ToggleButton value="all">Tất cả</ToggleButton>
+          <ToggleButton value="owned">Sở hữu</ToggleButton>
+          <ToggleButton value="saved">Đã lưu</ToggleButton>
+        </ToggleButtonGroup>
       </Box>
+
+      {(selectionLocked || previewError) && (
+        <Box sx={{ px: 2, pb: 1.1 }}>
+          {selectionLocked && (
+            <Alert severity="info" sx={{ py: 0, fontSize: "0.72rem" }}>
+              Phạm vi đã được cố định. Hãy tạo chat mới để đổi phạm vi.
+            </Alert>
+          )}
+          {previewError && (
+            <Alert
+              severity="error"
+              sx={{
+                mt: selectionLocked ? 0.75 : 0,
+                py: 0,
+                fontSize: "0.72rem",
+              }}
+            >
+              {previewError}
+            </Alert>
+          )}
+        </Box>
+      )}
 
       <Divider />
 
-      <Box sx={{ minHeight: 0, flex: 1, overflowY: "auto" }}>
+      <Box
+        sx={{
+          minHeight: 0,
+          flex: 1,
+          overflowY: "auto",
+          overflowX: "hidden",
+          overscrollBehaviorY: "contain",
+        }}
+      >
         <DocumentSection
-          title="Tài liệu của tôi"
-          source={library.owned}
+          title={
+            library.source === "owned"
+              ? "Tài liệu sở hữu"
+              : library.source === "saved"
+                ? "Tài liệu đã lưu"
+                : "Tất cả tài liệu"
+          }
+          source={visibleSource}
           selectedIds={selectedIds}
-          selectionLimitReached={selectionLimitReached}
           onToggle={onToggleDocument}
-          onPreview={onPreviewDocument}
-          previewingDocumentId={previewingDocumentId}
-        />
-        <Divider />
-        <DocumentSection
-          title="Đã lưu"
-          source={library.saved}
-          selectedIds={selectedIds}
-          selectionLimitReached={selectionLimitReached}
-          onToggle={onToggleDocument}
-          onPreview={onPreviewDocument}
-          previewingDocumentId={previewingDocumentId}
+          selectionLocked={selectionLocked}
         />
       </Box>
 
       <Divider />
-      <Box sx={{ p: 1.5, flexShrink: 0 }}>
+      <Box sx={{ p: 1.25, flexShrink: 0 }}>
         <Button
           fullWidth
           component={Link}
@@ -341,21 +448,25 @@ function SidebarContent({
 
 export default function LibraryDocumentSidebar({
   library,
+  scope,
   selectedDocuments = [],
+  selectedSubjectIds = [],
   onToggleDocument,
-  onPreviewDocument,
-  previewingDocumentId = null,
+  onChangeSubjects,
   previewError = "",
   mobileOpen = false,
   onMobileClose,
+  selectionLocked = false,
 }) {
   const commonProps = {
     library,
+    scope,
     selectedDocuments,
+    selectedSubjectIds,
     onToggleDocument,
-    onPreviewDocument,
-    previewingDocumentId,
+    onChangeSubjects,
     previewError,
+    selectionLocked,
   };
 
   return (

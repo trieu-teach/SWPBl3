@@ -17,6 +17,8 @@ import {
   BookmarkOutlined,
   CloudDownloadOutlined,
   DescriptionOutlined,
+  PersonOutlineOutlined,
+  ReportProblemOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
 import {
@@ -26,6 +28,7 @@ import {
   getFileTypeColors,
   normalizeTags,
 } from "../../DocumentLibrary/utils/document-formatters.js";
+import DocumentRatingButtons from "../../../../components/DocumentRating/DocumentRatingButtons.jsx";
 
 export default function CommunityCard({
   document,
@@ -33,9 +36,16 @@ export default function CommunityCard({
   onPreview,
   onDownload,
   onSave,
+  onReport,
 }) {
   const tags = normalizeTags(document.tags);
   const fileColors = getFileTypeColors(document);
+  const ownerName =
+    document.ownerPublicName ||
+    document.owner?.fullName ||
+    "Người chia sẻ";
+  const avatarUrl = document.ownerAvatarUrl || document.owner?.avatarUrl;
+
   return (
     <Card
       variant="outlined"
@@ -92,17 +102,28 @@ export default function CommunityCard({
           sx={{ mt: 2, minWidth: 0 }}
         >
           <Avatar
-            src={document.owner?.avatarUrl || undefined}
-            sx={{ width: 32, height: 32, fontSize: 12, flexShrink: 0 }}
+            src={avatarUrl || undefined}
+            alt={ownerName}
+            sx={{
+              width: 32,
+              height: 32,
+              fontSize: 13,
+              fontWeight: 700,
+              flexShrink: 0,
+              bgcolor: "primary.light",
+              color: "primary.contrastText",
+            }}
           >
-            {document.owner?.fullName?.[0]}
+            {avatarUrl ? null : ownerName[0]?.toUpperCase() || (
+              <PersonOutlineOutlined sx={{ fontSize: 16 }} />
+            )}
           </Avatar>
           <Typography
             variant="body2"
             noWrap
-            sx={{ minWidth: 0, flex: 1, ml: 1 }}
+            sx={{ minWidth: 0, flex: 1, ml: 1, fontWeight: 600 }}
           >
-            {document.owner?.fullName || "Người chia sẻ"}
+            {ownerName}
           </Typography>
         </Stack>
         <Typography
@@ -157,17 +178,34 @@ export default function CommunityCard({
             </IconButton>
           </span>
         </Tooltip>
+        <DocumentRatingButtons
+          documentId={document.id}
+          helpfulRating={document.helpfulRating}
+          totalRatings={document.ratingCount || document.totalRatings}
+          size="small"
+        />
         {!document.owned && (
-          <Button
-            size="small"
-            disabled={actionId === `save-${document.id}`}
-            startIcon={
-              document.saved ? <BookmarkOutlined /> : <BookmarkBorderOutlined />
-            }
-            onClick={() => onSave(document)}
-          >
-            {document.saved ? "Bỏ lưu" : "Lưu"}
-          </Button>
+          <>
+            <Button
+              size="small"
+              disabled={actionId === `save-${document.id}`}
+              startIcon={
+                document.saved ? <BookmarkOutlined /> : <BookmarkBorderOutlined />
+              }
+              onClick={() => onSave(document)}
+            >
+              {document.saved ? "Bỏ lưu" : "Lưu"}
+            </Button>
+            <Button
+              size="small"
+              color="error"
+              startIcon={<ReportProblemOutlined />}
+              onClick={() => onReport(document)}
+              sx={{ ml: "auto" }}
+            >
+              Báo cáo
+            </Button>
+          </>
         )}
       </CardActions>
     </Card>

@@ -519,7 +519,7 @@ export default function DownloadLogTable({ download }) {
             py: 1.5,
             borderBottom: "2px solid",
             borderColor: "divider",
-            bgcolor: "#fafafa",
+            bgcolor: "action.hover",
           }}
         >
           {/* Người tải */}

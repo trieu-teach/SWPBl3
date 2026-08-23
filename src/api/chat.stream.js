@@ -6,6 +6,8 @@ import {
   notifyUnauthorized,
   ApiError,
 } from "../lib/http.js";
+import { extractEvents, isValidDoneEvent } from "./chat.sse-parser.js";
+import { sanitizeLibraryFilters } from "./chat.filters.js";
 
 const STREAM_FAILED_MESSAGE = "Luồng phản hồi AI gặp lỗi. Vui lòng thử lại.";
 const STREAM_INCOMPLETE_MESSAGE =
@@ -14,11 +16,13 @@ const STREAM_INVALID_DONE_MESSAGE =
   "Phản hồi hoàn tất từ AI không hợp lệ. Vui lòng thử lại.";
 
 export class ChatStreamError extends Error {
-  constructor(message, { code, retryable } = {}) {
+  constructor(message, { code, retryable, details, status } = {}) {
     super(message);
     this.name = "ChatStreamError";
     if (code !== undefined) this.code = code;
     if (retryable !== undefined) this.retryable = retryable;
+    if (details !== undefined) this.details = details;
+    if (status !== undefined) this.status = status;
   }
 }
 
@@ -50,45 +54,6 @@ function createAbortError(cause) {
   return error;
 }
 
-function parseEventChunk(eventChunk) {
-  const lines = eventChunk.split(/\r?\n/);
-  let eventType = "message";
-  const dataLines = [];
-
-  for (const line of lines) {
-    if (line.startsWith("event:")) {
-      eventType = line.slice(6).trim();
-    } else if (line.startsWith("data:")) {
-      dataLines.push(line.slice(5).replace(/^ /, ""));
-    }
-  }
-
-  if (dataLines.length === 0) return null;
-
-  const eventData = dataLines.join("\n");
-  try {
-    return { type: eventType, data: JSON.parse(eventData) };
-  } catch {
-    return { type: eventType, data: eventData };
-  }
-}
-
-function extractEvents(buffer) {
-  const events = [];
-  let remaining = buffer;
-  let boundary = remaining.match(/\r?\n\r?\n/);
-
-  while (boundary?.index !== undefined) {
-    const eventChunk = remaining.slice(0, boundary.index);
-    remaining = remaining.slice(boundary.index + boundary[0].length);
-    const event = parseEventChunk(eventChunk);
-    if (event) events.push(event);
-    boundary = remaining.match(/\r?\n\r?\n/);
-  }
-
-  return { events, remaining };
-}
-
 function createServerStreamError(data) {
   const payload = data && typeof data === "object" ? data : null;
   const message =
@@ -100,22 +65,10 @@ function createServerStreamError(data) {
 
   return new ChatStreamError(message, {
     code: payload?.code,
+    details: payload?.details,
     retryable:
       typeof payload?.retryable === "boolean" ? payload.retryable : undefined,
   });
-}
-
-function validateDone(data) {
-  return (
-    data !== null &&
-    typeof data === "object" &&
-    !Array.isArray(data) &&
-    typeof data.answer === "string" &&
-    typeof data.sessionId === "string" &&
-    data.sessionId.trim().length > 0 &&
-    typeof data.messageId === "string" &&
-    data.messageId.trim().length > 0
-  );
 }
 
 /**
@@ -165,7 +118,7 @@ async function* readChatStream(response, signal) {
         }
 
         if (event.type === "done") {
-          if (!validateDone(event.data)) {
+          if (!isValidDoneEvent(event.data)) {
             throw new ChatStreamError(STREAM_INVALID_DONE_MESSAGE);
           }
           terminalData = event.data;
@@ -233,13 +186,21 @@ async function* requestChatStream(path, body, signal) {
       notifyUnauthorized();
     }
     let message = "Request failed";
+    let code;
+    let details;
+    let retryable;
     try {
       const errData = await response.json();
       message = errData.error?.message || errData.message || message;
+      code = errData.error?.code || errData.code;
+      details = errData.error?.details || errData.details;
+      retryable = errData.error?.retryable ?? errData.retryable;
     } catch {
       // ignore
     }
-    throw new ApiError(message, response.status);
+    const requestError = new ApiError(message, response.status, code, details);
+    if (typeof retryable === "boolean") requestError.retryable = retryable;
+    throw requestError;
   }
 
   yield* readChatStream(response, signal);
@@ -249,9 +210,10 @@ export async function* askDocumentStream({
   documentId,
   question,
   sessionId,
+  requestId,
   signal,
 }) {
-  const body = { documentId, question };
+  const body = { documentId, question, requestId };
   if (sessionId) body.sessionId = sessionId;
   yield* requestChatStream("/chat/ask-document/stream", body, signal);
 }
@@ -259,29 +221,16 @@ export async function* askDocumentStream({
 export async function* askLibraryStream({
   question,
   sessionId,
+  requestId,
   limit = 5,
   filters,
   signal,
 }) {
-  const body = { question, limit };
+  const body = { question, limit, requestId };
   if (sessionId) body.sessionId = sessionId;
 
-  if (filters) {
-    const cleanedFilters = {};
-    if (filters.subjectId) cleanedFilters.subjectId = filters.subjectId;
-    if (filters.subjectIds?.length > 0) {
-      cleanedFilters.subjectIds = filters.subjectIds;
-    }
-    if (filters.categoryId) cleanedFilters.categoryId = filters.categoryId;
-    if (filters.fileType) cleanedFilters.fileType = filters.fileType;
-    if (filters.documentIds?.length > 0) {
-      cleanedFilters.documentIds = filters.documentIds;
-    }
-
-    if (Object.keys(cleanedFilters).length > 0) {
-      body.filters = cleanedFilters;
-    }
-  }
+  const cleanedFilters = sanitizeLibraryFilters(filters);
+  if (cleanedFilters) body.filters = cleanedFilters;
 
   yield* requestChatStream("/chat/ask-library/stream", body, signal);
 }

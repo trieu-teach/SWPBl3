@@ -1,4 +1,9 @@
-import { Box, Card, CardContent, Typography, Skeleton } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Skeleton,
+  useTheme,
+} from "@mui/material";
 import {
   AreaChart,
   Area,
@@ -19,15 +24,15 @@ const CustomTooltipContent = ({ active, payload, label }) => {
         border: "1px solid",
         borderColor: "divider",
         borderRadius: 2,
-        p: 2,
+        p: 1.5,
         boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-        minWidth: 160,
+        minWidth: 140,
       }}
     >
-      <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 0.5 }}>
+      <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 0.25 }}>
         {label}
       </Typography>
-      <Typography variant="body1" sx={{ fontWeight: 700, color: "#6366f1" }}>
+      <Typography variant="body2" sx={{ fontWeight: 700, color: "#6366f1" }}>
         {payload[0]?.value?.toLocaleString("vi-VN")} tài liệu
       </Typography>
     </Box>
@@ -63,44 +68,36 @@ function calculateStats(data) {
 }
 
 export default function UploadStatsChart({ data, loading }) {
+  const theme = useTheme();
+
   if (loading) {
     return (
-      <Card variant="outlined" sx={{ borderRadius: 3 }}>
-        <CardContent sx={{ p: 3 }}>
-          <Box sx={{ display: "flex", gap: 4, mb: 3 }}>
-            {[1, 2, 3].map((i) => (
-              <Box key={i}>
-                <Skeleton width={100} height={16} />
-                <Skeleton width={60} height={40} sx={{ mt: 0.5 }} />
-              </Box>
-            ))}
-          </Box>
-          <Skeleton variant="rounded" width="100%" height={350} />
-        </CardContent>
-      </Card>
+      <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        <Box sx={{ display: "flex", gap: 3, mb: 3 }}>
+          {[1, 2, 3].map((i) => (
+            <Box key={i}>
+              <Skeleton width={80} height={12} />
+              <Skeleton width={50} height={32} sx={{ mt: 0.25 }} />
+            </Box>
+          ))}
+        </Box>
+        <Box sx={{ flex: 1 }}>
+          <Skeleton variant="rounded" width="100%" height="100%" />
+        </Box>
+      </Box>
     );
   }
 
   if (!data || data.length === 0) {
     return (
-      <Card variant="outlined" sx={{ borderRadius: 3 }}>
-        <CardContent
-          sx={{
-            height: 350,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Typography color="text.secondary" variant="body1">
-            Không có dữ liệu thống kê upload
-          </Typography>
-          <Typography color="text.disabled" variant="body2" sx={{ mt: 0.5 }}>
-            Thử thay đổi khoảng thời gian lọc
-          </Typography>
-        </CardContent>
-      </Card>
+      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", py: 4 }}>
+        <Typography color="text.secondary" variant="body2">
+          Không có dữ liệu thống kê upload
+        </Typography>
+        <Typography color="text.disabled" variant="caption" sx={{ mt: 0.5 }}>
+          Thử thay đổi khoảng thời gian lọc
+        </Typography>
+      </Box>
     );
   }
 
@@ -116,75 +113,82 @@ export default function UploadStatsChart({ data, loading }) {
   const yAxisDomain = Math.ceil(maxValue * 1.2);
 
   return (
-    <Card variant="outlined" sx={{ borderRadius: 3 }}>
-      <CardContent sx={{ p: 3 }}>
-        {/* Summary Stats */}
-        <Box
-          sx={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: { xs: 3, md: 5 },
-            mb: 4,
-            pb: 3,
-            borderBottom: "1px solid",
-            borderColor: "divider",
-          }}
-        >
-          <Box>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-              TỔNG UPLOAD
-            </Typography>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 800,
-                color: "#6366f1",
-                fontSize: { xs: "1.75rem", md: "2.25rem" },
-              }}
-            >
-              {stats.total.toLocaleString("vi-VN")}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-              TRUNG BÌNH / NGÀY
-            </Typography>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 700,
-                color: "text.primary",
-                fontSize: { xs: "1.5rem", md: "2rem" },
-              }}
-            >
-              {stats.average.toLocaleString("vi-VN")}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-              NGÀY CAO NHẤT
-            </Typography>
-            <Typography
-              variant="h5"
-              sx={{
-                fontWeight: 700,
-                color: "#10b981",
-                fontSize: { xs: "1.25rem", md: "1.5rem" },
-              }}
-            >
-              {stats.max.toLocaleString("vi-VN")}
-              {stats.maxDate && (
-                <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                  ({stats.maxDate})
-                </Typography>
-              )}
-            </Typography>
-          </Box>
+    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+      {/* Summary Stats */}
+      <Box
+        sx={{
+          display: "flex",
+          gap: { xs: 2, md: 4 },
+          mb: 2,
+          pb: 2,
+          borderBottom: "1px solid",
+          borderColor: "divider",
+          flexShrink: 0,
+        }}
+      >
+        <Box>
+          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: "0.65rem" }}>
+            TỔNG UPLOAD
+          </Typography>
+          <Typography
+            sx={{
+              fontWeight: 800,
+              color: "#6366f1",
+              fontSize: "1.5rem",
+              lineHeight: 1.1,
+            }}
+          >
+            {stats.total.toLocaleString("vi-VN")}
+          </Typography>
         </Box>
+        <Box>
+          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: "0.65rem" }}>
+            TRUNG BÌNH / NGÀY
+          </Typography>
+          <Typography
+            sx={{
+              fontWeight: 700,
+              color: "text.primary",
+              fontSize: "1.25rem",
+              lineHeight: 1.1,
+            }}
+          >
+            {stats.average.toLocaleString("vi-VN")}
+          </Typography>
+        </Box>
+        <Box>
+          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: "0.65rem" }}>
+            NGÀY CAO NHẤT
+          </Typography>
+          <Typography
+            sx={{
+              fontWeight: 700,
+              color: "#10b981",
+              fontSize: "1rem",
+              lineHeight: 1.1,
+              display: "flex",
+              alignItems: "baseline",
+              gap: 0.5,
+            }}
+          >
+            {stats.max.toLocaleString("vi-VN")}
+            {stats.maxDate && (
+              <Typography component="span" variant="caption" color="text.secondary" sx={{ fontWeight: 400 }}>
+                ({stats.maxDate})
+              </Typography>
+            )}
+          </Typography>
+        </Box>
+      </Box>
 
-        {/* Chart */}
-        <ResponsiveContainer width="100%" height={350}>
-          <AreaChart data={chartData} margin={{ top: 10, right: 24, left: 8, bottom: 8 }}>
+      {/* Chart - stretches to fill available space */}
+      <Box sx={{ flex: 1, minHeight: 280 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart 
+            data={chartData} 
+            margin={{ top: 4, right: 16, left: 0, bottom: 4 }}
+            key={`area-chart-${data?.length || 0}`}
+          >
             <defs>
               <linearGradient id="uploadGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#6366f1" stopOpacity={0.4} />
@@ -193,25 +197,25 @@ export default function UploadStatsChart({ data, loading }) {
             </defs>
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke="var(--mui-palette-divider)"
+              stroke={theme.palette.divider}
               vertical={false}
             />
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 12, fill: "var(--mui-palette-text-secondary)" }}
+              tick={{ fontSize: 10, fill: theme.palette.text.secondary }}
               tickLine={false}
-              axisLine={{ stroke: "var(--mui-palette-divider)" }}
+              axisLine={{ stroke: theme.palette.divider }}
               interval={tickInterval}
-              tickMargin={10}
+              tickMargin={6}
             />
             <YAxis
-              tick={{ fontSize: 12, fill: "var(--mui-palette-text-secondary)" }}
+              tick={{ fontSize: 10, fill: theme.palette.text.secondary }}
               tickLine={false}
               axisLine={false}
               tickFormatter={(value) => Math.round(value)}
               allowDecimals={false}
               domain={[0, yAxisDomain]}
-              width={40}
+              width={36}
             />
             <Tooltip
               content={<CustomTooltipContent />}
@@ -228,14 +232,19 @@ export default function UploadStatsChart({ data, loading }) {
               type="monotone"
               dataKey="uploads"
               stroke="#6366f1"
-              strokeWidth={2.5}
+              strokeWidth={2}
               fill="url(#uploadGradient)"
-              dot={{ fill: "#6366f1", strokeWidth: 0, r: 3 }}
-              activeDot={{ r: 6, fill: "#6366f1", stroke: "var(--mui-palette-background-paper)", strokeWidth: 3 }}
+              dot={{ fill: "#6366f1", strokeWidth: 0, r: 2 }}
+              activeDot={{
+                r: 5,
+                fill: "#6366f1",
+                stroke: theme.palette.background.paper,
+                strokeWidth: 2,
+              }}
             />
           </AreaChart>
         </ResponsiveContainer>
-      </CardContent>
-    </Card>
+      </Box>
+    </Box>
   );
 }

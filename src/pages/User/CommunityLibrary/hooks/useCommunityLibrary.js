@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getCommunityDocuments,
   getCommunityPreview,
+  reportCommunityDocument,
   saveCommunityDocument,
   unsaveCommunityDocument,
 } from "../../../../api/community.api.js";
@@ -23,6 +24,9 @@ export default function useCommunityLibrary() {
   const [error, setError] = useState("");
   const [actionId, setActionId] = useState("");
   const [preview, setPreview] = useState(null);
+  const [reportTarget, setReportTarget] = useState(null);
+  const [reporting, setReporting] = useState(false);
+  const [reportError, setReportError] = useState("");
 
   const query = useMemo(
     () => ({ ...filters, page, limit: 12, sortOrder: "desc" }),
@@ -152,6 +156,36 @@ export default function useCommunityLibrary() {
     }
   }
 
+  function openReport(document) {
+    setReportError("");
+    setReportTarget(document);
+  }
+
+  function closeReport() {
+    if (reporting) return;
+    setReportError("");
+    setReportTarget(null);
+  }
+
+  async function submitReport(payload) {
+    if (!reportTarget) return;
+    setReporting(true);
+    setReportError("");
+    try {
+      await reportCommunityDocument(reportTarget.id, payload);
+      toast.success("Báo cáo đã được gửi đến đội ngũ kiểm duyệt.");
+      setReportTarget(null);
+    } catch (requestError) {
+      const message =
+        requestError.status === 409
+          ? "Bạn đã có một báo cáo đang chờ xử lý cho tài liệu này."
+          : requestError.message || "Không thể gửi báo cáo tài liệu.";
+      setReportError(message);
+    } finally {
+      setReporting(false);
+    }
+  }
+
   return {
     documents,
     searchInput,
@@ -162,6 +196,9 @@ export default function useCommunityLibrary() {
     error,
     actionId,
     preview,
+    reportTarget,
+    reporting,
+    reportError,
     setSearchInput,
     setPage,
     updateFilter,
@@ -170,6 +207,9 @@ export default function useCommunityLibrary() {
     openPreview,
     downloadDocument,
     toggleSave,
+    openReport,
+    closeReport,
+    submitReport,
     closePreview: () => setPreview(null),
   };
 }

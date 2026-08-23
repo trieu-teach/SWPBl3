@@ -1,10 +1,8 @@
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
-  Chip,
   Skeleton,
+  useTheme,
 } from "@mui/material";
 import {
   BarChart,
@@ -20,7 +18,7 @@ import { getFileTypeColors, displayFileType } from "../../utils/admin-formatters
 
 const CustomTooltipContent = ({ active, payload, barColor }) => {
   if (!active || !payload?.length) return null;
-  const { fullTitle, downloadCount, saveCount, fileType, ownerFullName, subjectName, visibility, metricValue } = payload[0].payload;
+  const { fullTitle, fileType, ownerFullName, subjectName, visibility, metricValue } = payload[0].payload;
   const colors = getFileTypeColors(fileType);
   
   return (
@@ -30,9 +28,9 @@ const CustomTooltipContent = ({ active, payload, barColor }) => {
         border: "1px solid",
         borderColor: "divider",
         borderRadius: 2,
-        p: 2,
+        p: 1.5,
         boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-        maxWidth: 320,
+        maxWidth: 280,
       }}
     >
       <Typography
@@ -41,41 +39,60 @@ const CustomTooltipContent = ({ active, payload, barColor }) => {
           fontWeight: 700,
           color: "text.primary",
           display: "block",
-          mb: 1,
+          mb: 0.5,
           wordBreak: "break-word",
           whiteSpace: "normal",
-          lineHeight: 1.4,
+          lineHeight: 1.3,
         }}
       >
         {fullTitle}
       </Typography>
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mb: 1 }}>
-        <Chip
-          label={displayFileType({ fileType })}
-          size="small"
-          sx={{ height: 20, fontSize: "0.7rem", bgcolor: colors.bg, color: colors.main, fontWeight: 600 }}
-        />
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mb: 0.5 }}>
+        <Box
+          sx={{
+            height: 18,
+            px: 0.75,
+            borderRadius: 1,
+            bgcolor: colors.bg,
+            color: colors.main,
+            fontWeight: 600,
+            fontSize: "0.65rem",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          {displayFileType({ fileType })}
+        </Box>
         {visibility && (
-          <Chip
-            label={visibility}
-            size="small"
-            sx={{ height: 20, fontSize: "0.7rem", bgcolor: "#f3f4f6", color: "#6b7280" }}
-          />
+          <Box
+            sx={{
+              height: 18,
+              px: 0.75,
+              borderRadius: 1,
+              bgcolor: "action.hover",
+              color: "text.secondary",
+              fontSize: "0.65rem",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            {visibility}
+          </Box>
         )}
       </Box>
       {ownerFullName && (
-        <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 0.25 }}>
+        <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
           Tác giả: {ownerFullName}
         </Typography>
       )}
       {subjectName && (
-        <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 0.25 }}>
+        <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
           Môn: {subjectName}
         </Typography>
       )}
-      <Box sx={{ mt: 1, pt: 1, borderTop: "1px solid", borderColor: "divider" }}>
+      <Box sx={{ mt: 0.75, pt: 0.75, borderTop: "1px solid", borderColor: "divider" }}>
         <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
-          <strong style={{ color: barColor, fontSize: "1rem" }}>{metricValue}</strong> lượt
+          <strong style={{ color: barColor }}>{metricValue}</strong> lượt
         </Typography>
       </Box>
     </Box>
@@ -94,29 +111,6 @@ function truncateText(text, maxLength) {
   return text.slice(0, maxLength - 3) + "...";
 }
 
-function EmptyState({ message }) {
-  return (
-    <Card variant="outlined" sx={{ borderRadius: 3 }}>
-      <CardContent
-        sx={{
-          height: 400,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Typography color="text.secondary" variant="body1">
-          {message}
-        </Typography>
-        <Typography color="text.disabled" variant="body2" sx={{ mt: 0.5 }}>
-          Thử thay đổi khoảng thời gian lọc
-        </Typography>
-      </CardContent>
-    </Card>
-  );
-}
-
 export default function TopDocumentsChart({ 
   data, 
   loading, 
@@ -124,32 +118,43 @@ export default function TopDocumentsChart({
   metricLabel,
   barColor = "#6366f1",
 }) {
+  const theme = useTheme();
+
   if (loading) {
     return (
-      <Card variant="outlined" sx={{ borderRadius: 3 }}>
-        <CardContent sx={{ p: 3 }}>
-          <Box sx={{ display: "flex", gap: 3, mb: 3 }}>
-            {[1, 2, 3].map((i) => (
-              <Box key={i}>
-                <Skeleton width={80} height={14} />
-                <Skeleton width={60} height={32} sx={{ mt: 0.5 }} />
-              </Box>
-            ))}
-          </Box>
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} variant="rounded" width="100%" height={48} sx={{ mb: 1 }} />
+      <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        <Box sx={{ display: "flex", gap: 3, mb: 2 }}>
+          {[1, 2].map((i) => (
+            <Box key={i}>
+              <Skeleton width={60} height={12} />
+              <Skeleton width={50} height={28} sx={{ mt: 0.25 }} />
+            </Box>
           ))}
-        </CardContent>
-      </Card>
+        </Box>
+        <Box sx={{ flex: 1 }}>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton key={i} variant="rounded" width="100%" height={36} sx={{ mb: 0.75 }} />
+          ))}
+        </Box>
+      </Box>
     );
   }
 
   if (!data || data.length === 0) {
-    return <EmptyState message="Không có dữ liệu tài liệu" />;
+    return (
+      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", py: 4 }}>
+        <Typography color="text.secondary" variant="body2">
+          Không có dữ liệu tài liệu
+        </Typography>
+        <Typography color="text.disabled" variant="caption" sx={{ mt: 0.5 }}>
+          Thử thay đổi khoảng thời gian lọc
+        </Typography>
+      </Box>
+    );
   }
 
   const chartData = data.map((item, index) => {
-    const displayTitle = truncateText(item.title, 50);
+    const displayTitle = truncateText(item.title, 40);
     return {
       ...item,
       shortTitle: displayTitle,
@@ -163,69 +168,70 @@ export default function TopDocumentsChart({
   const maxValue = Math.max(...chartData.map((d) => d.metricValue));
 
   return (
-    <Card variant="outlined" sx={{ borderRadius: 3 }}>
-      <CardContent sx={{ p: 3 }}>
-        {/* Summary Stats */}
-        <Box
-          sx={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: { xs: 3, md: 5 },
-            mb: 3,
-            pb: 3,
-            borderBottom: "1px solid",
-            borderColor: "divider",
-          }}
-        >
-          <Box>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-              TỔNG {metricLabel.toUpperCase()}
-            </Typography>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 800,
-                color: barColor,
-                fontSize: { xs: "1.75rem", md: "2.25rem" },
-              }}
-            >
-              {totalValue.toLocaleString("vi-VN")}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-              TÀI LIỆU
-            </Typography>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 700,
-                color: "text.primary",
-                fontSize: { xs: "1.5rem", md: "2rem" },
-              }}
-            >
-              {data.length}
-            </Typography>
-          </Box>
+    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+      {/* Summary Stats */}
+      <Box
+        sx={{
+          display: "flex",
+          gap: { xs: 3, md: 4 },
+          mb: 2,
+          pb: 2,
+          borderBottom: "1px solid",
+          borderColor: "divider",
+          flexShrink: 0,
+        }}
+      >
+        <Box>
+          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: "0.65rem" }}>
+            TỔNG
+          </Typography>
+          <Typography
+            sx={{
+              fontWeight: 800,
+              color: barColor,
+              fontSize: "1.5rem",
+              lineHeight: 1.1,
+            }}
+          >
+            {totalValue.toLocaleString("vi-VN")}
+          </Typography>
         </Box>
+        <Box>
+          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: "0.65rem" }}>
+            TÀI LIỆU
+          </Typography>
+          <Typography
+            sx={{
+              fontWeight: 700,
+              color: "text.primary",
+              fontSize: "1.25rem",
+              lineHeight: 1.1,
+            }}
+          >
+            {data.length}
+          </Typography>
+        </Box>
+      </Box>
 
-        {/* Chart - Full Width with more height */}
-        <ResponsiveContainer width="100%" height={Math.max(400, chartData.length * 52)}>
+      {/* Chart - stretches to fill available space */}
+      <Box sx={{ flex: 1, minHeight: 200 }}>
+        <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={chartData}
             layout="vertical"
-            margin={{ top: 8, right: 80, left: 8, bottom: 8 }}
+            margin={{ top: 2, right: 60, left: 2, bottom: 2 }}
+            key={`bar-chart-${data?.length || 0}`}
           >
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke="var(--mui-palette-divider)"
+              stroke={theme.palette.divider}
               horizontal={false}
             />
             <XAxis
               type="number"
-              tick={{ fontSize: 12, fill: "var(--mui-palette-text-secondary)" }}
+              tick={{ fontSize: 10, fill: theme.palette.text.secondary }}
               tickLine={false}
-              axisLine={{ stroke: "var(--mui-palette-divider)" }}
+              axisLine={{ stroke: theme.palette.divider }}
               tickFormatter={formatXAxisTick}
               domain={[0, Math.ceil(maxValue * 1.2)]}
               allowDecimals={false}
@@ -233,10 +239,10 @@ export default function TopDocumentsChart({
             <YAxis
               type="category"
               dataKey="shortTitle"
-              tick={{ fontSize: 12, fill: "var(--mui-palette-text.primary)" }}
+              tick={{ fontSize: 10, fill: theme.palette.text.primary }}
               tickLine={false}
               axisLine={false}
-              width={280}
+              width={180}
             />
             <RechartsTooltip
               content={<CustomTooltipContent barColor={barColor} />}
@@ -251,8 +257,8 @@ export default function TopDocumentsChart({
             />
             <Bar
               dataKey="metricValue"
-              radius={[0, 6, 6, 0]}
-              maxBarSize={36}
+              radius={[0, 4, 4, 0]}
+              maxBarSize={28}
             >
               {chartData.map((entry, index) => (
                 <Cell
@@ -264,7 +270,7 @@ export default function TopDocumentsChart({
             </Bar>
           </BarChart>
         </ResponsiveContainer>
-      </CardContent>
-    </Card>
+      </Box>
+    </Box>
   );
 }

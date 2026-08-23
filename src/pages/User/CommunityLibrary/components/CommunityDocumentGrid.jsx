@@ -35,6 +35,7 @@ export default function CommunityDocumentGrid({ community }) {
           onPreview={community.openPreview}
           onDownload={community.downloadDocument}
           onSave={community.toggleSave}
+          onReport={community.openReport}
         />
       ))}
     </Box>

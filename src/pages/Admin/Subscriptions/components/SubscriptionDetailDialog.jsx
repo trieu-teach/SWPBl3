@@ -226,10 +226,6 @@ export default function SubscriptionDetailDialog({ admin }) {
                         value={`${subscription.storageLimitMb.toLocaleString("vi-VN")} MB`}
                       />
                       <DetailItem
-                        label="Giới hạn tải lên"
-                        value={subscription.uploadLimit.toLocaleString("vi-VN")}
-                      />
-                      <DetailItem
                         label="Lượt AI đã dùng"
                         value={subscription.aiChatsUsed.toLocaleString("vi-VN")}
                       />
@@ -290,14 +286,12 @@ export default function SubscriptionDetailDialog({ admin }) {
                       value={order.sepayTransactionId}
                       mono
                     />
-                    <DetailItem
-                      label="Thẻ"
-                      value={
-                        order.cardLast4
-                          ? `${order.cardBrand || "Thẻ"} •••• ${order.cardLast4}`
-                          : "—"
-                      }
-                    />
+                    {order.cardLast4 && (
+                      <DetailItem
+                        label="Thẻ"
+                        value={`${order.cardBrand || "Thẻ"} •••• ${order.cardLast4}`}
+                      />
+                    )}
                   </Box>
                 </Section>
               )}

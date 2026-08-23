@@ -1,12 +1,11 @@
-import { Box, Chip, Stack, Tooltip, Typography } from "@mui/material";
-import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
+import { Box, Button, Chip, Stack, Tooltip, Typography } from "@mui/material";
 import ExpandMoreRounded from "@mui/icons-material/ExpandMoreRounded";
 import ExpandLessRounded from "@mui/icons-material/ExpandLessRounded";
 import { useState } from "react";
 
 const MAX_VISIBLE_SOURCES = 2;
 
-function SourceItem({ source, onSourceSelect }) {
+function SourceItem({ source, index, onSourceSelect }) {
   const isSelectable = typeof onSourceSelect === "function";
 
   return (
@@ -15,16 +14,16 @@ function SourceItem({ source, onSourceSelect }) {
       type={isSelectable ? "button" : undefined}
       direction="row"
       spacing={1}
-      alignItems="flex-start"
       onClick={
         isSelectable ? () => onSourceSelect(source) : undefined
       }
       sx={{
-        p: 1,
+        alignItems: "flex-start",
+        px: 1,
+        py: 0.85,
         borderRadius: 1.5,
         bgcolor: "action.hover",
-        border: "1px solid",
-        borderColor: "divider",
+        border: 0,
         ...(isSelectable && {
           width: "100%",
           color: "inherit",
@@ -40,14 +39,18 @@ function SourceItem({ source, onSourceSelect }) {
         }),
       }}
     >
-      <DescriptionOutlined
-        sx={{ fontSize: "1rem", color: "text.secondary", mt: 0.15, flexShrink: 0 }}
-      />
+      <Typography
+        variant="caption"
+        color="primary.main"
+        sx={{ mt: 0.05, minWidth: 22, fontWeight: 800, flexShrink: 0 }}
+      >
+        [{index + 1}]
+      </Typography>
       <Box sx={{ minWidth: 0, flex: 1 }}>
         <Typography
           variant="caption"
           sx={{ fontWeight: 700, display: "block", lineHeight: 1.4 }}
-          noWrap
+          title={source.title}
         >
           {source.title}
         </Typography>
@@ -67,13 +70,15 @@ function SourceItem({ source, onSourceSelect }) {
             &ldquo;{source.snippet}&rdquo;
           </Typography>
         )}
-        {source.sourceLocator?.length > 0 && Array.isArray(source.sourceLocator) && (
+        {source.sourceLocator && (
           <Typography
             variant="caption"
             color="text.disabled"
             sx={{ display: "block", mt: 0.25 }}
           >
-            {source.sourceLocator.join(" · ")}
+            {Array.isArray(source.sourceLocator)
+              ? source.sourceLocator.join(" · ")
+              : source.sourceLocator}
           </Typography>
         )}
       </Box>
@@ -90,12 +95,11 @@ export default function ChatSources({ sources = [], onSourceSelect }) {
   const hasMore = sources.length > MAX_VISIBLE_SOURCES;
 
   return (
-    <Box sx={{ mt: 1.25 }}>
+    <Box sx={{ mt: 1.4, pt: 1.25, borderTop: "1px solid", borderColor: "divider" }}>
       <Stack
         direction="row"
-        alignItems="center"
         spacing={0.75}
-        sx={{ mb: 0.75 }}
+        sx={{ mb: 0.75, alignItems: "center" }}
       >
         <Typography
           variant="caption"
@@ -123,36 +127,35 @@ export default function ChatSources({ sources = [], onSourceSelect }) {
           <SourceItem
             key={source.citationId || `source-${index}`}
             source={source}
+            index={index}
             onSourceSelect={onSourceSelect}
           />
         ))}
       </Stack>
 
       {hasMore && (
-        <Stack
-          direction="row"
-          alignItems="center"
-          spacing={0.5}
+        <Button
+          type="button"
+          size="small"
           onClick={() => setExpanded((v) => !v)}
+          startIcon={
+            expanded ? (
+              <ExpandLessRounded sx={{ fontSize: "1rem" }} />
+            ) : (
+              <ExpandMoreRounded sx={{ fontSize: "1rem" }} />
+            )
+          }
           sx={{
             mt: 0.75,
-            cursor: "pointer",
-            color: "primary.main",
-            width: "fit-content",
-            "&:hover": { opacity: 0.8 },
+            px: 0.5,
+            minWidth: 0,
+            fontSize: "0.72rem",
           }}
         >
-          {expanded ? (
-            <ExpandLessRounded sx={{ fontSize: "1rem" }} />
-          ) : (
-            <ExpandMoreRounded sx={{ fontSize: "1rem" }} />
-          )}
-          <Typography variant="caption" sx={{ fontWeight: 600 }}>
-            {expanded
-              ? "Thu gọn"
-              : `Xem thêm ${sources.length - MAX_VISIBLE_SOURCES} nguồn`}
-          </Typography>
-        </Stack>
+          {expanded
+            ? "Thu gọn"
+            : `Xem thêm ${sources.length - MAX_VISIBLE_SOURCES} nguồn`}
+        </Button>
       )}
     </Box>
   );
