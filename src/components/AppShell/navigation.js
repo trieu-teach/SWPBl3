@@ -24,9 +24,21 @@ const USER_NAVIGATION = [
     icon: UploadFileOutlined,
   },
   { label: "Đã lưu", path: "/saved-documents", icon: BookmarkOutlined },
-  { label: "Đăng ký gói", path: "/subscription", icon: ShoppingCartOutlined },
-    { label: "Hỏi AI", path: "/hoi-ai", icon: SmartToyOutlined },
   { label: "Cộng đồng", path: "/community", icon: PeopleAltOutlined },
+  {
+    label: "Hỏi AI",
+    eyebrow: "TRỢ LÝ HỌC TẬP",
+    path: "/hoi-ai",
+    icon: SmartToyOutlined,
+    highlight: "ai",
+  },
+  {
+    label: "Mua gói",
+    eyebrow: "NÂNG CẤP",
+    path: "/subscription",
+    icon: ShoppingCartOutlined,
+    highlight: "subscription",
+  },
 ];
 
 const ADMIN_NAVIGATION = [

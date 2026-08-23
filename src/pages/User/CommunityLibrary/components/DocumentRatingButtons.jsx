@@ -56,7 +56,7 @@ export default function DocumentRatingButtons({
   const iconSize = isSmall ? 16 : 20;
 
   return (
-    <Stack direction="row" alignItems="center" spacing={0.75}>
+    <Stack direction="row" alignItems="center" spacing={1.25}>
       {showStats && helpfulRating !== null && helpfulRating !== undefined && (
         <Typography
           variant="caption"
@@ -68,16 +68,20 @@ export default function DocumentRatingButtons({
         </Typography>
       )}
 
-      <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+      <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1.25 }}>
         <Tooltip title="Tài liệu hữu ích">
-          <span>
+          <Box component="span" sx={{ display: "inline-flex" }}>
             <IconButton
               size={size}
               onClick={() => handleRate(true)}
               disabled={loading}
               aria-label="Đánh giá tài liệu hữu ích"
               sx={{
+                width: isSmall ? 30 : 38,
+                height: isSmall ? 30 : 38,
                 p: isSmall ? 0.5 : 1,
+                border: "1px solid",
+                borderColor: userRating === true ? "primary.main" : "divider",
                 color: userRating === true ? "primary.main" : "text.secondary",
                 bgcolor:
                   userRating === true ? "action.selected" : "transparent",
@@ -96,18 +100,22 @@ export default function DocumentRatingButtons({
                 <ThumbUpOutlined sx={{ fontSize: iconSize }} />
               )}
             </IconButton>
-          </span>
+          </Box>
         </Tooltip>
 
         <Tooltip title="Tài liệu không hữu ích">
-          <span>
+          <Box component="span" sx={{ display: "inline-flex" }}>
             <IconButton
               size={size}
               onClick={() => handleRate(false)}
               disabled={loading}
               aria-label="Đánh giá tài liệu không hữu ích"
               sx={{
+                width: isSmall ? 30 : 38,
+                height: isSmall ? 30 : 38,
                 p: isSmall ? 0.5 : 1,
+                border: "1px solid",
+                borderColor: userRating === false ? "error.main" : "divider",
                 color: userRating === false ? "error.main" : "text.secondary",
                 bgcolor:
                   userRating === false ? "action.selected" : "transparent",
@@ -126,7 +134,7 @@ export default function DocumentRatingButtons({
                 <ThumbDownOutlined sx={{ fontSize: iconSize }} />
               )}
             </IconButton>
-          </span>
+          </Box>
         </Tooltip>
       </Box>
     </Stack>

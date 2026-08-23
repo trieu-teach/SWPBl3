@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Box, IconButton, Tooltip, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import ChevronLeftRounded from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRounded from "@mui/icons-material/ChevronRightRounded";
 import Logo from "../Logo/Logo.jsx";
@@ -12,37 +13,123 @@ import {
 
 function NavigationItem({ item, active, accent, collapsed, onNavigate }) {
   const Icon = item.icon;
+  const isAiHighlight = item.highlight === "ai";
+  const isSubscriptionHighlight = item.highlight === "subscription";
+  const isHighlighted = isAiHighlight || isSubscriptionHighlight;
+
   const content = (
     <Box
       component={Link}
       to={item.path}
       onClick={onNavigate}
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: collapsed ? "center" : "flex-start",
-        gap: collapsed ? 0 : 1.5,
-        px: collapsed ? 1 : 2,
-        py: 1.25,
-        borderRadius: "12px",
-        color: active ? accent : "text.primary",
-        backgroundColor: active ? `${accent}15` : "transparent",
-        fontWeight: active ? 600 : 500,
-        textDecoration: "none",
-        transition: "all 0.2s ease",
-        "&:hover": {
-          color: accent,
-          backgroundColor: active ? `${accent}20` : "action.hover",
-        },
+      sx={(theme) => {
+        const highlightColor = isSubscriptionHighlight
+          ? theme.palette.warning.main
+          : accent;
+
+        return {
+          display: "flex",
+          alignItems: "center",
+          justifyContent: collapsed ? "center" : "flex-start",
+          gap: collapsed ? 0 : 1.5,
+          minHeight:
+            isAiHighlight && !collapsed
+              ? 104
+              : isSubscriptionHighlight && !collapsed
+                ? 72
+                : 44,
+          mt: isSubscriptionHighlight ? 2 : isAiHighlight ? 1 : 0,
+          mb: isHighlighted ? 1 : 0,
+          px: collapsed ? 1 : isHighlighted ? 2.25 : 2,
+          py: isAiHighlight && !collapsed ? 2 : isHighlighted ? 1.4 : 1.25,
+          border: "1px solid",
+          borderColor: isHighlighted
+            ? alpha(highlightColor, active ? 0.7 : 0.3)
+            : "transparent",
+          borderRadius: "14px",
+          color: active || isHighlighted ? highlightColor : "text.primary",
+          background: isHighlighted
+            ? `linear-gradient(135deg, ${alpha(highlightColor, 0.16)}, ${alpha(
+                highlightColor,
+                0.06,
+              )})`
+            : active
+              ? alpha(accent, 0.1)
+              : "transparent",
+          boxShadow:
+            active && isHighlighted
+              ? `0 8px 22px ${alpha(highlightColor, 0.14)}`
+              : "none",
+          fontWeight: active || isHighlighted ? 700 : 500,
+          textDecoration: "none",
+          transition:
+            "color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease",
+          "&:hover": {
+            color: highlightColor,
+            borderColor: isHighlighted
+              ? alpha(highlightColor, 0.65)
+              : "transparent",
+            backgroundColor: isHighlighted
+              ? alpha(highlightColor, 0.14)
+              : active
+                ? alpha(accent, 0.14)
+                : "action.hover",
+            transform: isHighlighted ? "translateY(-1px)" : "none",
+          },
+        };
       }}
     >
-      <Icon sx={{ fontSize: 20, opacity: active ? 1 : 0.7 }} />
+      <Box
+        sx={(theme) => ({
+          display: "grid",
+          flexShrink: 0,
+          placeItems: "center",
+          width: isAiHighlight ? 44 : isHighlighted ? 38 : 20,
+          height: isAiHighlight ? 44 : isHighlighted ? 38 : 20,
+          borderRadius: isHighlighted ? "12px" : 0,
+          bgcolor: isHighlighted
+            ? alpha(
+                isSubscriptionHighlight
+                  ? theme.palette.warning.main
+                  : accent,
+                0.14,
+              )
+            : "transparent",
+        })}
+      >
+        <Icon
+          sx={{
+            fontSize: isAiHighlight ? 26 : isHighlighted ? 22 : 20,
+            opacity: active || isHighlighted ? 1 : 0.7,
+          }}
+        />
+      </Box>
       {!collapsed && (
-        <Typography
-          sx={{ fontSize: "0.875rem", fontWeight: active ? 600 : 500 }}
-        >
-          {item.label}
-        </Typography>
+        <Box sx={{ minWidth: 0 }}>
+          {item.eyebrow && (
+            <Typography
+              sx={{
+                mb: isAiHighlight ? 0.75 : 0.3,
+                fontSize: isAiHighlight ? "0.62rem" : "0.58rem",
+                fontWeight: 800,
+                lineHeight: 1,
+                letterSpacing: "0.08em",
+                opacity: 0.8,
+              }}
+            >
+              {item.eyebrow}
+            </Typography>
+          )}
+          <Typography
+            sx={{
+              fontSize: isAiHighlight ? "1rem" : "0.9rem",
+              fontWeight: active || isHighlighted ? 700 : 500,
+              lineHeight: 1.25,
+            }}
+          >
+            {item.label}
+          </Typography>
+        </Box>
       )}
     </Box>
   );

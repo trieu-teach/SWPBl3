@@ -199,30 +199,58 @@ export default function TopRatedDocumentCard({
             borderColor: "divider",
           }}
         >
-          <Stack direction="row" alignItems="center" flexWrap="wrap" gap={1.5}>
-            <Stack direction="row" alignItems="center" spacing={0.5}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              flexWrap: "wrap",
+              rowGap: 1.25,
+            }}
+          >
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={0.75}
+              sx={{ whiteSpace: "nowrap" }}
+            >
               <ThumbUpAltOutlined sx={{ fontSize: 16, color: "success.main" }} />
               <Typography variant="caption" color="text.secondary" fontWeight={600}>
                 {helpfulPercent ?? 0}% đánh giá cao · {totalVotes} đánh giá
               </Typography>
             </Stack>
 
-            <Tooltip title="Lượt tải về">
-              <Stack direction="row" alignItems="center" spacing={0.5}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0.75,
+                ml: 2.5,
+                pl: 2.5,
+                borderLeft: "1px solid",
+                borderColor: "divider",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <Tooltip title="Lượt tải về">
                 <CloudDownloadOutlined sx={{ fontSize: 16, color: "text.secondary" }} />
-                <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                  {document.downloadCount || 0} lượt tải
-                </Typography>
-              </Stack>
-            </Tooltip>
-          </Stack>
+              </Tooltip>
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                {document.downloadCount || 0} lượt tải
+              </Typography>
+            </Box>
+          </Box>
 
           {/* Quick Rate & Date Footer */}
           <Stack
             direction="row"
-            justifyContent="space-between"
             alignItems="center"
-            sx={{ mt: 1.5, pt: 1, borderTop: "1px dashed", borderColor: "divider" }}
+            sx={{
+              mt: 1.5,
+              pt: 1.25,
+              gap: 3,
+              borderTop: "1px dashed",
+              borderColor: "divider",
+            }}
           >
             <Typography variant="caption" color="text.secondary">
               {formatDate(document.createdAt)}
