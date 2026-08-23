@@ -79,6 +79,9 @@ const ModeratorReports = lazy(
 const ModeratorDocuments = lazy(
   () => import("./pages/Moderator/Documents/ModeratorDocuments.jsx"),
 );
+const ModeratorAppeals = lazy(
+  () => import("./pages/Moderator/Appeals/ModeratorAppeals.jsx"),
+);
 const Homepage = lazy(() => import("./pages/Home/Homepage.jsx"));
 
 // ---------------------------------------------------------------------------
@@ -399,6 +402,14 @@ export default function App() {
                       element={
                         <RequireAuth allowedRoles={["MODERATOR"]}>
                           <ModeratorDocuments />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/moderator/appeals"
+                      element={
+                        <RequireAuth allowedRoles={["MODERATOR"]}>
+                          <ModeratorAppeals />
                         </RequireAuth>
                       }
                     />

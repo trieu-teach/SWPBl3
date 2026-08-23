@@ -38,7 +38,17 @@ export default function ReportReviewDrawer({ moderation }) {
   const documentTitle = document?.title || report?.document?.title || "Tài liệu";
   const isPending = report?.status === "PENDING";
   const canHide = document?.status === "ACTIVE";
-  const canUnhide = document?.status === "HIDDEN";
+  const heldModerationStatuses = [
+    "AUTO_BLOCKED",
+    "REJECTED",
+    "APPEALED",
+    "EXPIRED",
+  ];
+  const isHeldByModeration =
+    heldModerationStatuses.includes(document?.moderationStatus) ||
+    document?.moderationFlag === "FLAGGED";
+  const canUnhide =
+    document?.status === "HIDDEN" && !isHeldByModeration;
 
   function requestAction(type) {
     moderation.setAction({ type, documentTitle });
@@ -210,6 +220,13 @@ export default function ReportReviewDrawer({ moderation }) {
                 >
                   Xem trước tài liệu
                 </Button>
+                {document.status === "HIDDEN" && isHeldByModeration && (
+                  <Alert severity="warning" sx={{ mt: 2 }}>
+                    Tài liệu đang bị quy trình kiểm duyệt giữ. Việc bỏ qua báo cáo
+                    không làm tài liệu xuất hiện lại; hãy xử lý tài liệu trong hàng
+                    chờ kiểm duyệt hoặc hàng chờ khiếu nại.
+                  </Alert>
+                )}
               </>
             )}
           </Box>
