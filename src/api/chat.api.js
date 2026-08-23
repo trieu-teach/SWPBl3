@@ -1,27 +1,42 @@
 import { ApiError, apiRequest } from "../lib/http.js";
+import {
+  buildChatSessionPayload,
+  requireLibrarySourceFilters,
+} from "./chat.filters.js";
+import { resolveChatRequestId } from "./chat.request-id.js";
+export {
+  getChatErrorMessage,
+  getHistoryErrorMessage,
+} from "./chat.errors.js";
 
 const DEFAULT_LIBRARY_LIMIT = 5;
 const DEFAULT_SESSIONS_LIMIT = 20;
 const DEFAULT_MESSAGES_LIMIT = 50;
-const MAX_SELECTED_DOCUMENTS = 10;
-
-export { MAX_SELECTED_DOCUMENTS };
-
 // ── Request mappers ───────────────────────────────────────────────────────────
 
-function mapChatRequest({ question, documentIds, sessionId }) {
+function mapChatRequest({
+  question,
+  filters,
+  subjectId,
+  subjectIds,
+  documentIds,
+  sessionId,
+  requestId,
+}) {
   const body = {
     question,
     limit: DEFAULT_LIBRARY_LIMIT,
+    requestId: resolveChatRequestId(requestId),
   };
 
   if (sessionId) {
     body.sessionId = sessionId;
   }
 
-  if (Array.isArray(documentIds) && documentIds.length > 0) {
-    body.filters = { documentIds };
-  }
+  const cleanedFilters = requireLibrarySourceFilters(
+    filters ?? { subjectId, subjectIds, documentIds },
+  );
+  body.filters = cleanedFilters;
 
   return body;
 }
@@ -42,11 +57,13 @@ function mapChatResponse(response) {
       : [],
     sources: Array.isArray(response.sources) ? response.sources : [],
     answerStatus: response.answerStatus || "ANSWERED",
+    errorCode: response.errorCode ?? null,
+    usage: response.usage ?? null,
   };
 }
 
 /**
- * Map a raw ChatMessageDto from GET /chat/messages/{sessionId}
+ * Map a raw ChatMessageDto from GET /chat/sessions/{sessionId}/messages
  * to the internal UI message model used by useChat.
  */
 export function mapHistoryMessage(dto) {
@@ -82,67 +99,72 @@ function formatHistoryTime(isoString) {
   }
 }
 
-// ── Error message helpers ─────────────────────────────────────────────────────
-
-export function getChatErrorMessage(error) {
-  if (error?.status === -1) {
-    return "Phản hồi từ AI không hợp lệ. Vui lòng thử lại.";
-  }
-  if (error?.status === 0) {
-    return "Không thể kết nối tới AI Study Hub. Vui lòng kiểm tra mạng và thử lại.";
-  }
-  if (error?.status === 400) {
-    return "Câu hỏi chưa hợp lệ. Vui lòng rút gọn hoặc nhập lại nội dung.";
-  }
-  if (error?.status === 401) {
-    return "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tiếp tục.";
-  }
-  if (error?.status === 403) {
-    return "Bạn không có quyền sử dụng phiên chat này.";
-  }
-  if (error?.status === 404) {
-    return "Không tìm thấy phiên chat cần xử lý.";
-  }
-  if (error?.status === 409) {
-    return "Nội dung thư viện chưa sẵn sàng để AI xử lý. Vui lòng thử lại sau.";
-  }
-  if (error?.status >= 500) {
-    return "Máy chủ AI đang gặp sự cố. Vui lòng thử lại sau.";
-  }
-  return error?.message || "Đã xảy ra lỗi khi tạo phản hồi AI.";
-}
-
-export function getHistoryErrorMessage(error) {
-  if (error?.status === 401) {
-    return "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
-  }
-  if (error?.status === 403) {
-    return "Bạn không có quyền truy cập cuộc hội thoại này.";
-  }
-  if (error?.status === 404) {
-    return "Không tìm thấy cuộc hội thoại.";
-  }
-  if (error?.status === 0) {
-    return "Không thể kết nối. Vui lòng kiểm tra mạng và thử lại.";
-  }
-  if (error?.status >= 500) {
-    return "Máy chủ đang gặp sự cố. Vui lòng thử lại sau.";
-  }
-  return error?.message || "Không thể tải lịch sử hội thoại.";
-}
-
 // ── API functions ─────────────────────────────────────────────────────────────
 
 /**
  * POST /chat/ask-library
  */
-export async function sendChatMessage({ question, documentIds, sessionId }) {
+export async function sendChatMessage({
+  question,
+  filters,
+  subjectId,
+  subjectIds,
+  documentIds,
+  sessionId,
+  requestId,
+}) {
   const response = await apiRequest("/chat/ask-library", {
     method: "POST",
-    body: mapChatRequest({ question, documentIds, sessionId }),
+    body: mapChatRequest({
+      question,
+      filters,
+      subjectId,
+      subjectIds,
+      documentIds,
+      sessionId,
+      requestId,
+    }),
   });
 
   return mapChatResponse(response);
+}
+
+export function createChatSession({
+  mode,
+  documentId,
+  documentIds,
+  signal,
+} = {}) {
+  const body = buildChatSessionPayload({ mode, documentId, documentIds });
+  return apiRequest("/chat/sessions", { method: "POST", body, signal });
+}
+
+export function renameChatSession(sessionId, title) {
+  if (!sessionId) throw new Error("sessionId is required");
+  return apiRequest(`/chat/sessions/${sessionId}`, {
+    method: "PATCH",
+    body: { title: title.trim() },
+  });
+}
+
+export function deleteChatSession(sessionId) {
+  if (!sessionId) throw new Error("sessionId is required");
+  return apiRequest(`/chat/sessions/${sessionId}`, { method: "DELETE" });
+}
+
+export function getAiChatDocuments({
+  source = "all",
+  search,
+  page = 1,
+  limit = 20,
+} = {}) {
+  const params = new URLSearchParams({
+    source,
+    page: String(page),
+    limit: String(limit),
+  });
+  if (search) params.set("search", search);
+  return apiRequest(`/chat/documents?${params}`);
 }
 
 /**
@@ -169,10 +191,10 @@ export async function getChatSession(sessionId) {
 }
 
 /**
- * GET /chat/messages/{sessionId}?page=&limit=
+ * GET /chat/sessions/{sessionId}/messages?page=&limit=
  */
 export async function getChatMessages(sessionId, { page = 1, limit = DEFAULT_MESSAGES_LIMIT } = {}) {
   if (!sessionId) throw new Error("sessionId is required");
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
-  return apiRequest(`/chat/messages/${sessionId}?${params}`);
+  return apiRequest(`/chat/sessions/${sessionId}/messages?${params}`);
 }

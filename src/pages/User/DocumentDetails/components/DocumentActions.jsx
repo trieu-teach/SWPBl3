@@ -17,6 +17,7 @@ import {
 import {
   CloudDownloadOutlined,
   DeleteOutlined,
+  SendOutlined,
   SmartToyOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
@@ -35,7 +36,7 @@ export default function DocumentActions({ details }) {
         ? document.title.trim()
         : document?.fileName || "Tài liệu";
 
-    navigate("/ai-chat", {
+    navigate("/hoi-ai", {
       state: {
         libraryDocumentPreselection: {
           id: documentId,
@@ -102,6 +103,23 @@ export default function DocumentActions({ details }) {
           Tài liệu công khai sẽ được gửi duyệt trước khi xuất hiện trong cộng
           đồng.
         </Typography>
+        {document.visibility === "PUBLIC" &&
+          document.moderationStatus === "REJECTED" && (
+            <Stack spacing={1} sx={{ mt: 2 }}>
+              <Typography variant="caption" color="error.main">
+                Hãy lưu nội dung đã chỉnh sửa trước khi gửi duyệt lại.
+              </Typography>
+              <Button
+                fullWidth
+                variant="outlined"
+                startIcon={<SendOutlined />}
+                onClick={details.resubmitForReview}
+                disabled={details.saving}
+              >
+                Gửi duyệt lại
+              </Button>
+            </Stack>
+          )}
         <Divider sx={{ my: 3 }} />
         <Button
           fullWidth

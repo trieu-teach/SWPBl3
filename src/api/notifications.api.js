@@ -3,7 +3,7 @@ import { API_BASE_URL, apiClient } from "../lib/http";
 /**
  * @typedef {Object} NotificationDto
  * @property {string} id
- * @property {'PAYMENT_SUCCESS'|'PAYMENT_REFUNDED'|'SUBSCRIPTION_EXPIRED'|'SUBSCRIPTION_EXPIRING_SOON'|'ACCOUNT_STATUS_CHANGED'|'ACCOUNT_ROLE_CHANGED'|'REPORT_RESOLVED'} type
+ * @property {'PAYMENT_SUCCESS'|'PAYMENT_REFUNDED'|'SUBSCRIPTION_EXPIRED'|'SUBSCRIPTION_EXPIRING_SOON'|'ACCOUNT_STATUS_CHANGED'|'ACCOUNT_ROLE_CHANGED'|'REPORT_RESOLVED'|'DOCUMENT_FLAGGED'|'DOCUMENT_FLAGGED_OWNER'|'DOCUMENT_APPROVED'|'DOCUMENT_REJECTED'} type
  * @property {string} title
  * @property {string} body
  * @property {Record<string, unknown>|null} metadata

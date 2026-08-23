@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   createNotificationStream,
   getNotifications,
@@ -8,7 +8,7 @@ import {
 } from "../../../../api/notifications.api";
 import { auth } from "../../../../lib/firebase.js";
 
-export function useNotifications() {
+export function useNotifications({ isRead } = {}) {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -16,6 +16,40 @@ export function useNotifications() {
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(1);
   const [error, setError] = useState(null);
+
+  // Ref to hold the refresh function so SSE effect can call it
+  const refreshRef = useRef(null);
+
+  // Keep filter in sync when prop changes
+  useEffect(() => {
+    setNotifications([]);
+    setPage(1);
+    setHasMore(false);
+  }, [isRead]);
+
+  // Refresh notifications
+  const refresh = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [notificationsRes, countRes] = await Promise.all([
+        getNotifications({ isRead, page: 1, limit: 20 }),
+        getUnreadCount(),
+      ]);
+      setNotifications(notificationsRes.items || notificationsRes);
+      setUnreadCount(countRes?.count ?? 0);
+      setHasMore(notificationsRes.meta?.hasNext ?? false);
+      setPage(1);
+    } catch (err) {
+      setError(err.message || "Failed to refresh");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isRead]);
+
+  // Keep ref in sync
+  refreshRef.current = refresh;
+
   // Initial load
   useEffect(() => {
     let cancelled = false;
@@ -25,7 +59,7 @@ export function useNotifications() {
       setError(null);
       try {
         const [notificationsRes, countRes] = await Promise.all([
-          getNotifications({ page: 1, limit: 20 }),
+          getNotifications({ isRead, page: 1, limit: 20 }),
           getUnreadCount(),
         ]);
         if (!cancelled) {
@@ -48,7 +82,7 @@ export function useNotifications() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [isRead]);
 
   // SSE real-time connection
   useEffect(() => {
@@ -74,6 +108,8 @@ export function useNotifications() {
               return [notification, ...current];
             });
           },
+          undefined,
+          () => refreshRef.current?.(),
         );
       } catch {
         // The REST list remains available if the live stream cannot start.
@@ -94,7 +130,7 @@ export function useNotifications() {
     setIsLoadingMore(true);
     try {
       const nextPage = page + 1;
-      const res = await getNotifications({ page: nextPage, limit: 20 });
+      const res = await getNotifications({ isRead, page: nextPage, limit: 20 });
       setNotifications((current) => {
         const existingIds = new Set(current.map((item) => item.id));
         const newItems = (res.items || res).filter(
@@ -109,7 +145,7 @@ export function useNotifications() {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, hasMore, page]);
+  }, [isLoadingMore, hasMore, page, isRead]);
 
   // Mark single notification as read
   const markNotificationAsRead = useCallback(async (id) => {
@@ -132,26 +168,6 @@ export function useNotifications() {
       setUnreadCount(0);
     } catch (err) {
       console.warn("Failed to mark all as read:", err);
-    }
-  }, []);
-
-  // Refresh notifications
-  const refresh = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const [notificationsRes, countRes] = await Promise.all([
-        getNotifications({ page: 1, limit: 20 }),
-        getUnreadCount(),
-      ]);
-      setNotifications(notificationsRes.items || notificationsRes);
-      setUnreadCount(countRes?.count ?? 0);
-      setHasMore(notificationsRes.meta?.hasNext ?? false);
-      setPage(1);
-    } catch (err) {
-      setError(err.message || "Failed to refresh");
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 

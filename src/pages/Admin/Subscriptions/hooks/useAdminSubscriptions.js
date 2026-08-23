@@ -13,6 +13,10 @@ export default function useAdminSubscriptions() {
   const [search, setSearch] = useState("");
   const [plan, setPlan] = useState("");
   const [page, setPage] = useState(1);
+  const [sort, setSort] = useState({
+    sortBy: "paidAt",
+    sortOrder: "desc",
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [detailTarget, setDetailTarget] = useState(null);
@@ -21,8 +25,8 @@ export default function useAdminSubscriptions() {
   const [detailError, setDetailError] = useState("");
 
   const query = useMemo(
-    () => ({ page, limit: 20, search, plan }),
-    [page, search, plan],
+    () => ({ page, limit: 20, search, plan, ...sort }),
+    [page, search, plan, sort],
   );
 
   const load = useCallback(async () => {
@@ -73,6 +77,19 @@ export default function useAdminSubscriptions() {
     setPage(1);
   }
 
+  function toggleSort(field) {
+    setPage(1);
+    setSort((current) => {
+      if (current.sortBy !== field) {
+        return { sortBy: field, sortOrder: "desc" };
+      }
+      if (current.sortOrder === "desc") {
+        return { sortBy: field, sortOrder: "asc" };
+      }
+      return { sortBy: "paidAt", sortOrder: "desc" };
+    });
+  }
+
   const openDetail = useCallback(async (purchase) => {
     setDetailTarget(purchase);
     setBillingDetail(null);
@@ -111,6 +128,7 @@ export default function useAdminSubscriptions() {
     searchInput,
     plan,
     page,
+    sort,
     loading,
     error,
     detailTarget,
@@ -122,6 +140,7 @@ export default function useAdminSubscriptions() {
     submitSearch,
     changePlan,
     resetFilters,
+    toggleSort,
     load,
     openDetail,
     closeDetail,

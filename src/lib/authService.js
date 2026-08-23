@@ -11,6 +11,9 @@ import {
   signInWithPopup,
   sendEmailVerification,
   signOut,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+  updatePassword,
 } from "firebase/auth";
 import { auth } from "./firebase";
 import * as authApi from "../api/auth.api";
@@ -25,6 +28,11 @@ function firebaseErrorMessage(err, fallback) {
   if (err.code === "auth/user-not-found") return "Tài khoản không tồn tại.";
   if (err.code === "auth/weak-password") return "Mật khẩu quá yếu (tối thiểu 6 ký tự).";
   if (err.code === "auth/invalid-email") return "Email không hợp lệ.";
+  if (err.code === "auth/wrong-password" || err.code === "auth/invalid-credential")
+    return "Mật khẩu hiện tại không đúng.";
+  if (err.code === "auth/requires-recent-login")
+    return "Vui lòng đăng nhập lại trước khi thực hiện thao tác này.";
+  if (err.code === "auth/too-many-requests") return "Quá nhiều yêu cầu. Vui lòng thử lại sau.";
   return err.message || fallback;
 }
 
@@ -104,6 +112,20 @@ export async function logout() {
   } catch {
     // ignore firebase signout errors
   }
+}
+
+export async function changePassword({ currentPassword, newPassword }) {
+  const { currentUser } = auth;
+  if (!currentUser) throw new Error("Người dùng chưa đăng nhập.");
+
+  // Re-authenticate to prevent brute-force changing another user's password
+  const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
+  await reauthenticateWithCredential(currentUser, credential);
+
+  // Update password
+  await updatePassword(currentUser, newPassword);
+
+  return { success: true };
 }
 
 export { firebaseErrorMessage };

@@ -13,6 +13,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
   Typography,
 } from "@mui/material";
 
@@ -67,8 +68,32 @@ export default function SubscriptionTable({ admin }) {
               <TableRow sx={{ bgcolor: "action.hover" }}>
                 <TableCell>Người dùng</TableCell>
                 <TableCell>Gói</TableCell>
-                <TableCell>Ngày mua</TableCell>
-                <TableCell>Ngày hết hạn</TableCell>
+                <TableCell>
+                  <TableSortLabel
+                    active={admin.sort.sortBy === "paidAt"}
+                    direction={
+                      admin.sort.sortBy === "paidAt"
+                        ? admin.sort.sortOrder
+                        : "desc"
+                    }
+                    onClick={() => admin.toggleSort("paidAt")}
+                  >
+                    Ngày mua
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell>
+                  <TableSortLabel
+                    active={admin.sort.sortBy === "expiresAt"}
+                    direction={
+                      admin.sort.sortBy === "expiresAt"
+                        ? admin.sort.sortOrder
+                        : "desc"
+                    }
+                    onClick={() => admin.toggleSort("expiresAt")}
+                  >
+                    Ngày hết hạn
+                  </TableSortLabel>
+                </TableCell>
                 <TableCell>Mã giao dịch</TableCell>
                 <TableCell align="right">Thao tác</TableCell>
               </TableRow>

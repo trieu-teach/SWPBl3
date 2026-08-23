@@ -1,7 +1,9 @@
-import { Box, Skeleton, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, IconButton, Skeleton, Stack, Tooltip, Typography } from "@mui/material";
 import SmartToyOutlined from "@mui/icons-material/SmartToyOutlined";
 import LibraryBooksOutlined from "@mui/icons-material/LibraryBooksOutlined";
 import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
+import DeleteOutlineRounded from "@mui/icons-material/DeleteOutlineRounded";
+import EditOutlined from "@mui/icons-material/EditOutlined";
 
 const MODE_ICON = {
   ASK_MY_LIBRARY: LibraryBooksOutlined,
@@ -42,7 +44,7 @@ export function ConversationItemSkeleton() {
   );
 }
 
-export default function ConversationItem({ session, isActive, onSelect }) {
+export default function ConversationItem({ session, isActive, onSelect, onRename, onDelete }) {
   const Icon = MODE_ICON[session.mode] ?? SmartToyOutlined;
   const label = getSessionLabel(session);
   
@@ -51,7 +53,6 @@ export default function ConversationItem({ session, isActive, onSelect }) {
   const contextSub = isDocMode && docTitle ? docTitle : "Thư viện của bạn";
 
   return (
-    <Tooltip title={label} placement="right" enterDelay={700}>
       <Box
         onClick={() => onSelect(session)}
         sx={{
@@ -66,7 +67,7 @@ export default function ConversationItem({ session, isActive, onSelect }) {
           userSelect: "none",
         }}
       >
-        <Stack direction="row" spacing={1.25} alignItems="center">
+        <Stack direction="row" spacing={1.25} sx={{ alignItems: "center" }}>
           <Box
             sx={{
               width: 30,
@@ -84,6 +85,7 @@ export default function ConversationItem({ session, isActive, onSelect }) {
           </Box>
           <Box sx={{ minWidth: 0, flex: 1 }}>
             <Typography
+              title={label}
               variant="body2"
               sx={{
                 fontWeight: isActive ? 700 : 500,
@@ -96,16 +98,28 @@ export default function ConversationItem({ session, isActive, onSelect }) {
             >
               {label}
             </Typography>
-            <Typography
-              variant="caption"
-              color="text.disabled"
-              sx={{ display: "block", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-            >
-              {isDocMode ? "📄 " : "📚 "}{contextSub}
-            </Typography>
+            <Stack direction="row" spacing={0.5} sx={{ minWidth: 0, alignItems: "center" }}>
+              <Typography variant="caption" color="text.disabled" noWrap sx={{ minWidth: 0, flex: 1 }}>
+                {session.lastMessage?.content || contextSub}
+              </Typography>
+              <Typography variant="caption" color="text.disabled" sx={{ flexShrink: 0 }}>
+                {formatRelativeTime(session.updatedAt)}
+              </Typography>
+            </Stack>
           </Box>
+          <Stack direction="row" spacing={0.25} onClick={(event) => event.stopPropagation()}>
+            <Tooltip title="Đổi tên">
+              <IconButton size="small" aria-label={`Đổi tên ${label}`} onClick={() => onRename?.(session)}>
+                <EditOutlined sx={{ fontSize: 17 }} />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Xóa">
+              <IconButton size="small" color="error" aria-label={`Xóa ${label}`} onClick={() => onDelete?.(session)}>
+                <DeleteOutlineRounded sx={{ fontSize: 17 }} />
+              </IconButton>
+            </Tooltip>
+          </Stack>
         </Stack>
       </Box>
-    </Tooltip>
   );
 }

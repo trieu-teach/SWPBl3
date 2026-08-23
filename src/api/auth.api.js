@@ -1,4 +1,6 @@
+import { sendPasswordResetEmail, confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth";
 import { apiRequest } from "../lib/http";
+import { auth } from "../lib/firebase";
 
 export async function register(payload) {
   return apiRequest("/auth/register", {
@@ -38,4 +40,16 @@ export async function updateProfile(payload) {
     method: "PATCH",
     body: payload,
   });
+}
+
+export async function forgotPassword(email) {
+  await sendPasswordResetEmail(auth, email);
+}
+
+export async function resetPassword(oobCode, newPassword) {
+  await confirmPasswordReset(auth, oobCode, newPassword);
+}
+
+export async function verifyResetCode(oobCode) {
+  return await verifyPasswordResetCode(auth, oobCode);
 }

@@ -2,7 +2,7 @@ import axios from "axios";
 import { getAuth } from "firebase/auth";
 
 export const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api"
+  import.meta.env?.VITE_API_BASE_URL || "http://localhost:3001/api"
 ).replace(/\/+$/, "");
 
 export function normalizeApiBaseUrl(value) {
@@ -112,6 +112,8 @@ apiClient.interceptors.response.use(
       throw new ApiError(
         data.error?.message || "Request failed",
         response.status,
+        data.error?.code,
+        data.error?.details,
       );
     }
     return data;
@@ -142,6 +144,7 @@ apiClient.interceptors.response.use(
 export async function apiRequest(path, options = {}) {
   const { body, headers, ...rest } = options;
   const config = {
+    ...rest,
     url: path,
     method: rest.method || "GET",
     headers: { ...headers },

@@ -8,140 +8,17 @@ import {
   Divider,
   CircularProgress,
   Tooltip,
+  Tab,
+  Tabs,
 } from "@mui/material";
 import NotificationsOutlined from "@mui/icons-material/NotificationsOutlined";
 import DoneAllOutlined from "@mui/icons-material/DoneAllOutlined";
-import PaymentOutlined from "@mui/icons-material/PaymentOutlined";
-import SubscriptionOutlined from "@mui/icons-material/SubscriptionsOutlined";
-import AccountCircleOutlined from "@mui/icons-material/AccountCircleOutlined";
-import CheckCircleOutlineOutlined from "@mui/icons-material/CheckCircleOutlineOutlined";
+import NotificationItem from "./NotificationItem.jsx";
 import { useNotifications } from "../hooks/useNotifications";
-
-const NOTIFICATION_ICONS = {
-  PAYMENT_SUCCESS: PaymentOutlined,
-  PAYMENT_REFUNDED: PaymentOutlined,
-  SUBSCRIPTION_EXPIRED: SubscriptionOutlined,
-  SUBSCRIPTION_EXPIRING_SOON: SubscriptionOutlined,
-  ACCOUNT_STATUS_CHANGED: AccountCircleOutlined,
-  ACCOUNT_ROLE_CHANGED: AccountCircleOutlined,
-  REPORT_RESOLVED: CheckCircleOutlineOutlined,
-};
-
-const NOTIFICATION_COLORS = {
-  PAYMENT_SUCCESS: "#22c55e",
-  PAYMENT_REFUNDED: "#f59e0b",
-  SUBSCRIPTION_EXPIRED: "#ef4444",
-  SUBSCRIPTION_EXPIRING_SOON: "#f59e0b",
-  ACCOUNT_STATUS_CHANGED: "#8b5cf6",
-  ACCOUNT_ROLE_CHANGED: "#8b5cf6",
-  REPORT_RESOLVED: "#22c55e",
-};
-
-function formatTimeAgo(dateString) {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now - date;
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMins < 1) return "Vừa xong";
-  if (diffMins < 60) return `${diffMins} phút trước`;
-  if (diffHours < 24) return `${diffHours} giờ trước`;
-  if (diffDays < 7) return `${diffDays} ngày trước`;
-  return date.toLocaleDateString("vi-VN", {
-    day: "numeric",
-    month: "short",
-  });
-}
-
-function NotificationItem({ notification, onMarkAsRead }) {
-  const Icon = NOTIFICATION_ICONS[notification.type] || NotificationsOutlined;
-  const color = NOTIFICATION_COLORS[notification.type] || "#6366f1";
-
-  return (
-    <Box
-      onClick={() => !notification.isRead && onMarkAsRead(notification.id)}
-      sx={{
-        display: "flex",
-        gap: 1.5,
-        p: 2,
-        cursor: notification.isRead ? "default" : "pointer",
-        backgroundColor: notification.isRead ? "transparent" : "action.hover",
-        "&:hover": {
-          backgroundColor: notification.isRead
-            ? "action.hover"
-            : "action.selected",
-        },
-        transition: "background-color 0.15s ease",
-      }}
-    >
-      <Box
-        sx={{
-          width: 40,
-          height: 40,
-          borderRadius: "10px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: `${color}15`,
-          flexShrink: 0,
-        }}
-      >
-        <Icon sx={{ fontSize: 20, color }} />
-      </Box>
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography
-          sx={{
-            fontSize: "0.85rem",
-            fontWeight: notification.isRead ? 500 : 600,
-            color: "text.primary",
-            mb: 0.25,
-          }}
-        >
-          {notification.title}
-        </Typography>
-        <Typography
-          sx={{
-            fontSize: "0.78rem",
-            color: "text.secondary",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-          }}
-        >
-          {notification.body}
-        </Typography>
-        <Typography
-          sx={{
-            fontSize: "0.7rem",
-            color: "text.disabled",
-            mt: 0.5,
-          }}
-        >
-          {formatTimeAgo(notification.createdAt)}
-        </Typography>
-      </Box>
-      {!notification.isRead && (
-        <Box
-          sx={{
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-            backgroundColor: color,
-            flexShrink: 0,
-            mt: 0.75,
-          }}
-        />
-      )}
-    </Box>
-  );
-}
 
 export default function NotificationBell() {
   const [anchorEl, setAnchorEl] = useState(null);
+  const [filter, setFilter] = useState("all");
   const menuRef = useRef(null);
   const {
     notifications,
@@ -154,7 +31,7 @@ export default function NotificationBell() {
     markNotificationAsRead,
     markAllNotificationsAsRead,
     refresh,
-  } = useNotifications();
+  } = useNotifications({ isRead: filter === "read" ? true : filter === "unread" ? false : undefined });
   const open = Boolean(anchorEl);
 
   const handleOpen = (event) => {
@@ -163,6 +40,10 @@ export default function NotificationBell() {
 
   const handleClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleFilterChange = (_event, newValue) => {
+    setFilter(newValue);
   };
 
   // Close on outside click
@@ -208,8 +89,7 @@ export default function NotificationBell() {
             top: "100%",
             right: 0,
             mt: 1,
-            width: 380,
-            maxHeight: 520,
+            width: 400,
             backgroundColor: "background.paper",
             borderRadius: "16px",
             boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
@@ -228,8 +108,7 @@ export default function NotificationBell() {
               alignItems: "center",
               justifyContent: "space-between",
               p: 2,
-              borderBottom: "1px solid",
-              borderColor: "divider",
+              pb: 1,
             }}
           >
             <Typography sx={{ fontWeight: 700, fontSize: "1rem" }}>
@@ -247,11 +126,57 @@ export default function NotificationBell() {
             )}
           </Box>
 
+          {/* Filter Tabs */}
+          <Tabs
+            value={filter}
+            onChange={handleFilterChange}
+            sx={{
+              minHeight: 40,
+              px: 2,
+              "& .MuiTabs-indicator": { height: 2 },
+              "& .MuiTab-root": {
+                minHeight: 40,
+                fontSize: "0.8rem",
+                textTransform: "none",
+                px: 1.5,
+              },
+            }}
+          >
+            <Tab label="Tất cả" value="all" />
+            <Tab
+              label={
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  Chưa đọc
+                  {unreadCount > 0 && (
+                    <Box
+                      sx={{
+                        bgcolor: "error.main",
+                        color: "white",
+                        borderRadius: "10px",
+                        px: 0.75,
+                        fontSize: "0.65rem",
+                        fontWeight: 700,
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {unreadCount}
+                    </Box>
+                  )}
+                </Box>
+              }
+              value="unread"
+            />
+            <Tab label="Đã đọc" value="read" />
+          </Tabs>
+
+          <Divider />
+
           {/* Content */}
           <Box
             sx={{
               flex: 1,
               overflowY: "auto",
+              maxHeight: 400,
               "&::-webkit-scrollbar": {
                 width: 6,
               },
@@ -299,7 +224,7 @@ export default function NotificationBell() {
                   sx={{ fontSize: 48, color: "text.disabled", mb: 1.5 }}
                 />
                 <Typography sx={{ color: "text.secondary", fontSize: "0.85rem" }}>
-                  Chưa có thông báo nào
+                  Không có thông báo nào
                 </Typography>
               </Box>
             ) : (

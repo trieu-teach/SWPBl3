@@ -14,6 +14,7 @@ import {
   Email,
   VerifiedUser,
 } from "@mui/icons-material";
+import { forgotPassword } from "../../api/auth.api";
 import "./Login.css";
 
 export default function ForgotPassword() {
@@ -31,11 +32,19 @@ export default function ForgotPassword() {
     }
     setLoading(true);
     try {
-      const { forgotPassword } = await import("../../api/auth.api");
       await forgotPassword(email);
       setSuccess(true);
     } catch (err) {
-      setError(err?.message || "Không thể gửi yêu cầu. Vui lòng thử lại.");
+      const code = err?.code || "";
+      let msg = "Không thể gửi yêu cầu. Vui lòng thử lại.";
+      if (code === "auth/user-not-found") {
+        msg = "Không tìm thấy tài khoản với email này.";
+      } else if (code === "auth/invalid-email") {
+        msg = "Email không hợp lệ.";
+      } else if (code === "auth/too-many-requests") {
+        msg = "Đã gửi quá nhiều yêu cầu. Vui lòng đợi vài phút.";
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }

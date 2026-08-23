@@ -30,6 +30,5 @@ export function getAuditLogs(params = {}) {
   if (params.keyword) searchParams.set("keyword", params.keyword);
 
   const qs = searchParams.toString();
-  console.log("📡 Audit API Request:", `/admin/logs/audit${qs ? `?${qs}` : ""}`);
   return apiRequest(`/admin/logs/audit${qs ? `?${qs}` : ""}`);
 }

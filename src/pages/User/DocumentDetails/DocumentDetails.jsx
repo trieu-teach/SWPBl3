@@ -20,6 +20,7 @@ import {
   displayFileType,
   formatBytes,
   formatDate,
+  getModerationStatus,
   normalizeTags,
 } from "../DocumentLibrary/utils/document-formatters.js";
 
@@ -50,6 +51,7 @@ export default function DocumentDetails() {
 
   const document = details.document;
   const status = AI_STATUS[document.aiStatus] || AI_STATUS.PENDING;
+  const moderation = getModerationStatus(document);
   const tags = normalizeTags(document.tags);
 
   return (
@@ -73,6 +75,23 @@ export default function DocumentDetails() {
           {details.success}
         </Alert>
       )}
+
+      {document.visibility === "PUBLIC" &&
+        document.moderationStatus === "PENDING" && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Tài liệu đang chờ kiểm duyệt và chưa xuất hiện trong Cộng đồng.
+          </Alert>
+        )}
+      {document.visibility === "PUBLIC" &&
+        document.moderationStatus === "REJECTED" && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            <Typography fontWeight={700}>Tài liệu đã bị từ chối.</Typography>
+            <Typography variant="body2">
+              {document.rejectionReason ||
+                "Chưa có lý do từ chối cụ thể."}
+            </Typography>
+          </Alert>
+        )}
 
       <Paper
         variant="outlined"
@@ -111,6 +130,13 @@ export default function DocumentDetails() {
                 color={status.color}
                 variant="outlined"
               />
+              {moderation && (
+                <Chip
+                  label={moderation.label}
+                  color={moderation.color}
+                  variant="outlined"
+                />
+              )}
               <Chip
                 label={
                   document.visibility === "PUBLIC" ? "Công khai" : "Riêng tư"

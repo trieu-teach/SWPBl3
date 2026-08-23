@@ -25,6 +25,7 @@ import {
   formatBytes,
   formatDate,
   getFileTypeColors,
+  getModerationStatus,
   normalizeTags,
 } from "../utils/document-formatters.js";
 
@@ -32,6 +33,7 @@ export default function DocumentCard({ document, actionId, onOpen }) {
   const status = AI_STATUS[document.aiStatus] || AI_STATUS.PENDING;
   const tags = normalizeTags(document.tags);
   const fileColors = getFileTypeColors(document);
+  const moderation = getModerationStatus(document);
 
   return (
     <Card
@@ -58,7 +60,13 @@ export default function DocumentCard({ document, actionId, onOpen }) {
           <DescriptionOutlined />
         </Box>
         <Tooltip
-          title={document.visibility === "PUBLIC" ? "Công khai" : "Riêng tư"}
+          title={
+            document.visibility === "PUBLIC"
+              ? moderation
+                ? `Công khai · ${moderation.label}`
+                : "Công khai"
+              : "Riêng tư"
+          }
         >
           <Box
             color="text.secondary"
@@ -83,7 +91,13 @@ export default function DocumentCard({ document, actionId, onOpen }) {
         <Typography variant="body2" color="text.secondary" noWrap>
           {document.fileName}
         </Typography>
-        <Stack direction="row" spacing={1} sx={{ my: 2 }}>
+        <Stack
+          direction="row"
+          gap={1}
+          rowGap={1}
+          flexWrap="wrap"
+          sx={{ my: 2 }}
+        >
           <Chip
             size="small"
             label={displayFileType(document)}
@@ -95,6 +109,14 @@ export default function DocumentCard({ document, actionId, onOpen }) {
             color={status.color}
             variant="outlined"
           />
+          {moderation && (
+            <Chip
+              size="small"
+              label={moderation.label}
+              color={moderation.color}
+              variant="outlined"
+            />
+          )}
         </Stack>
         <Typography variant="body2" color="text.secondary" noWrap>
           {document.subject?.name || "Chưa phân môn"} ·{" "}

@@ -4,16 +4,34 @@ import {
   Box,
   Button,
   CircularProgress,
+  IconButton,
   Link,
   Paper,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import SmartToyOutlined from "@mui/icons-material/SmartToyOutlined";
 import PersonOutlineOutlined from "@mui/icons-material/PersonOutlineOutlined";
 import ReplayRounded from "@mui/icons-material/ReplayRounded";
+import CheckRounded from "@mui/icons-material/CheckRounded";
+import ContentCopyRounded from "@mui/icons-material/ContentCopyRounded";
+import ThumbUpOutlined from "@mui/icons-material/ThumbUpOutlined";
+import ThumbUpRounded from "@mui/icons-material/ThumbUpRounded";
+import ThumbDownOutlined from "@mui/icons-material/ThumbDownOutlined";
+import ThumbDownRounded from "@mui/icons-material/ThumbDownRounded";
+import { useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import ChatSources from "./ChatSources.jsx";
+import { splitMarkdownBlocks } from "../markdownTables.js";
+import { useChatRating } from "../hooks/useChatRating.js";
 
 const markdownComponents = {
   p: ({ children }) => (
@@ -109,7 +127,18 @@ const markdownComponents = {
   ),
 };
 
+const compactMarkdownComponents = {
+  ...markdownComponents,
+  p: ({ children }) => (
+    <Typography component="span" sx={{ fontSize: "0.9rem", lineHeight: 1.5 }}>
+      {children}
+    </Typography>
+  ),
+};
+
 function MarkdownContent({ content }) {
+  const blocks = splitMarkdownBlocks(content);
+
   return (
     <Box
       sx={{
@@ -119,9 +148,45 @@ function MarkdownContent({ content }) {
         "& > :last-child": { mb: 0 },
       }}
     >
-      <ReactMarkdown skipHtml components={markdownComponents}>
-        {content}
-      </ReactMarkdown>
+      {blocks.map((block, blockIndex) =>
+        block.type === "table" ? (
+          <TableContainer
+            key={`table-${blockIndex}`}
+            component={Paper}
+            variant="outlined"
+            sx={{ my: 1.25, maxWidth: "100%" }}
+          >
+            <Table size="small" sx={{ minWidth: 420 }}>
+              <TableHead>
+                <TableRow>
+                  {block.headers.map((cell, cellIndex) => (
+                    <TableCell key={`header-${cellIndex}`} sx={{ fontWeight: 700, bgcolor: "action.hover" }}>
+                      <ReactMarkdown skipHtml components={compactMarkdownComponents}>{cell}</ReactMarkdown>
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {block.rows.map((row, rowIndex) => (
+                  <TableRow key={`row-${rowIndex}`}>
+                    {block.headers.map((_, cellIndex) => (
+                      <TableCell key={`cell-${cellIndex}`} sx={{ verticalAlign: "top" }}>
+                        <ReactMarkdown skipHtml components={compactMarkdownComponents}>
+                          {row[cellIndex] ?? ""}
+                        </ReactMarkdown>
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        ) : (
+          <ReactMarkdown key={`markdown-${blockIndex}`} skipHtml components={markdownComponents}>
+            {block.value}
+          </ReactMarkdown>
+        ),
+      )}
     </Box>
   );
 }
@@ -140,20 +205,54 @@ export default function ChatMessage({
   onRetry,
   onSend,
   onSourceSelect,
+  onPreviewDocument,
+  loadingId,
 }) {
+  const [copied, setCopied] = useState(false);
   const isUser = message.role === "user";
   const isLoading = message.status === "loading";
   const isError = message.status === "error";
   const isComplete = message.status === "complete";
-  const hasSources = !isUser && isComplete && message.sources?.length > 0;
+  const hasSources = !isUser && message.sources?.length > 0;
+  const targetMessageId = message.backendMessageId || message.id;
+  const {
+    rating: ratedHelpful,
+    isRating,
+    submitRating,
+  } = useChatRating({
+    messageId: targetMessageId,
+    initialRating: message.isHelpful ?? null,
+  });
+
+  async function handleRate(isHelpful) {
+    if (!targetMessageId || isRating) return;
+
+    try {
+      await submitRating(isHelpful);
+    } catch {
+      // Hook tự khôi phục đánh giá trước đó khi API lỗi.
+    }
+  }
+
+  async function copyMessage() {
+    try {
+      await navigator.clipboard.writeText(message.content || "");
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setCopied(false);
+    }
+  }
 
   return (
     <Stack
       direction="row"
       spacing={1.5}
-      justifyContent={isUser ? "flex-end" : "flex-start"}
-      alignItems="flex-start"
-      sx={{ width: "100%" }}
+      sx={{
+        width: "100%",
+        justifyContent: isUser ? "flex-end" : "flex-start",
+        alignItems: "flex-start",
+      }}
     >
       {!isUser && (
         <Avatar
@@ -202,7 +301,7 @@ export default function ChatMessage({
           }}
         >
           {isLoading ? (
-            <Stack direction="row" spacing={1.25} alignItems="center">
+            <Stack direction="row" spacing={1.25} sx={{ alignItems: "center" }}>
               <CircularProgress size={18} thickness={5} />
               <Typography sx={{ fontSize: "0.95rem", lineHeight: 1.7 }}>
                 {message.content}
@@ -221,6 +320,8 @@ export default function ChatMessage({
                     <ChatSources
                       sources={message.sources}
                       onSourceSelect={onSourceSelect}
+                      onPreviewDocument={onPreviewDocument}
+                      loadingId={loadingId}
                     />
                   )}
                 </Box>
@@ -237,17 +338,25 @@ export default function ChatMessage({
               >
                 {message.errorDetail || message.content}
               </Alert>
-              <Button
-                type="button"
-                size="small"
-                variant="outlined"
-                startIcon={<ReplayRounded />}
-                onClick={() => onRetry(message.id)}
-                disabled={isSending}
-                sx={{ alignSelf: "flex-start" }}
-              >
-                Thử lại
-              </Button>
+              <Stack direction="row" spacing={1}>
+                {message.streamRetryable === true && (
+                  <Button
+                    type="button"
+                    size="small"
+                    variant="outlined"
+                    startIcon={<ReplayRounded />}
+                    onClick={() => onRetry(message.id)}
+                    disabled={isSending}
+                  >
+                    Thử lại
+                  </Button>
+                )}
+                {message.errorActionPath && (
+                  <Button component={RouterLink} to={message.errorActionPath} size="small" variant="contained">
+                    {message.errorActionLabel || "Xem chi tiết"}
+                  </Button>
+                )}
+              </Stack>
             </Stack>
           ) : (
             <Stack spacing={1.25}>
@@ -259,7 +368,7 @@ export default function ChatMessage({
               
               {/* If streaming and verifying, show a subtle indicator */}
               {message.status === "streaming" && message.streamPhase === "verifying" && (
-                <Stack direction="row" spacing={1} alignItems="center" sx={{ opacity: 0.7 }}>
+                <Stack direction="row" spacing={1} sx={{ opacity: 0.7, alignItems: "center" }}>
                   <CircularProgress size={14} thickness={4} />
                   <Typography variant="caption">Đang kiểm tra thông tin...</Typography>
                 </Stack>
@@ -267,7 +376,7 @@ export default function ChatMessage({
               
               {/* Show generating if streaming but no content yet */}
               {message.status === "streaming" && message.streamPhase === "generating" && !message.content && (
-                <Stack direction="row" spacing={1} alignItems="center" sx={{ opacity: 0.7 }}>
+                <Stack direction="row" spacing={1} sx={{ opacity: 0.7, alignItems: "center" }}>
                   <CircularProgress size={14} thickness={4} />
                   <Typography variant="caption">Đang tạo câu trả lời...</Typography>
                 </Stack>
@@ -275,7 +384,7 @@ export default function ChatMessage({
 
               {/* Show retrieving if streaming but no content yet */}
               {message.status === "streaming" && message.streamPhase === "retrieving" && !message.content && (
-                <Stack direction="row" spacing={1} alignItems="center" sx={{ opacity: 0.7 }}>
+                <Stack direction="row" spacing={1} sx={{ opacity: 0.7, alignItems: "center" }}>
                   <CircularProgress size={14} thickness={4} />
                   <Typography variant="caption">Đang tìm kiếm tài liệu...</Typography>
                 </Stack>
@@ -285,6 +394,8 @@ export default function ChatMessage({
                 <ChatSources
                   sources={message.sources}
                   onSourceSelect={onSourceSelect}
+                  onPreviewDocument={onPreviewDocument}
+                  loadingId={loadingId}
                 />
               )}
 
@@ -301,20 +412,76 @@ export default function ChatMessage({
             </Stack>
           )}
         </Paper>
-        <Typography
-          sx={{
-            px: 0.5,
-            fontSize: "0.66rem",
-            color: "text.secondary",
-            opacity: 0.78,
-          }}
-        >
-          {isUser ? "Bạn" : "AI Study Hub"} · {message.createdAt}
-        </Typography>
+        <Stack direction="row" spacing={0.5} sx={{ px: 0.5, alignItems: "center" }}>
+          <Typography sx={{ fontSize: "0.66rem", color: "text.secondary", opacity: 0.78 }}>
+            {isUser ? "Bạn" : "AI Study Hub"} · {message.createdAt}
+          </Typography>
+          {!isLoading && message.content && (
+            <Tooltip title={copied ? "Đã sao chép" : "Sao chép tin nhắn"}>
+              <IconButton size="small" onClick={copyMessage} aria-label="Sao chép tin nhắn">
+                {copied ? <CheckRounded sx={{ fontSize: 15 }} /> : <ContentCopyRounded sx={{ fontSize: 15 }} />}
+              </IconButton>
+            </Tooltip>
+          )}
+          {!isUser && isComplete && (message.backendMessageId || message.id) && (
+            <>
+              <Tooltip title="Hữu ích">
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleRate(true)}
+                    disabled={isRating}
+                    aria-label="Đánh giá hữu ích"
+                    sx={{
+                      p: 0.5,
+                      color: ratedHelpful === true ? "primary.main" : "text.secondary",
+                      bgcolor: ratedHelpful === true ? "action.selected" : "transparent",
+                      "&:hover": {
+                        bgcolor: "action.hover",
+                        color: ratedHelpful === true ? "primary.main" : "primary.light",
+                      },
+                    }}
+                  >
+                    {ratedHelpful === true ? (
+                      <ThumbUpRounded sx={{ fontSize: 14 }} />
+                    ) : (
+                      <ThumbUpOutlined sx={{ fontSize: 14 }} />
+                    )}
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip title="Không hữu ích">
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleRate(false)}
+                    disabled={isRating}
+                    aria-label="Đánh giá không hữu ích"
+                    sx={{
+                      p: 0.5,
+                      color: ratedHelpful === false ? "error.main" : "text.secondary",
+                      bgcolor: ratedHelpful === false ? "action.selected" : "transparent",
+                      "&:hover": {
+                        bgcolor: "action.hover",
+                        color: ratedHelpful === false ? "error.main" : "error.light",
+                      },
+                    }}
+                  >
+                    {ratedHelpful === false ? (
+                      <ThumbDownRounded sx={{ fontSize: 14 }} />
+                    ) : (
+                      <ThumbDownOutlined sx={{ fontSize: 14 }} />
+                    )}
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </>
+          )}
+        </Stack>
 
         {/* Suggested Prompts below the paper bubble */}
         {!isUser && isComplete && message.suggestedPrompts?.length > 0 && (
-          <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mt: 0.5 }}>
+          <Stack direction="row" sx={{ mt: 0.5, flexWrap: "wrap", gap: 1 }}>
             {message.suggestedPrompts.map((prompt) => (
               <Button
                 key={prompt}

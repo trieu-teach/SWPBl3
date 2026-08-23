@@ -27,6 +27,7 @@ import {
   getFileTypeColors,
   normalizeTags,
 } from "../../DocumentLibrary/utils/document-formatters.js";
+import DocumentRatingButtons from "./DocumentRatingButtons.jsx";
 
 export default function CommunityCard({
   document,
@@ -38,6 +39,12 @@ export default function CommunityCard({
 }) {
   const tags = normalizeTags(document.tags);
   const fileColors = getFileTypeColors(document);
+  const ownerName =
+    document.ownerPublicName ||
+    document.owner?.fullName ||
+    "Người chia sẻ";
+  const ownerAvatarUrl =
+    document.ownerAvatarUrl || document.owner?.avatarUrl;
   return (
     <Card
       variant="outlined"
@@ -94,17 +101,17 @@ export default function CommunityCard({
           sx={{ mt: 2, minWidth: 0 }}
         >
           <Avatar
-            src={document.owner?.avatarUrl || undefined}
+            src={ownerAvatarUrl || undefined}
             sx={{ width: 32, height: 32, fontSize: 12, flexShrink: 0 }}
           >
-            {document.owner?.fullName?.[0]}
+            {ownerName[0]}
           </Avatar>
           <Typography
             variant="body2"
             noWrap
             sx={{ minWidth: 0, flex: 1, ml: 1 }}
           >
-            {document.owner?.fullName || "Người chia sẻ"}
+            {ownerName}
           </Typography>
         </Stack>
         <Typography
@@ -115,6 +122,15 @@ export default function CommunityCard({
           {formatBytes(document.fileSize)} · {formatDate(document.createdAt)} ·{" "}
           {document.viewCount || 0} lượt xem
         </Typography>
+        <Box sx={{ mt: 1 }}>
+          <DocumentRatingButtons
+            documentId={document.id}
+            initialUserRating={document.userRating ?? null}
+            helpfulRating={document.helpfulRating}
+            totalRatings={document.totalRatings ?? document.ratingCount}
+            showStats
+          />
+        </Box>
         {tags.length > 0 && (
           <Stack direction="row" gap={0.75} flexWrap="wrap" sx={{ mt: 1.5 }}>
             {tags.slice(0, 3).map((tag) => (

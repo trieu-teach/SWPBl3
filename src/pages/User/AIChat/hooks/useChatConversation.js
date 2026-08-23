@@ -1,152 +1,43 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  createChatSession,
   getChatErrorMessage,
   getChatMessages,
   getHistoryErrorMessage,
   mapHistoryMessage,
 } from "../../../../api/chat.api.js";
+import { getChatErrorPresentation } from "../../../../api/chat.errors.js";
 import {
   askDocumentStream,
   askLibraryStream,
 } from "../../../../api/chat.stream.js";
 import {
+  applyChatProgressEvent,
+  cancelAssistantMessage,
+  cloneContextSnapshot,
+  completeAssistantMessage,
+  createConversationScope,
+  createMessage,
+  createRequestSnapshot,
+  formatTime,
+  getChatRetryPolicy,
+  normalizeId,
+  parseChatDoneEvent,
+  PENDING_CONTENT,
+  prepareRetryRequestSnapshot,
+  prependUniqueMessages,
+  RETRY_DISABLED,
+  validateChatProgressEvent,
+} from "../chatConversation.model.js";
+import {
   CHAT_MODE_DOCUMENT,
   CHAT_MODE_LIBRARY,
+  hasSelectedSource,
 } from "../chatContext.js";
 
 const HISTORY_PAGE_LIMIT = 50;
-const PENDING_CONTENT = "Đang suy nghĩ...";
-const CANCELLED_CONTENT = "Phản hồi đã dừng.";
 const FALLBACK_SEND_ERROR =
   "Đã xảy ra lỗi khi tạo phản hồi. Tin nhắn của bạn vẫn được giữ lại.";
-const INVALID_DONE_ERROR =
-  "Phản hồi hoàn tất từ AI không hợp lệ. Vui lòng thử lại.";
-
-function normalizeId(value) {
-  if (typeof value !== "string") return null;
-  const normalized = value.trim();
-  return normalized || null;
-}
-
-function snapshotLibraryFilters(filters) {
-  if (filters === null || filters === undefined) return null;
-  if (typeof filters !== "object" || Array.isArray(filters)) return null;
-
-  const snapshot = {};
-  if (typeof filters.subjectId === "string" && filters.subjectId.trim()) {
-    snapshot.subjectId = filters.subjectId;
-  }
-  if (Array.isArray(filters.subjectIds) && filters.subjectIds.length > 0) {
-    snapshot.subjectIds = [...filters.subjectIds];
-  }
-  if (typeof filters.categoryId === "string" && filters.categoryId.trim()) {
-    snapshot.categoryId = filters.categoryId;
-  }
-  if (typeof filters.fileType === "string" && filters.fileType.trim()) {
-    snapshot.fileType = filters.fileType;
-  }
-  if (Array.isArray(filters.documentIds) && filters.documentIds.length > 0) {
-    snapshot.documentIds = [...filters.documentIds];
-  }
-
-  return Object.keys(snapshot).length > 0 ? snapshot : null;
-}
-
-function createConversationScope(context, enabled) {
-  if (!enabled) return null;
-
-  if (context?.mode === CHAT_MODE_DOCUMENT) {
-    const documentId = normalizeId(context.documentId);
-    if (!documentId) return null;
-
-    const contextSnapshot = {
-      mode: CHAT_MODE_DOCUMENT,
-      documentId,
-    };
-    return {
-      key: JSON.stringify([CHAT_MODE_DOCUMENT, documentId]),
-      context: contextSnapshot,
-    };
-  }
-
-  if (context?.mode === CHAT_MODE_LIBRARY) {
-    if (
-      context.libraryFilters !== null &&
-      context.libraryFilters !== undefined &&
-      (typeof context.libraryFilters !== "object" ||
-        Array.isArray(context.libraryFilters))
-    ) {
-      return null;
-    }
-
-    const libraryFilters = snapshotLibraryFilters(context.libraryFilters);
-    const contextSnapshot = {
-      mode: CHAT_MODE_LIBRARY,
-      libraryFilters,
-    };
-    return {
-      key: JSON.stringify([CHAT_MODE_LIBRARY]),
-      context: contextSnapshot,
-    };
-  }
-
-  return null;
-}
-
-function cloneContextSnapshot(context) {
-  if (context.mode === CHAT_MODE_DOCUMENT) {
-    return { mode: CHAT_MODE_DOCUMENT, documentId: context.documentId };
-  }
-
-  return {
-    mode: CHAT_MODE_LIBRARY,
-    libraryFilters: snapshotLibraryFilters(context.libraryFilters),
-  };
-}
-
-function createRequestSnapshot(question, context, sessionId) {
-  return {
-    question,
-    context: cloneContextSnapshot(context),
-    sessionId: normalizeId(sessionId),
-  };
-}
-
-function createMessage({ role, content, status = "sent", retryOf = null }) {
-  return {
-    id: createId(),
-    role,
-    content,
-    status,
-    retryOf,
-    createdAt: formatTime(new Date()),
-  };
-}
-
-function createId() {
-  if (typeof crypto !== "undefined" && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  return `msg-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
-function formatTime(date) {
-  return date.toLocaleTimeString("vi-VN", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function prependUniqueMessages(olderMessages, currentMessages) {
-  const seenIds = new Set(currentMessages.map((message) => message.id));
-  const uniqueOlderMessages = olderMessages.filter((message) => {
-    if (seenIds.has(message.id)) return false;
-    seenIds.add(message.id);
-    return true;
-  });
-
-  return [...uniqueOlderMessages, ...currentMessages];
-}
 
 function notify(callback, ...args) {
   if (typeof callback !== "function") return;
@@ -163,6 +54,7 @@ export function useChatConversation({
   enabled = true,
   onSessionCreated,
   onConversationCompleted,
+  onSessionUnavailable,
 } = {}) {
   const scope = useMemo(
     () => createConversationScope(context, enabled),
@@ -195,10 +87,12 @@ export function useChatConversation({
   const historyRequestRef = useRef(null);
   const onSessionCreatedRef = useRef(onSessionCreated);
   const onConversationCompletedRef = useRef(onConversationCompleted);
+  const onSessionUnavailableRef = useRef(onSessionUnavailable);
 
   latestScopeRef.current = scope;
   onSessionCreatedRef.current = onSessionCreated;
   onConversationCompletedRef.current = onConversationCompleted;
+  onSessionUnavailableRef.current = onSessionUnavailable;
 
   const invalidateHistory = useCallback(() => {
     historyGenerationRef.current += 1;
@@ -227,16 +121,7 @@ export function useChatConversation({
             return message;
           }
 
-          const hasPartial =
-            message.content && message.content !== PENDING_CONTENT;
-          return {
-            ...message,
-            content: hasPartial ? message.content : CANCELLED_CONTENT,
-            status: "cancelled",
-            streamPhase: "CANCELLED",
-            errorDetail: undefined,
-            createdAt: formatTime(new Date()),
-          };
+          return cancelAssistantMessage(message);
         }),
       );
       setStatus("idle");
@@ -398,25 +283,65 @@ export function useChatConversation({
       activeScopeRef.current?.key === streamRequest.scopeKey;
 
     try {
-      const { question, context: contextSnapshot } = requestSnapshot;
-      const knownSessionId = requestSnapshot.sessionId;
+      const { question, context: contextSnapshot, requestId } = requestSnapshot;
+      let knownSessionId = requestSnapshot.sessionId;
+      const createdNewSession = !knownSessionId;
+
+      if (!knownSessionId) {
+        const createdSession = await createChatSession({
+          mode: contextSnapshot.mode,
+          documentId:
+            contextSnapshot.mode === CHAT_MODE_DOCUMENT
+              ? contextSnapshot.documentId
+              : undefined,
+          documentIds:
+            contextSnapshot.mode === CHAT_MODE_LIBRARY
+              ? contextSnapshot.libraryFilters?.documentIds
+              : undefined,
+          signal: requestController.signal,
+        });
+        knownSessionId = normalizeId(createdSession?.id);
+        if (!knownSessionId) throw new Error("Không nhận được sessionId hợp lệ.");
+
+        requestSnapshot.sessionId = knownSessionId;
+        confirmedSessionRef.current = {
+          scopeKey: requestScope.key,
+          sessionId: knownSessionId,
+        };
+        activeSessionIdRef.current = knownSessionId;
+        setOwner({ scopeKey: requestScope.key, sessionId: knownSessionId });
+        setMessages((current) =>
+          current.map((message) =>
+            message.id === targetMessageId
+              ? { ...message, requestSnapshot: { ...requestSnapshot }, sessionId: knownSessionId }
+              : message,
+          ),
+        );
+        notify(onSessionCreatedRef.current, knownSessionId, { createdSession });
+      }
+
       const stream =
         contextSnapshot.mode === CHAT_MODE_DOCUMENT
           ? askDocumentStream({
               documentId: contextSnapshot.documentId,
               question,
               sessionId: knownSessionId,
+              requestId,
               signal: requestController.signal,
             })
           : askLibraryStream({
               question,
               sessionId: knownSessionId,
+              requestId,
               limit: 5,
+              // The backend accepts subjectIds/documentIds in filters.
+              // chat.stream sanitizes display-only metadata before sending.
               filters: contextSnapshot.libraryFilters,
               signal: requestController.signal,
             });
 
       let receivedDone = false;
+      let receivedDelta = false;
 
       for await (const event of stream) {
         if (!isValidStreamRequest() || requestController.signal.aborted) {
@@ -426,103 +351,40 @@ export function useChatConversation({
         const { type, data } = event;
 
         if (type === "done") {
-          const confirmedSessionId = normalizeId(data?.sessionId);
-          const confirmedMessageId = normalizeId(data?.messageId);
-          if (
-            typeof data?.answer !== "string" ||
-            !confirmedSessionId ||
-            !confirmedMessageId ||
-            (knownSessionId && confirmedSessionId !== knownSessionId)
-          ) {
-            throw new Error(INVALID_DONE_ERROR);
-          }
+          const doneEvent = parseChatDoneEvent(data, knownSessionId);
 
           receivedDone = true;
           setMessages((current) =>
             current.map((message) =>
               message.id === targetMessageId
-                ? {
-                    ...message,
-                    content: data.answer,
-                    status: "complete",
-                    streamPhase: "COMPLETED",
-                    backendMessageId: confirmedMessageId,
-                    sessionId: confirmedSessionId,
-                    ...(Array.isArray(data.sources)
-                      ? { sources: data.sources }
-                      : {}),
-                    ...(Array.isArray(data.suggestedPrompts)
-                      ? { suggestedPrompts: data.suggestedPrompts }
-                      : {}),
-                    ...(typeof data.answerStatus === "string"
-                      ? { answerStatus: data.answerStatus }
-                      : {}),
-                    createdAt: formatTime(new Date()),
-                  }
+                ? completeAssistantMessage(message, doneEvent, {
+                    receivedDelta,
+                  })
                 : message,
             ),
           );
 
-          if (!knownSessionId) {
-            confirmedSessionRef.current = {
-              scopeKey: requestScope.key,
-              sessionId: confirmedSessionId,
-            };
-            activeSessionIdRef.current = confirmedSessionId;
-            setOwner({
-              scopeKey: requestScope.key,
-              sessionId: confirmedSessionId,
-            });
-            notify(
-              onSessionCreatedRef.current,
-              confirmedSessionId,
-              { messageId: confirmedMessageId },
-            );
-          }
-
           notify(onConversationCompletedRef.current, {
-            sessionId: confirmedSessionId,
-            messageId: confirmedMessageId,
-            answerStatus: data.answerStatus,
-            usage: data.usage ?? null,
-            isNewSession: !knownSessionId,
+            sessionId: doneEvent.sessionId,
+            messageId: doneEvent.messageId,
+            answerStatus: doneEvent.answerStatus,
+            usage: doneEvent.usage,
+            isNewSession: createdNewSession,
             context: cloneContextSnapshot(contextSnapshot),
           });
           continue;
         }
 
-        setMessages((current) => {
-          const message = current.find((item) => item.id === targetMessageId);
-          if (!message) return current;
+        const progressEvent = validateChatProgressEvent(type, data);
+        if (type === "delta") receivedDelta = true;
 
-          const nextMessage = { ...message };
-          if (type === "status") {
-            nextMessage.status = "streaming";
-            nextMessage.streamPhase = data.phase;
-            if (
-              data.phase === "generating" &&
-              nextMessage.content === PENDING_CONTENT
-            ) {
-              nextMessage.content = "";
-            }
-          } else if (type === "sources") {
-            nextMessage.status = "streaming";
-            nextMessage.sources = data;
-            if (nextMessage.content === PENDING_CONTENT) {
-              nextMessage.content = "";
-            }
-          } else if (type === "delta") {
-            nextMessage.status = "streaming";
-            if (nextMessage.content === PENDING_CONTENT) {
-              nextMessage.content = "";
-            }
-            nextMessage.content += data.text;
-          }
-
-          return current.map((item) =>
-            item.id === targetMessageId ? nextMessage : item,
-          );
-        });
+        setMessages((current) =>
+          current.map((message) =>
+            message.id === targetMessageId
+              ? applyChatProgressEvent(message, progressEvent)
+              : message,
+          ),
+        );
       }
 
       if (!isValidStreamRequest() || requestController.signal.aborted) {
@@ -545,8 +407,12 @@ export function useChatConversation({
         return false;
       }
 
-      const errorMessage =
-        getChatErrorMessage(requestError) || FALLBACK_SEND_ERROR;
+      const errorPresentation = getChatErrorPresentation(requestError);
+      const retryPolicy = getChatRetryPolicy(
+        requestError,
+        errorPresentation,
+      );
+      const errorMessage = getChatErrorMessage(requestError) || FALLBACK_SEND_ERROR;
       setMessages((current) =>
         current.map((message) => {
           if (message.id !== targetMessageId) return message;
@@ -561,15 +427,19 @@ export function useChatConversation({
             ...(requestError.code !== undefined
               ? { streamErrorCode: requestError.code }
               : {}),
-            ...(typeof requestError.retryable === "boolean"
-              ? { streamRetryable: requestError.retryable }
-              : {}),
+            streamRetryable: retryPolicy.retryable,
+            retryRequestIdStrategy: retryPolicy.requestIdStrategy,
+            errorActionLabel: errorPresentation.actionLabel,
+            errorActionPath: errorPresentation.actionPath,
             createdAt: formatTime(new Date()),
           };
         }),
       );
       setError(errorMessage);
       setStatus("error");
+      if (errorPresentation.resetSession) {
+        notify(onSessionUnavailableRef.current, requestSnapshot.sessionId);
+      }
       return false;
     } finally {
       if (ownsStreamRequest()) {
@@ -599,6 +469,15 @@ export function useChatConversation({
         : inputValue
       ).trim();
       if (!activeScope || !content || sendingRef.current) return false;
+
+      // Guard: block sending when in LIBRARY mode without any selected source.
+      // This is a hard check at the logic layer — do not rely on UI disabled state alone.
+      if (
+        activeScope.context.mode === CHAT_MODE_LIBRARY &&
+        !hasSelectedSource(activeScope.context.libraryFilters)
+      ) {
+        return false;
+      }
 
       const knownSessionId =
         suppliedSessionId ||
@@ -643,6 +522,7 @@ export function useChatConversation({
         (message) => message.id === assistantMessageId,
       );
       const requestSnapshot = failedMessage?.requestSnapshot;
+      const requestIdStrategy = failedMessage?.retryRequestIdStrategy;
       const retryScope = requestSnapshot
         ? createConversationScope(requestSnapshot.context, true)
         : null;
@@ -656,6 +536,9 @@ export function useChatConversation({
       if (
         !failedMessage ||
         failedMessage.status !== "error" ||
+        failedMessage.streamRetryable !== true ||
+        !requestIdStrategy ||
+        requestIdStrategy === RETRY_DISABLED ||
         !requestSnapshot?.question?.trim() ||
         !retryScope ||
         retryScope.key !== activeScope?.key ||
@@ -663,6 +546,11 @@ export function useChatConversation({
       ) {
         return false;
       }
+
+      const retrySnapshot = prepareRetryRequestSnapshot(
+        requestSnapshot,
+        requestIdStrategy,
+      );
 
       setMessages((current) =>
         current.map((message) =>
@@ -673,6 +561,8 @@ export function useChatConversation({
                 errorDetail: undefined,
                 streamErrorCode: undefined,
                 streamRetryable: undefined,
+                retryRequestIdStrategy: undefined,
+                requestSnapshot: retrySnapshot,
                 status: "loading",
                 streamPhase: undefined,
                 createdAt: formatTime(new Date()),
@@ -684,7 +574,7 @@ export function useChatConversation({
       setStatus("sending");
       sendingRef.current = true;
 
-      return executeRequest(assistantMessageId, requestSnapshot);
+      return executeRequest(assistantMessageId, retrySnapshot);
     },
     [messages, suppliedSessionId, executeRequest],
   );
