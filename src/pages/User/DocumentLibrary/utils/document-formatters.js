@@ -1,3 +1,5 @@
+import { DOCUMENT_MODERATION_STATUS } from "../../../../lib/moderation.js";
+
 export const AI_STATUS = {
   PENDING: { label: "Chờ xử lý", color: "warning" },
   PROCESSING: { label: "Đang xử lý", color: "info" },
@@ -6,26 +8,11 @@ export const AI_STATUS = {
   MOCKED: { label: "Dữ liệu mẫu", color: "default" },
 };
 
-export const MODERATION_STATUS = {
-  PENDING: { label: "Chờ duyệt", color: "warning" },
-  APPROVED: { label: "Đã duyệt", color: "success" },
-  REJECTED: { label: "Bị từ chối", color: "error" },
-  AUTO_BLOCKED: { label: "Bị chặn tự động", color: "error" },
-  FLAGGED: { label: "Cần kiểm tra", color: "warning" },
-  UNDER_REVIEW: { label: "Đang kiểm duyệt", color: "info" },
-  APPEALED: { label: "Đang khiếu nại", color: "info" },
-  EXPIRED: { label: "Hết hạn khiếu nại", color: "default" },
-  SYSTEM_CLEARED: { label: "Hệ thống đã duyệt", color: "success" },
-};
+export const MODERATION_STATUS = DOCUMENT_MODERATION_STATUS;
 
 export function getModerationStatus(document) {
   if (document?.visibility !== "PUBLIC") return null;
-  return (
-    MODERATION_STATUS[document.moderationStatus] || {
-      label: "Chưa có trạng thái duyệt",
-      color: "default",
-    }
-  );
+  return MODERATION_STATUS[document.moderationStatus] || null;
 }
 
 export function formatBytes(bytes) {

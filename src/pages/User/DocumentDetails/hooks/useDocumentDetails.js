@@ -12,6 +12,7 @@ import {
   updateDocument,
   updateDocumentVisibility,
 } from "../../../../api/documents.api.js";
+import { createDocumentAppeal } from "../../../../api/document-appeals.api.js";
 import { useToast } from "../../../../components/Toast/ToastProvider.jsx";
 
 export default function useDocumentDetails() {
@@ -30,6 +31,7 @@ export default function useDocumentDetails() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [appealing, setAppealing] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [preview, setPreview] = useState(null);
@@ -159,16 +161,17 @@ export default function useDocumentDetails() {
     try {
       const updated = await updateDocumentVisibility(id, value);
       setDocument(updated);
-      setSuccess(
-        value === "PUBLIC"
-          ? "Tài liệu đã được gửi duyệt công khai."
-          : "Tài liệu đã chuyển sang riêng tư.",
+      const published = ["APPROVED", "SYSTEM_CLEARED"].includes(
+        updated.moderationStatus,
       );
-      toast.success(
-        value === "PUBLIC"
-          ? "Đã gửi tài liệu để duyệt công khai."
-          : "Đã chuyển tài liệu sang riêng tư.",
-      );
+      const message =
+        value === "PRIVATE"
+          ? "Tài liệu đã chuyển sang riêng tư."
+          : published
+            ? "Tài liệu đã lên Cộng đồng."
+            : "Tài liệu đang được kiểm tra trước khi xuất hiện trong Cộng đồng.";
+      setSuccess(message);
+      toast.success(message);
     } catch (requestError) {
       const message = requestError.message || "Không thể đổi quyền riêng tư.";
       setError(message);
@@ -178,21 +181,36 @@ export default function useDocumentDetails() {
     }
   }
 
-  async function resubmitForReview() {
-    setSaving(true);
+  async function submitAppeal(reason, description) {
+    setAppealing(true);
     setError("");
     setSuccess("");
     try {
-      const updated = await updateDocumentVisibility(id, "PUBLIC");
-      setDocument(updated);
-      setSuccess("Tài liệu đã được gửi duyệt lại.");
-      toast.success("Đã gửi tài liệu để kiểm duyệt lại.");
+      await createDocumentAppeal(id, reason, description);
+      const refreshed = await getDocument(id);
+      setDocument(refreshed);
+      setSuccess("Khiếu nại đã được gửi và đang chờ xem xét.");
+      toast.success("Đã gửi khiếu nại tài liệu.");
+      return true;
     } catch (requestError) {
-      const message = requestError.message || "Không thể gửi duyệt lại.";
+      const message =
+        requestError.status === 409
+          ? "Bạn đã gửi khiếu nại cho tài liệu này trước đó."
+          : requestError.status === 400
+            ? "Không thể gửi khiếu nại. Thời hạn có thể đã kết thúc hoặc trạng thái tài liệu đã thay đổi."
+            : requestError.message || "Không thể gửi khiếu nại tài liệu.";
       setError(message);
       toast.error(message);
+      if ([400, 409].includes(requestError.status)) {
+        try {
+          setDocument(await getDocument(id));
+        } catch {
+          // Keep the current document when the refresh also fails.
+        }
+      }
+      return false;
     } finally {
-      setSaving(false);
+      setAppealing(false);
     }
   }
 
@@ -247,6 +265,7 @@ export default function useDocumentDetails() {
     loading,
     saving,
     deleting,
+    appealing,
     error,
     success,
     preview,
@@ -256,7 +275,7 @@ export default function useDocumentDetails() {
     updateField,
     save,
     changeVisibility,
-    resubmitForReview,
+    submitAppeal,
     openFile,
     remove,
     openDeleteDialog,

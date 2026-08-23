@@ -17,7 +17,6 @@ import {
 import {
   CloudDownloadOutlined,
   DeleteOutlined,
-  SendOutlined,
   SmartToyOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
@@ -100,26 +99,9 @@ export default function DocumentActions({ details }) {
           />
         </RadioGroup>
         <Typography variant="caption" color="text.secondary">
-          Tài liệu công khai sẽ được gửi duyệt trước khi xuất hiện trong cộng
-          đồng.
+          Tài liệu công khai sạch có thể được hệ thống đưa lên Cộng đồng tự
+          động; trường hợp cần xem xét sẽ được thông báo riêng.
         </Typography>
-        {document.visibility === "PUBLIC" &&
-          document.moderationStatus === "REJECTED" && (
-            <Stack spacing={1} sx={{ mt: 2 }}>
-              <Typography variant="caption" color="error.main">
-                Hãy lưu nội dung đã chỉnh sửa trước khi gửi duyệt lại.
-              </Typography>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<SendOutlined />}
-                onClick={details.resubmitForReview}
-                disabled={details.saving}
-              >
-                Gửi duyệt lại
-              </Button>
-            </Stack>
-          )}
         <Divider sx={{ my: 3 }} />
         <Button
           fullWidth
