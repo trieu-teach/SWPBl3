@@ -116,7 +116,7 @@ export default function TopRatedDocumentsSection({
                 startIcon={<ThumbUpAltOutlined sx={{ fontSize: 16 }} />}
                 onClick={() => setSortBy("rating")}
               >
-                Hữu ích nhất
+                Đánh giá cao
               </Button>
               <Button
                 variant={sortBy === "downloadCount" ? "contained" : "outlined"}

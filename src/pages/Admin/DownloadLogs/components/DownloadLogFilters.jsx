@@ -1,8 +1,6 @@
 import {
   Box,
   Button,
-  Chip,
-  Divider,
   FormControl,
   InputAdornment,
   MenuItem,
@@ -10,11 +8,8 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import FilterListOutlined from "@mui/icons-material/FilterListOutlined";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
-import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import ClearOutlined from "@mui/icons-material/ClearOutlined";
-import SwapVertOutlined from "@mui/icons-material/SwapVertOutlined";
 
 const ROLE_OPTIONS = [
   { value: "USER", label: "Người dùng" },
@@ -34,19 +29,8 @@ const VISIBILITY_OPTIONS = [
   { value: "PRIVATE", label: "Riêng tư" },
 ];
 
-const SORT_OPTIONS = [
-  { label: "Mới nhất", sortBy: "downloadedAt", sortOrder: "desc" },
-  { label: "Cũ nhất", sortBy: "downloadedAt", sortOrder: "asc" },
-  { label: "Nhiều tải", sortBy: "downloadCount", sortOrder: "desc" },
-  { label: "Ít tải", sortBy: "downloadCount", sortOrder: "asc" },
-];
-
 export default function DownloadLogFilters({ download }) {
-  const { filters, sort, hasActiveFilters, updateFilter, updateSort, resetFilters } = download;
-
-  const currentSort = SORT_OPTIONS.find(
-    (opt) => opt.sortBy === sort.sortBy && opt.sortOrder === sort.sortOrder,
-  ) || SORT_OPTIONS[0];
+  const { filters, hasActiveFilters, updateFilter, resetFilters } = download;
 
   return (
     <Box
@@ -252,49 +236,6 @@ export default function DownloadLogFilters({ download }) {
         </Box>
       </Box>
 
-      <Divider />
-
-      {/* Sort Row */}
-      <Box sx={{ px: 2, py: 1 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <SwapVertOutlined sx={{ fontSize: 14, color: "text.disabled" }} />
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: "0.75rem" }}>
-              Sắp xếp:
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", gap: 0.75 }}>
-            {SORT_OPTIONS.map((opt) => {
-              const isActive = currentSort.label === opt.label;
-              return (
-                <Chip
-                  key={opt.label}
-                  label={opt.label}
-                  size="small"
-                  onClick={() => {
-                    updateSort("sortBy", opt.sortBy);
-                    updateSort("sortOrder", opt.sortOrder);
-                  }}
-                  sx={{
-                    height: 24,
-                    borderRadius: "6px",
-                    fontSize: "0.72rem",
-                    fontWeight: isActive ? 600 : 400,
-                    bgcolor: isActive ? "primary.main" : "transparent",
-                    color: isActive ? "primary.contrastText" : "text.secondary",
-                    border: isActive ? "none" : "1px solid",
-                    borderColor: "divider",
-                    transition: "all 0.15s",
-                    "&:hover": {
-                      bgcolor: isActive ? "primary.dark" : "action.hover",
-                    },
-                  }}
-                />
-              );
-            })}
-          </Box>
-        </Box>
-      </Box>
     </Box>
   );
 }

@@ -25,6 +25,7 @@ export default function useAdminDocuments() {
   const [filters, setFilters] = useState(INITIAL_FILTERS);
   const [searchInput, setSearchInput] = useState("");
   const [page, setPage] = useState(1);
+  const [sort, setSort] = useState({ sortBy: "", sortOrder: "" });
   const [meta, setMeta] = useState({ totalItems: 0, totalPages: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -34,8 +35,8 @@ export default function useAdminDocuments() {
   const [acting, setActing] = useState(false);
 
   const query = useMemo(
-    () => ({ ...filters, page, limit: 20 }),
-    [filters, page],
+    () => ({ ...filters, ...sort, page, limit: 20 }),
+    [filters, sort, page],
   );
 
   const load = useCallback(async () => {
@@ -71,6 +72,22 @@ export default function useAdminDocuments() {
     setSearchInput("");
     setFilters(INITIAL_FILTERS);
     setPage(1);
+  }
+
+  function toggleSort(field, firstOrder) {
+    setPage(1);
+    setSort((current) => {
+      if (current.sortBy !== field) {
+        return { sortBy: field, sortOrder: firstOrder };
+      }
+      if (current.sortOrder === firstOrder) {
+        return {
+          sortBy: field,
+          sortOrder: firstOrder === "asc" ? "desc" : "asc",
+        };
+      }
+      return { sortBy: "", sortOrder: "" };
+    });
   }
 
   async function openDetail(document) {
@@ -162,6 +179,7 @@ export default function useAdminDocuments() {
     filters,
     searchInput,
     page,
+    sort,
     meta,
     loading,
     error,
@@ -174,6 +192,7 @@ export default function useAdminDocuments() {
     updateFilter,
     search,
     resetFilters,
+    toggleSort,
     load,
     openDetail,
     openPreview,

@@ -15,6 +15,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -74,7 +75,15 @@ export default function AdminUsersTable({ adminUsers }) {
           <Table>
             <TableHead>
               <TableRow sx={{ bgcolor: "action.hover" }}>
-                <TableCell>Người dùng</TableCell>
+                <TableCell>
+                  <TableSortLabel
+                    active={adminUsers.sort.sortBy === "fullName"}
+                    direction={adminUsers.sort.sortOrder || "asc"}
+                    onClick={adminUsers.toggleSort}
+                  >
+                    Người dùng
+                  </TableSortLabel>
+                </TableCell>
                 <TableCell>Vai trò</TableCell>
                 <TableCell>Mức sử dụng</TableCell>
                 <TableCell>Trạng thái</TableCell>
@@ -174,7 +183,7 @@ export default function AdminUsersTable({ adminUsers }) {
                       <TableCell align="right">
                         <Tooltip title="Xem chi tiết">
                           <IconButton
-                            onClick={() => adminUsers.setSelectedUser(user)}
+                            onClick={() => adminUsers.openDetail(user)}
                           >
                             <VisibilityOutlined />
                           </IconButton>

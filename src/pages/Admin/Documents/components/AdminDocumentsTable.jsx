@@ -14,6 +14,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -22,6 +23,12 @@ import {
   RefreshOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
+
+function formatSubmittedAt(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString("vi-VN");
+}
 
 export default function AdminDocumentsTable({ admin }) {
   if (admin.error)
@@ -56,7 +63,32 @@ export default function AdminDocumentsTable({ admin }) {
           <Table>
             <TableHead>
               <TableRow sx={{ bgcolor: "action.hover" }}>
-                <TableCell>Tài liệu</TableCell>
+                <TableCell>
+                  <TableSortLabel
+                    active={admin.sort.sortBy === "title"}
+                    direction={
+                      admin.sort.sortBy === "title"
+                        ? admin.sort.sortOrder
+                        : "asc"
+                    }
+                    onClick={() => admin.toggleSort("title", "asc")}
+                  >
+                    Tài liệu
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell>
+                  <TableSortLabel
+                    active={admin.sort.sortBy === "submittedAt"}
+                    direction={
+                      admin.sort.sortBy === "submittedAt"
+                        ? admin.sort.sortOrder
+                        : "desc"
+                    }
+                    onClick={() => admin.toggleSort("submittedAt", "desc")}
+                  >
+                    Ngày nộp
+                  </TableSortLabel>
+                </TableCell>
                 <TableCell>Người đăng</TableCell>
                 <TableCell>Quyền</TableCell>
                 <TableCell>Kiểm duyệt</TableCell>
@@ -68,14 +100,14 @@ export default function AdminDocumentsTable({ admin }) {
               {admin.loading &&
                 Array.from({ length: 6 }).map((_, index) => (
                   <TableRow key={index}>
-                    <TableCell colSpan={6}>
+                    <TableCell colSpan={7}>
                       <Skeleton height={42} />
                     </TableCell>
                   </TableRow>
                 ))}
               {!admin.loading && admin.documents.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
                     <Typography fontWeight={700}>
                       Không tìm thấy tài liệu
                     </Typography>
@@ -100,6 +132,7 @@ export default function AdminDocumentsTable({ admin }) {
                         {document.fileName}
                       </Typography>
                     </TableCell>
+                    <TableCell>{formatSubmittedAt(document.submittedAt)}</TableCell>
                     <TableCell>
                       <Typography>{document.owner?.fullName}</Typography>
                       <Typography variant="caption" color="text.secondary">
