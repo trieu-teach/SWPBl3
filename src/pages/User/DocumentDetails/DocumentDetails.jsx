@@ -13,6 +13,7 @@ import { ArrowBackOutlined, DescriptionOutlined } from "@mui/icons-material";
 import UserLayout from "../Layout/UserLayout.jsx";
 import DocumentPreviewDialog from "../DocumentLibrary/components/DocumentPreviewDialog.jsx";
 import DocumentActions from "./components/DocumentActions.jsx";
+import DocumentAppealForm from "./components/DocumentAppealForm.jsx";
 import DocumentEditForm from "./components/DocumentEditForm.jsx";
 import useDocumentDetails from "./hooks/useDocumentDetails.js";
 import {
@@ -23,6 +24,10 @@ import {
   getModerationStatus,
   normalizeTags,
 } from "../DocumentLibrary/utils/document-formatters.js";
+import {
+  getDocumentAppealState,
+  getOwnerModerationNotice,
+} from "../../../lib/moderation.js";
 
 export default function DocumentDetails() {
   const details = useDocumentDetails();
@@ -52,6 +57,8 @@ export default function DocumentDetails() {
   const document = details.document;
   const status = AI_STATUS[document.aiStatus] || AI_STATUS.PENDING;
   const moderation = getModerationStatus(document);
+  const moderationNotice = getOwnerModerationNotice(document);
+  const appealState = getDocumentAppealState(document);
   const tags = normalizeTags(document.tags);
 
   return (
@@ -76,22 +83,27 @@ export default function DocumentDetails() {
         </Alert>
       )}
 
-      {document.visibility === "PUBLIC" &&
-        document.moderationStatus === "PENDING" && (
-          <Alert severity="info" sx={{ mb: 2 }}>
-            Tài liệu đang chờ kiểm duyệt và chưa xuất hiện trong Cộng đồng.
-          </Alert>
-        )}
-      {document.visibility === "PUBLIC" &&
-        document.moderationStatus === "REJECTED" && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            <Typography fontWeight={700}>Tài liệu đã bị từ chối.</Typography>
-            <Typography variant="body2">
-              {document.rejectionReason ||
-                "Chưa có lý do từ chối cụ thể."}
-            </Typography>
-          </Alert>
-        )}
+      {moderationNotice && (
+        <Alert severity={moderationNotice.severity} sx={{ mb: 2 }}>
+          <Typography fontWeight={700}>{moderationNotice.title}</Typography>
+          <Typography variant="body2">{moderationNotice.message}</Typography>
+          {appealState === "expired" &&
+            ["REJECTED", "AUTO_BLOCKED"].includes(
+              document.moderationStatus,
+            ) && (
+              <Typography variant="body2" sx={{ mt: 0.5 }}>
+                Thời hạn khiếu nại đã kết thúc hoặc tài liệu không còn đủ điều
+                kiện gửi thêm khiếu nại.
+              </Typography>
+            )}
+        </Alert>
+      )}
+
+      <DocumentAppealForm
+        document={document}
+        loading={details.appealing}
+        onSubmit={details.submitAppeal}
+      />
 
       <Paper
         variant="outlined"

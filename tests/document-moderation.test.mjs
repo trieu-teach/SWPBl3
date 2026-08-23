@@ -11,6 +11,9 @@ import {
   canUnhideModeratedDocument,
   getDocumentModerationFlagPresentation,
   getDocumentModerationStatusPresentation,
+  getDocumentAppealState,
+  getOwnerModerationNotice,
+  getUploadModerationOutcome,
   isQueuedDocumentModerationStatus,
 } from "../src/lib/moderation.js";
 import { getModerationStatus } from "../src/pages/User/DocumentLibrary/utils/document-formatters.js";
@@ -186,4 +189,76 @@ test("only allows an admin-provided owner ban action for active accounts", () =>
     false,
   );
   assert.equal(canBanOwnerFromModerationReview(null), false);
+});
+
+test("only opens an appeal before the deadline for eligible statuses", () => {
+  const now = new Date("2026-08-24T00:00:00.000Z");
+  assert.equal(
+    getDocumentAppealState(
+      {
+        moderationStatus: "AUTO_BLOCKED",
+        appealDeadline: "2026-08-25T00:00:00.000Z",
+      },
+      now,
+    ),
+    "available",
+  );
+  assert.equal(
+    getDocumentAppealState(
+      {
+        moderationStatus: "REJECTED",
+        appealDeadline: "2026-08-23T00:00:00.000Z",
+      },
+      now,
+    ),
+    "expired",
+  );
+  assert.equal(
+    getDocumentAppealState({ moderationStatus: "APPEALED" }, now),
+    "submitted",
+  );
+  assert.equal(
+    getDocumentAppealState({ moderationStatus: "APPROVED" }, now),
+    "unavailable",
+  );
+});
+
+test("does not expose matched keywords in owner moderation notices", () => {
+  const notice = getOwnerModerationNotice({
+    visibility: "PUBLIC",
+    moderationStatus: "AUTO_BLOCKED",
+    matchedKeywords: ["secret-keyword"],
+  });
+  assert.equal(notice.severity, "error");
+  assert.equal(JSON.stringify(notice).includes("secret-keyword"), false);
+  assert.equal(
+    getOwnerModerationNotice({
+      visibility: "PUBLIC",
+      moderationStatus: "SYSTEM_CLEARED",
+    }),
+    null,
+  );
+});
+
+test("distinguishes published uploads from documents waiting for review", () => {
+  assert.equal(
+    getUploadModerationOutcome({
+      visibility: "PUBLIC",
+      moderationStatus: "APPROVED",
+      moderationFlag: "NORMAL",
+    }),
+    "published",
+  );
+  assert.equal(
+    getUploadModerationOutcome({
+      visibility: "PUBLIC",
+      moderationStatus: "PENDING",
+      moderationFlag: "SCAN_FAILED",
+    }),
+    "review",
+  );
+  assert.equal(
+    getUploadModerationOutcome({ visibility: "PRIVATE" }),
+    "private",
+  );
 });

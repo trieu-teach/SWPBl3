@@ -91,6 +91,77 @@ export function canBanOwnerFromModerationReview(ownerReview) {
   return ownerReview?.canBan === true && ownerReview.status === "ACTIVE";
 }
 
+export function getDocumentAppealState(document, now = Date.now()) {
+  if (document?.moderationStatus === "APPEALED") return "submitted";
+  if (document?.moderationStatus === "EXPIRED") return "expired";
+  if (!["REJECTED", "AUTO_BLOCKED"].includes(document?.moderationStatus)) {
+    return "unavailable";
+  }
+
+  const deadline = new Date(document.appealDeadline).getTime();
+  const current = now instanceof Date ? now.getTime() : Number(now);
+  return Number.isFinite(deadline) && deadline > current
+    ? "available"
+    : "expired";
+}
+
+export function getOwnerModerationNotice(document) {
+  if (document?.visibility !== "PUBLIC") return null;
+
+  return (
+    {
+      PENDING: {
+        severity: "info",
+        title: "Tài liệu đang chờ kiểm duyệt.",
+        message: "Tài liệu chưa xuất hiện trong Cộng đồng.",
+      },
+      FLAGGED: {
+        severity: "warning",
+        title: "Tài liệu đang chờ người xem.",
+        message:
+          "Tài liệu chưa xuất hiện trong Cộng đồng; tài liệu mức LOW có thể vẫn hoạt động trong thư viện của bạn.",
+      },
+      AUTO_BLOCKED: {
+        severity: "error",
+        title: "Tài liệu đã bị máy tự động ẩn.",
+        message:
+          "Bạn có thể gửi khiếu nại trong thời hạn cho phép nếu cho rằng đây là nhầm lẫn.",
+      },
+      APPEALED: {
+        severity: "info",
+        title: "Đã gửi khiếu nại.",
+        message: "Đội ngũ kiểm duyệt đang xem xét yêu cầu của bạn.",
+      },
+      EXPIRED: {
+        severity: "warning",
+        title: "Đã hết hạn khiếu nại.",
+        message: "Tài liệu không thể gửi thêm khiếu nại.",
+      },
+      REJECTED: {
+        severity: "error",
+        title: "Tài liệu đã bị từ chối.",
+        message: document.rejectionReason || "Chưa có lý do từ chối cụ thể.",
+      },
+    }[document.moderationStatus] || null
+  );
+}
+
+export function getUploadModerationOutcome(document) {
+  if (document?.visibility !== "PUBLIC") return "private";
+  if (["APPROVED", "SYSTEM_CLEARED"].includes(document.moderationStatus)) {
+    return "published";
+  }
+  if (
+    ["NOT_SCANNED", "SCAN_FAILED"].includes(document.moderationFlag) ||
+    ["PENDING", "FLAGGED", "AUTO_BLOCKED", "UNDER_REVIEW"].includes(
+      document.moderationStatus,
+    )
+  ) {
+    return "review";
+  }
+  return "uploaded";
+}
+
 export const REPORT_REASON_OPTIONS = [
   { value: "SPAM", label: "Nội dung rác" },
   { value: "INAPPROPRIATE", label: "Nội dung không phù hợp" },

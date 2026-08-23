@@ -1,11 +1,10 @@
 import { Alert, Button, Paper, Stack, Typography } from "@mui/material";
 import { CheckCircleOutlined, ScheduleOutlined } from "@mui/icons-material";
 import { Link } from "react-router-dom";
+import { getUploadModerationOutcome } from "../../../../lib/moderation.js";
 
 export default function UploadSuccess({ document, fallbackTitle, onReset }) {
-  const awaitingModeration =
-    document.visibility === "PUBLIC" &&
-    (!document.moderationStatus || document.moderationStatus === "PENDING");
+  const moderationOutcome = getUploadModerationOutcome(document);
 
   return (
     <Paper
@@ -29,14 +28,20 @@ export default function UploadSuccess({ document, fallbackTitle, onReset }) {
         “{document.title || fallbackTitle}” đã được lưu. Hệ thống đang trích
         xuất nội dung cho tìm kiếm và AI.
       </Typography>
-      {awaitingModeration && (
+      {moderationOutcome === "published" && (
+        <Alert severity="success" sx={{ mt: 3, textAlign: "left" }}>
+          <strong>Đã lên Cộng đồng.</strong> Hệ thống đã kiểm tra và tự động
+          duyệt tài liệu công khai này.
+        </Alert>
+      )}
+      {moderationOutcome === "review" && (
         <Alert
           severity="info"
           icon={<ScheduleOutlined />}
           sx={{ mt: 3, textAlign: "left" }}
         >
-          <strong>Đang chờ kiểm duyệt.</strong> Tài liệu chỉ xuất hiện trong
-          Cộng đồng sau khi được duyệt.
+          <strong>Đang chờ người xem.</strong> Hệ thống chưa thể tự động xác
+          nhận tài liệu an toàn; tài liệu chưa xuất hiện trong Cộng đồng.
         </Alert>
       )}
       <Stack
