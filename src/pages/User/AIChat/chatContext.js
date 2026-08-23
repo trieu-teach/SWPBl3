@@ -276,6 +276,44 @@ export function hasSelectedSource(libraryFilters) {
   );
 }
 
+function getPrimaryLibrarySourceKey(context) {
+  const filters = context?.libraryFilters;
+  const documentIds = Array.isArray(filters?.documentIds)
+    ? filters.documentIds.map(normalizeDocumentId).filter(Boolean).sort()
+    : [];
+  if (documentIds.length > 0) {
+    return JSON.stringify(["documents", ...documentIds]);
+  }
+
+  const subjectIds = Array.isArray(filters?.subjectIds)
+    ? filters.subjectIds.map(normalizeDocumentId).filter(Boolean).sort()
+    : [];
+  const subjectId = normalizeDocumentId(filters?.subjectId);
+  if (subjectId) subjectIds.push(subjectId);
+
+  return JSON.stringify([
+    "subjects",
+    ...[...new Set(subjectIds)].sort(),
+  ]);
+}
+
+export function hasSameLibrarySource(currentContext, nextContext) {
+  return (
+    getPrimaryLibrarySourceKey(currentContext) ===
+    getPrimaryLibrarySourceKey(nextContext)
+  );
+}
+
+export function shouldStartNewLibraryChatOnSourceChange({
+  sessionId,
+  messages,
+} = {}) {
+  return Boolean(
+    normalizeDocumentId(sessionId) ||
+      (Array.isArray(messages) && messages.length > 0),
+  );
+}
+
 // ── Factory functions ──────────────────────────────────────────────────────────
 
 /**
