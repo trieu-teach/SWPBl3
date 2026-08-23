@@ -46,6 +46,9 @@ const CommunityLibrary = lazy(
 const SavedDocuments = lazy(
   () => import("./pages/User/SavedDocuments/SavedDocuments.jsx"),
 );
+const DocumentAppeals = lazy(
+  () => import("./pages/User/DocumentAppeals/DocumentAppeals.jsx"),
+);
 const Subscription = lazy(
   () => import("./pages/User/Subscription/Subscription.jsx"),
 );
@@ -402,6 +405,14 @@ export default function App() {
                       element={
                         <RequireAuth allowedRoles={["MODERATOR"]}>
                           <ModeratorDocuments />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/appeals"
+                      element={
+                        <RequireAuth allowedRoles={["USER"]}>
+                          <DocumentAppeals />
                         </RequireAuth>
                       }
                     />

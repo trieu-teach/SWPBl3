@@ -25,6 +25,7 @@ const USER_NAVIGATION = [
     path: "/documents/upload",
     icon: UploadFileOutlined,
   },
+  { label: "Khiếu nại", path: "/appeals", icon: GavelOutlined },
   { label: "Đã lưu", path: "/saved-documents", icon: BookmarkOutlined },
   { label: "Cộng đồng", path: "/community", icon: PeopleAltOutlined },
   {
