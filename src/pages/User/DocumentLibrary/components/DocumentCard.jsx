@@ -18,17 +18,22 @@ import {
   PublicOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
+import { Link } from "react-router-dom";
 import {
   AI_STATUS,
   displayFileType,
   formatBytes,
   formatDate,
+  getFileTypeColors,
+  getModerationStatus,
   normalizeTags,
 } from "../utils/document-formatters.js";
 
 export default function DocumentCard({ document, actionId, onOpen }) {
   const status = AI_STATUS[document.aiStatus] || AI_STATUS.PENDING;
   const tags = normalizeTags(document.tags);
+  const fileColors = getFileTypeColors(document);
+  const moderation = getModerationStatus(document);
 
   return (
     <Card
@@ -48,14 +53,20 @@ export default function DocumentCard({ document, actionId, onOpen }) {
             display: "grid",
             placeItems: "center",
             borderRadius: 2,
-            bgcolor: "action.hover",
-            color: "primary.main",
+            bgcolor: fileColors.soft,
+            color: fileColors.main,
           }}
         >
           <DescriptionOutlined />
         </Box>
         <Tooltip
-          title={document.visibility === "PUBLIC" ? "Công khai" : "Riêng tư"}
+          title={
+            document.visibility === "PUBLIC"
+              ? moderation
+                ? `Công khai · ${moderation.label}`
+                : "Công khai"
+              : "Riêng tư"
+          }
         >
           <Box
             color="text.secondary"
@@ -80,14 +91,26 @@ export default function DocumentCard({ document, actionId, onOpen }) {
         <Typography variant="body2" color="text.secondary" noWrap>
           {document.fileName}
         </Typography>
-        <Stack direction="row" spacing={1} sx={{ my: 2 }}>
-          <Chip size="small" label={displayFileType(document)} />
+        <Stack direction="row" gap={0.75} flexWrap="wrap" sx={{ my: 2 }}>
+          <Chip
+            size="small"
+            label={displayFileType(document)}
+            sx={{ bgcolor: fileColors.soft, color: fileColors.main, fontWeight: 700 }}
+          />
           <Chip
             size="small"
             label={status.label}
             color={status.color}
             variant="outlined"
           />
+          {moderation && (
+            <Chip
+              size="small"
+              label={moderation.label}
+              color={moderation.color}
+              variant="outlined"
+            />
+          )}
         </Stack>
         <Typography variant="body2" color="text.secondary" noWrap>
           {document.subject?.name || "Chưa phân môn"} ·{" "}
@@ -112,6 +135,9 @@ export default function DocumentCard({ document, actionId, onOpen }) {
       <CardActions
         sx={{ px: 2, pb: 2, borderTop: "1px solid", borderColor: "divider" }}
       >
+        <Button component={Link} to={`/documents/${document.id}`} size="small">
+          Chi tiết
+        </Button>
         <Button
           size="small"
           startIcon={

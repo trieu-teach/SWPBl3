@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import {
+  createCategory,
+  createSubject,
+  deleteCategory,
+  deleteSubject,
   getCategories,
   getSubjects,
   uploadDocument,
@@ -8,6 +12,7 @@ import {
   getTitleFromFileName,
   validateFile,
 } from "../utils/upload-validation.js";
+import { useToast } from "../../../../components/Toast/ToastProvider.jsx";
 
 const INITIAL_FORM = {
   title: "",
@@ -18,6 +23,7 @@ const INITIAL_FORM = {
 };
 
 export default function useDocumentUpload() {
+  const toast = useToast();
   const [subjects, setSubjects] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
@@ -31,6 +37,13 @@ export default function useDocumentUpload() {
   const [progress, setProgress] = useState(0);
   const [submitError, setSubmitError] = useState("");
   const [result, setResult] = useState(null);
+  const [acceptedUploadTerms, setAcceptedUploadTerms] = useState(false);
+  const [taxonomyDialog, setTaxonomyDialog] = useState(null);
+  const [creatingTaxonomy, setCreatingTaxonomy] = useState(false);
+  const [taxonomyError, setTaxonomyError] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deletingTaxonomy, setDeletingTaxonomy] = useState(false);
+  const [deleteTaxonomyError, setDeleteTaxonomyError] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -70,6 +83,93 @@ export default function useDocumentUpload() {
     }));
   }
 
+  function openTaxonomyDialog(type) {
+    setTaxonomyError("");
+    setTaxonomyDialog(type);
+  }
+
+  function closeTaxonomyDialog() {
+    if (creatingTaxonomy) return;
+    setTaxonomyDialog(null);
+    setTaxonomyError("");
+  }
+
+  async function submitTaxonomy(payload) {
+    setCreatingTaxonomy(true);
+    setTaxonomyError("");
+    try {
+      if (taxonomyDialog === "subject") {
+        const subject = await createSubject(payload);
+        setSubjects((current) => [
+          ...current.filter((item) => item.id !== subject.id),
+          subject,
+        ]);
+        updateField("subjectId", subject.id);
+        toast.success("Đã tạo và chọn môn học mới.");
+      } else {
+        const category = await createCategory({
+          ...payload,
+          subjectId: form.subjectId,
+        });
+        setCategories((current) => [
+          ...current.filter((item) => item.id !== category.id),
+          category,
+        ]);
+        updateField("categoryId", category.id);
+        toast.success("Đã tạo và chọn danh mục mới.");
+      }
+      setTaxonomyDialog(null);
+    } catch (error) {
+      setTaxonomyError(error.message || "Không thể tạo dữ liệu mới.");
+    } finally {
+      setCreatingTaxonomy(false);
+    }
+  }
+
+  function openDeleteDialog(type, item) {
+    setDeleteTaxonomyError(null);
+    setDeleteTarget({ type, item });
+  }
+
+  function closeDeleteDialog() {
+    if (deletingTaxonomy) return;
+    setDeleteTarget(null);
+    setDeleteTaxonomyError(null);
+  }
+
+  async function confirmDeleteTaxonomy() {
+    if (!deleteTarget) return;
+    setDeletingTaxonomy(true);
+    setDeleteTaxonomyError(null);
+    try {
+      if (deleteTarget.type === "subject") {
+        await deleteSubject(deleteTarget.item.id);
+        setSubjects((current) =>
+          current.filter((item) => item.id !== deleteTarget.item.id),
+        );
+        if (form.subjectId === deleteTarget.item.id) {
+          updateField("subjectId", "");
+        }
+      } else {
+        await deleteCategory(deleteTarget.item.id);
+        setCategories((current) =>
+          current.filter((item) => item.id !== deleteTarget.item.id),
+        );
+        if (form.categoryId === deleteTarget.item.id) {
+          updateField("categoryId", "");
+        }
+      }
+      toast.success(
+        `Đã xóa ${deleteTarget.type === "subject" ? "môn học" : "danh mục"}.`,
+      );
+      setDeleteTarget(null);
+    } catch (error) {
+      setDeleteTaxonomyError(error);
+    } finally {
+      setDeletingTaxonomy(false);
+    }
+  }
+
   function selectFile(nextFile) {
     const error = validateFile(nextFile);
     setFileError(error);
@@ -105,6 +205,12 @@ export default function useDocumentUpload() {
       setSubmitError("Vui lòng nhập tiêu đề, chọn môn học và danh mục.");
       return;
     }
+    if (!acceptedUploadTerms) {
+      const message = "Bạn cần xác nhận quyền tải lên tài liệu này.";
+      setSubmitError(message);
+      toast.warning(message);
+      return;
+    }
     setSubmitting(true);
     setSubmitError("");
     setProgress(0);
@@ -115,8 +221,11 @@ export default function useDocumentUpload() {
       );
       setProgress(100);
       setResult(document);
+      toast.success("Tải tài liệu thành công. Hệ thống đang xử lý nội dung.");
     } catch (uploadError) {
-      setSubmitError(uploadError.message || "Không thể tải tài liệu lên.");
+      const message = uploadError.message || "Không thể tải tài liệu lên.";
+      setSubmitError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -131,6 +240,7 @@ export default function useDocumentUpload() {
     setProgress(0);
     setSubmitError("");
     setResult(null);
+    setAcceptedUploadTerms(false);
   }
 
   return {
@@ -147,12 +257,26 @@ export default function useDocumentUpload() {
     progress,
     submitError,
     result,
+    acceptedUploadTerms,
+    taxonomyDialog,
+    creatingTaxonomy,
+    taxonomyError,
+    deleteTarget,
+    deletingTaxonomy,
+    deleteTaxonomyError,
     updateField,
     selectFile,
     removeFile,
     setTagInput,
     addTag,
     removeTag,
+    setAcceptedUploadTerms,
+    openTaxonomyDialog,
+    closeTaxonomyDialog,
+    submitTaxonomy,
+    openDeleteDialog,
+    closeDeleteDialog,
+    confirmDeleteTaxonomy,
     submit,
     reset,
   };

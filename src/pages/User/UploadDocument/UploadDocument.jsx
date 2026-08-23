@@ -2,6 +2,7 @@ import { Alert, Box, Stack } from "@mui/material";
 import UserLayout from "../Layout/UserLayout.jsx";
 import DocumentMetadataForm from "./components/DocumentMetadataForm.jsx";
 import FileDropzone from "./components/FileDropzone.jsx";
+import FilePreview from "./components/FilePreview.jsx";
 import UploadHeader from "./components/UploadHeader.jsx";
 import UploadSuccess from "./components/UploadSuccess.jsx";
 import UploadSummary from "./components/UploadSummary.jsx";
@@ -46,6 +47,7 @@ export default function UploadDocument() {
             onSelect={upload.selectFile}
             onRemove={upload.removeFile}
           />
+          <FilePreview file={upload.file} />
           <DocumentMetadataForm upload={upload} />
         </Stack>
         <UploadSummary upload={upload} />

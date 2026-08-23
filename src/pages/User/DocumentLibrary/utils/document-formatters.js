@@ -6,6 +6,17 @@ export const AI_STATUS = {
   MOCKED: { label: "Dữ liệu mẫu", color: "default" },
 };
 
+export const MODERATION_STATUS = {
+  PENDING: { label: "Chờ duyệt", color: "warning" },
+  APPROVED: { label: "Đã duyệt", color: "success" },
+  REJECTED: { label: "Bị từ chối", color: "error" },
+};
+
+export function getModerationStatus(document) {
+  if (document?.visibility !== "PUBLIC") return null;
+  return MODERATION_STATUS[document.moderationStatus] || null;
+}
+
 export function formatBytes(bytes) {
   const value = Number(bytes || 0);
   if (value < 1024 * 1024) {
@@ -25,6 +36,18 @@ export function formatDate(value) {
 
 export function displayFileType(document) {
   return document.fileName?.split(".").pop()?.toUpperCase() || "FILE";
+}
+
+export function getFileTypeColors(document) {
+  const extension = displayFileType(document).toLowerCase();
+  if (extension === "pdf") return { main: "#dc2626", soft: "rgba(220,38,38,.12)" };
+  if (["doc", "docx"].includes(extension))
+    return { main: "#2563eb", soft: "rgba(37,99,235,.12)" };
+  if (["xls", "xlsx"].includes(extension))
+    return { main: "#16803c", soft: "rgba(22,128,60,.12)" };
+  if (["ppt", "pptx"].includes(extension))
+    return { main: "#ea580c", soft: "rgba(234,88,12,.12)" };
+  return { main: "#64748b", soft: "rgba(100,116,139,.12)" };
 }
 
 export function normalizeTags(tags) {

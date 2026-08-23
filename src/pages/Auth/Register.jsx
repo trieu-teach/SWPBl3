@@ -27,6 +27,8 @@ import {
 import { useAuth } from "../../features/auth/AuthProvider.jsx";
 import { getAuthenticatedHomeRoute } from "../../lib/routes";
 import { firebaseErrorMessage } from "../../lib/authService";
+import Logo from "../../components/Logo/Logo.jsx";
+import Header from "../../components/Header/Header.jsx";
 import "./Login.css";
 import "./Register.css";
 
@@ -93,7 +95,9 @@ export default function Register() {
       });
       setSuccess({ email: result?.email || email });
     } catch (err) {
-      setError(firebaseErrorMessage(err, "Đăng ký thất bại. Vui lòng thử lại."));
+      setError(
+        firebaseErrorMessage(err, "Đăng ký thất bại. Vui lòng thử lại."),
+      );
     } finally {
       setLoading(false);
     }
@@ -110,7 +114,7 @@ export default function Register() {
       const refreshed = await refreshUser();
       navigate(
         getAuthenticatedHomeRoute(refreshed?.role || data?.role || "USER"),
-        { replace: true }
+        { replace: true },
       );
     } catch (err) {
       setError(firebaseErrorMessage(err, "Đăng ký Google thất bại."));
@@ -121,49 +125,31 @@ export default function Register() {
 
   return (
     <Box className="bx-auth">
-      {/* ── HEADER ── */}
-      <Box component="header" className="bx-header">
-        <Link to="/" className="bx-header-logo">
-          <Box className="bx-header-logo-icon">D</Box>
-          <Typography className="bx-header-logo-text">DocuMind</Typography>
-        </Link>
-
-        <Box component="nav" className="bx-header-nav">
-          <Link to="/" className="bx-header-nav-item">Trang chủ</Link>
-          <Link to="/#features" className="bx-header-nav-item">Tính năng</Link>
-          <Link to="/#pricing" className="bx-header-nav-item">Bảng giá</Link>
-        </Box>
-
-        <Box className="bx-header-actions">
-          <Button component={Link} to="/login" className="bx-header-login-btn">
-            Đăng nhập
-          </Button>
-        </Box>
-      </Box>
+      <Header />
 
       <Box className="bx-layout">
         {/* LEFT — Branding */}
         <Box className="bx-panel-left">
           <Box className="bx-panel-dots" aria-hidden />
           <Box className="bx-panel-content">
-            <Box className="bx-panel-logo">
-              <Box className="bx-panel-logo-icon">D</Box>
-              <Typography className="bx-panel-logo-text">DocuMind</Typography>
-            </Box>
+            <Logo size={48} variant="authPanel" />
 
             <Typography variant="h3" className="bx-panel-heading">
-              Bắt đầu miễn phí,{" "}
-              <em>không giới hạn.</em>
+              Bắt đầu miễn phí, <em>không giới hạn.</em>
             </Typography>
 
             <Typography className="bx-panel-desc">
-              Tạo tài khoản trong 30 giây và bắt đầu hỏi AI trên tài liệu của bạn — không cần thẻ tín dụng.
+              Tạo tài khoản trong 30 giây và bắt đầu hỏi AI trên tài liệu của
+              bạn — không cần thẻ tín dụng.
             </Typography>
 
             <Box component="ul" className="bx-features">
               {BRAND_FEATURES.map((f, i) => (
                 <Box component="li" className="bx-feature-item" key={i}>
-                  <Box className="bx-feature-icon" sx={{ background: f.bg, color: f.color }}>
+                  <Box
+                    className="bx-feature-icon"
+                    sx={{ background: f.bg, color: f.color }}
+                  >
                     {f.icon}
                   </Box>
                   <Typography className="bx-feature-text">{f.text}</Typography>
@@ -184,7 +170,11 @@ export default function Register() {
             {success ? (
               <Box className="bx-verify-banner">
                 <CheckCircle sx={{ fontSize: 48, color: "#34d399" }} />
-                <Typography variant="h5" className="bx-form-title" sx={{ mt: 2 }}>
+                <Typography
+                  variant="h5"
+                  className="bx-form-title"
+                  sx={{ mt: 2 }}
+                >
                   Kiểm tra email của bạn
                 </Typography>
                 <Typography className="bx-form-sub" sx={{ mt: 1, mb: 3 }}>
@@ -285,7 +275,11 @@ export default function Register() {
                               aria-label="Hiện/ẩn mật khẩu"
                               className="bx-input-action"
                             >
-                              {showPassword ? <VisibilityOff /> : <Visibility />}
+                              {showPassword ? (
+                                <VisibilityOff />
+                              ) : (
+                                <Visibility />
+                              )}
                             </IconButton>
                           </InputAdornment>
                         ),
@@ -304,15 +298,7 @@ export default function Register() {
                     }
                     label={
                       <Typography variant="body2" className="bx-terms-text">
-                        Tôi đồng ý với{" "}
-                        <Link to="/terms" className="bx-form-link">
-                          Điều khoản
-                        </Link>{" "}
-                        và{" "}
-                        <Link to="/privacy" className="bx-form-link">
-                          Chính sách bảo mật
-                        </Link>
-                        .
+                        Tôi đồng ý với Điều khoản và Chính sách bảo mật.
                       </Typography>
                     }
                   />
@@ -351,7 +337,10 @@ export default function Register() {
                     Đăng ký với Google
                   </Button>
 
-                  <Typography className="bx-form-sub" sx={{ textAlign: "center" }}>
+                  <Typography
+                    className="bx-form-sub"
+                    sx={{ textAlign: "center" }}
+                  >
                     Đã có tài khoản?{" "}
                     <Link to="/login" className="bx-form-link">
                       Đăng nhập

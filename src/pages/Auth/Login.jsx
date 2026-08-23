@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Box,
-  Stack,
   Typography,
   TextField,
   Button,
@@ -24,9 +23,11 @@ import {
   Person,
 } from "@mui/icons-material";
 import { useAuth } from "../../features/auth/AuthProvider.jsx";
+import { useToast } from "../../components/Toast/ToastProvider.jsx";
 import { getAuthenticatedHomeRoute } from "../../lib/routes";
-import { useColorMode } from "../../App.jsx";
 import { firebaseErrorMessage } from "../../lib/authService";
+import Logo from "../../components/Logo/Logo.jsx";
+import Header from "../../components/Header/Header.jsx";
 import "./Login.css";
 
 const BRAND_FEATURES = [
@@ -52,9 +53,9 @@ const BRAND_FEATURES = [
 
 export default function Login() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [searchParams] = useSearchParams();
   const { signIn, signInGoogle, refreshUser } = useAuth();
-  const { mode, toggle } = useColorMode();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -66,7 +67,9 @@ export default function Login() {
     e.preventDefault();
     setError("");
     if (!email || !password) {
-      setError("Vui lòng nhập email và mật khẩu.");
+      const message = "Vui lòng nhập email và mật khẩu.";
+      setError(message);
+      toast.warning(message);
       return;
     }
     setLoading(true);
@@ -74,12 +77,19 @@ export default function Login() {
       const data = await signIn({ email, password });
       const refreshed = await refreshUser();
       const from = searchParams.get("from");
+      toast.success("Đăng nhập thành công.");
       navigate(
-        from || getAuthenticatedHomeRoute(refreshed?.role || data?.role || "USER"),
-        { replace: true }
+        from ||
+          getAuthenticatedHomeRoute(refreshed?.role || data?.role || "USER"),
+        { replace: true },
       );
     } catch (err) {
-      setError(firebaseErrorMessage(err, "Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu."));
+      const message = firebaseErrorMessage(
+        err,
+        "Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.",
+      );
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -92,12 +102,16 @@ export default function Login() {
       const data = await signInGoogle({});
       const refreshed = await refreshUser();
       const from = searchParams.get("from");
+      toast.success("Đăng nhập bằng Google thành công.");
       navigate(
-        from || getAuthenticatedHomeRoute(refreshed?.role || data?.role || "USER"),
-        { replace: true }
+        from ||
+          getAuthenticatedHomeRoute(refreshed?.role || data?.role || "USER"),
+        { replace: true },
       );
     } catch (err) {
-      setError(firebaseErrorMessage(err, "Đăng nhập Google thất bại."));
+      const message = firebaseErrorMessage(err, "Đăng nhập Google thất bại.");
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -105,36 +119,16 @@ export default function Login() {
 
   return (
     <Box className="bx-auth">
-      <Box component="header" className="bx-header">
-        <Link to="/" className="bx-header-logo">
-          <Box className="bx-header-logo-icon">D</Box>
-          <Typography className="bx-header-logo-text">DocuMind</Typography>
-        </Link>
-
-        <Box component="nav" className="bx-header-nav">
-          <Link to="/" className="bx-header-nav-item">Trang chủ</Link>
-          <Link to="/#features" className="bx-header-nav-item">Tính năng</Link>
-          <Link to="/#pricing" className="bx-header-nav-item">Bảng giá</Link>
-        </Box>
-
-        <Box className="bx-header-actions">
-          <Button
-            component={Link}
-            to="/register"
-            className="bx-header-register-btn"
-          >
-            Đăng ký
-          </Button>
-        </Box>
-      </Box>
+      <Header />
 
       <Box className="bx-layout">
         <Box className="bx-panel-left">
           <Box className="bx-panel-dots" aria-hidden />
           <Box className="bx-panel-content">
+            <Logo size={48} variant="authPanel" />
+
             <Typography variant="h3" className="bx-panel-heading">
-              Tài liệu thông minh,{" "}
-              <em>trả lời tức thì.</em>
+              Tài liệu thông minh, <em>trả lời tức thì.</em>
             </Typography>
 
             <Typography className="bx-panel-desc">
