@@ -16,3 +16,11 @@ export function createChatRequestId() {
   const hex = [...bytes].map((value) => value.toString(16).padStart(2, "0"));
   return `${hex.slice(0, 4).join("")}-${hex.slice(4, 6).join("")}-${hex.slice(6, 8).join("")}-${hex.slice(8, 10).join("")}-${hex.slice(10).join("")}`;
 }
+
+export function resolveChatRequestId(requestId) {
+  if (typeof requestId === "string" && requestId.trim()) {
+    return requestId.trim();
+  }
+
+  return createChatRequestId();
+}

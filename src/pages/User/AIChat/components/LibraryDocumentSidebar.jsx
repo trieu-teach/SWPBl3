@@ -28,6 +28,10 @@ import {
   UploadFileOutlined,
 } from "@mui/icons-material";
 import { Link } from "react-router-dom";
+import {
+  LIBRARY_DOCUMENT_LIMIT_MESSAGE,
+  MAX_LIBRARY_DOCUMENTS,
+} from "../../../../api/chat.constants.js";
 import { filterLibraryDocumentsBySubjects } from "../chatContext.js";
 
 const SIDEBAR_WIDTH = 328;
@@ -51,11 +55,14 @@ function DocumentRow({
   selected,
   onToggle,
   selectionLocked,
+  selectionLimitReached,
   onPreviewDocument,
 }) {
   const selectable = isSelectable(document);
   const selectionDisabled =
-    selectionLocked || (!selectable && !selected);
+    selectionLocked ||
+    (!selectable && !selected) ||
+    (selectionLimitReached && !selected);
   const extension =
     document.fileName?.split(".").pop()?.toUpperCase() ||
     document.fileType?.split("/").pop()?.toUpperCase() ||
@@ -151,6 +158,7 @@ function DocumentSection({
   selectedIds,
   onToggle,
   selectionLocked,
+  selectionLimitReached,
   onPreviewDocument,
 }) {
   return (
@@ -197,6 +205,7 @@ function DocumentSection({
               selected={selectedIds.has(document.id)}
               onToggle={onToggle}
               selectionLocked={selectionLocked}
+              selectionLimitReached={selectionLimitReached}
               onPreviewDocument={onPreviewDocument}
             />
           ))}
@@ -236,8 +245,11 @@ function SidebarContent({
   onPreviewDocument,
 }) {
   const selectedIds = new Set(
-    selectedDocuments.map((document) => document.id),
+    Array.isArray(scope?.documentIds)
+      ? scope.documentIds
+      : selectedDocuments.map((document) => document.id),
   );
+  const selectionLimitReached = selectedIds.size >= MAX_LIBRARY_DOCUMENTS;
   const subjectOptions = library.subjects;
   const selectedSubjectsSet = new Set(selectedSubjectIds);
   const subjectDocumentCounts = new Map();
@@ -417,6 +429,14 @@ function SidebarContent({
         </Box>
       )}
 
+      {!selectionLocked && selectionLimitReached && (
+        <Box sx={{ px: 2, pb: 1.1 }}>
+          <Alert severity="info" sx={{ py: 0, fontSize: "0.72rem" }}>
+            {LIBRARY_DOCUMENT_LIMIT_MESSAGE}
+          </Alert>
+        </Box>
+      )}
+
       <Divider />
 
       <Box
@@ -440,6 +460,7 @@ function SidebarContent({
           selectedIds={selectedIds}
           onToggle={onToggleDocument}
           selectionLocked={selectionLocked}
+          selectionLimitReached={selectionLimitReached}
           onPreviewDocument={onPreviewDocument}
         />
       </Box>

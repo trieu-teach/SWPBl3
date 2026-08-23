@@ -10,6 +10,8 @@
  * No React dependency — importable from hooks, services, and components.
  */
 
+import { MAX_LIBRARY_DOCUMENTS } from "../../../api/chat.constants.js";
+
 // ── Mode constants ─────────────────────────────────────────────────────────────
 
 /** @type {"ASK_THIS_DOCUMENT"} */
@@ -170,6 +172,13 @@ export function toggleLibraryDocumentScope(context, document, shouldSelect) {
     : [];
   const selected = currentIds.includes(documentId);
   const nextSelected = shouldSelect ?? !selected;
+  if (
+    nextSelected &&
+    !selected &&
+    currentIds.length >= MAX_LIBRARY_DOCUMENTS
+  ) {
+    return context;
+  }
   const nextIds = nextSelected
     ? [...new Set([...currentIds, documentId])]
     : currentIds.filter((id) => id !== documentId);

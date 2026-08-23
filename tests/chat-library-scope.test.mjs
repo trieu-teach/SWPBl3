@@ -7,6 +7,7 @@ import {
   setLibrarySubjectScopes,
   toggleLibraryDocumentScope,
 } from "../src/pages/User/AIChat/chatContext.js";
+import { MAX_LIBRARY_DOCUMENTS } from "../src/api/chat.constants.js";
 
 test("selecting a document replaces the multi-subject AI scope", () => {
   const subjectContext = setLibrarySubjectScopes([
@@ -45,6 +46,24 @@ test("explicit documents take precedence over subject filters", () => {
 
   assert.equal(context.libraryFilters.subjectIds, undefined);
   assert.deepEqual(context.libraryFilters.documentIds, ["document-1"]);
+});
+
+test("does not allow selecting a sixth explicit document", () => {
+  let context = createLibraryContext(null);
+  for (let index = 0; index < MAX_LIBRARY_DOCUMENTS; index += 1) {
+    context = toggleLibraryDocumentScope(context, {
+      id: `document-${index + 1}`,
+      title: `Document ${index + 1}`,
+    });
+  }
+
+  const unchanged = toggleLibraryDocumentScope(context, {
+    id: "document-6",
+    title: "Document 6",
+  });
+
+  assert.equal(unchanged, context);
+  assert.equal(unchanged.libraryFilters.documentIds.length, MAX_LIBRARY_DOCUMENTS);
 });
 
 test("filters the sidebar documents by every selected subject", () => {
