@@ -7,11 +7,25 @@ import {
   mapHistoryMessage,
 } from "../../../../api/chat.api.js";
 import { getChatErrorPresentation } from "../../../../api/chat.errors.js";
-import { createChatRequestId } from "../../../../api/chat.request-id.js";
 import {
   askDocumentStream,
   askLibraryStream,
 } from "../../../../api/chat.stream.js";
+import {
+  applyChatProgressEvent,
+  CANCELLED_CONTENT,
+  cloneContextSnapshot,
+  completeAssistantMessage,
+  createConversationScope,
+  createMessage,
+  createRequestSnapshot,
+  formatTime,
+  normalizeId,
+  parseChatDoneEvent,
+  PENDING_CONTENT,
+  prependUniqueMessages,
+  validateChatProgressEvent,
+} from "../chatConversation.model.js";
 import {
   CHAT_MODE_DOCUMENT,
   CHAT_MODE_LIBRARY,
@@ -19,139 +33,8 @@ import {
 } from "../chatContext.js";
 
 const HISTORY_PAGE_LIMIT = 50;
-const PENDING_CONTENT = "Đang suy nghĩ...";
-const CANCELLED_CONTENT = "Phản hồi đã dừng.";
 const FALLBACK_SEND_ERROR =
   "Đã xảy ra lỗi khi tạo phản hồi. Tin nhắn của bạn vẫn được giữ lại.";
-const INVALID_DONE_ERROR =
-  "Phản hồi hoàn tất từ AI không hợp lệ. Vui lòng thử lại.";
-
-function normalizeId(value) {
-  if (typeof value !== "string") return null;
-  const normalized = value.trim();
-  return normalized || null;
-}
-
-function snapshotLibraryFilters(filters) {
-  if (filters === null || filters === undefined) return null;
-  if (typeof filters !== "object" || Array.isArray(filters)) return null;
-
-  const snapshot = {};
-  if (typeof filters.subjectId === "string" && filters.subjectId.trim()) {
-    snapshot.subjectId = filters.subjectId;
-  }
-  if (Array.isArray(filters.subjectIds) && filters.subjectIds.length > 0) {
-    snapshot.subjectIds = [...filters.subjectIds];
-  }
-  if (typeof filters.categoryId === "string" && filters.categoryId.trim()) {
-    snapshot.categoryId = filters.categoryId;
-  }
-  if (typeof filters.fileType === "string" && filters.fileType.trim()) {
-    snapshot.fileType = filters.fileType;
-  }
-  if (Array.isArray(filters.documentIds) && filters.documentIds.length > 0) {
-    snapshot.documentIds = [...filters.documentIds];
-  }
-
-  return Object.keys(snapshot).length > 0 ? snapshot : null;
-}
-
-function createConversationScope(context, enabled) {
-  if (!enabled) return null;
-
-  if (context?.mode === CHAT_MODE_DOCUMENT) {
-    const documentId = normalizeId(context.documentId);
-    if (!documentId) return null;
-
-    const contextSnapshot = {
-      mode: CHAT_MODE_DOCUMENT,
-      documentId,
-    };
-    return {
-      key: JSON.stringify([CHAT_MODE_DOCUMENT, documentId]),
-      context: contextSnapshot,
-    };
-  }
-
-  if (context?.mode === CHAT_MODE_LIBRARY) {
-    if (
-      context.libraryFilters !== null &&
-      context.libraryFilters !== undefined &&
-      (typeof context.libraryFilters !== "object" ||
-        Array.isArray(context.libraryFilters))
-    ) {
-      return null;
-    }
-
-    const libraryFilters = snapshotLibraryFilters(context.libraryFilters);
-    const contextSnapshot = {
-      mode: CHAT_MODE_LIBRARY,
-      libraryFilters,
-    };
-    return {
-      key: JSON.stringify([CHAT_MODE_LIBRARY]),
-      context: contextSnapshot,
-    };
-  }
-
-  return null;
-}
-
-function cloneContextSnapshot(context) {
-  if (context.mode === CHAT_MODE_DOCUMENT) {
-    return { mode: CHAT_MODE_DOCUMENT, documentId: context.documentId };
-  }
-
-  return {
-    mode: CHAT_MODE_LIBRARY,
-    libraryFilters: snapshotLibraryFilters(context.libraryFilters),
-  };
-}
-
-function createRequestSnapshot(question, context, sessionId) {
-  return {
-    question,
-    context: cloneContextSnapshot(context),
-    sessionId: normalizeId(sessionId),
-    requestId: createChatRequestId(),
-  };
-}
-
-function createMessage({ role, content, status = "sent", retryOf = null }) {
-  return {
-    id: createId(),
-    role,
-    content,
-    status,
-    retryOf,
-    createdAt: formatTime(new Date()),
-  };
-}
-
-function createId() {
-  if (typeof crypto !== "undefined" && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  return `msg-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
-function formatTime(date) {
-  return date.toLocaleTimeString("vi-VN", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function prependUniqueMessages(olderMessages, currentMessages) {
-  const seenIds = new Set(currentMessages.map((message) => message.id));
-  const uniqueOlderMessages = olderMessages.filter((message) => {
-    if (seenIds.has(message.id)) return false;
-    seenIds.add(message.id);
-    return true;
-  });
-
-  return [...uniqueOlderMessages, ...currentMessages];
-}
 
 function notify(callback, ...args) {
   if (typeof callback !== "function") return;
@@ -474,94 +357,40 @@ export function useChatConversation({
         const { type, data } = event;
 
         if (type === "done") {
-          const confirmedSessionId = normalizeId(data?.sessionId);
-          const confirmedMessageId = normalizeId(data?.messageId);
-          if (
-            typeof data?.answer !== "string" ||
-            !confirmedSessionId ||
-            !confirmedMessageId ||
-            (knownSessionId && confirmedSessionId !== knownSessionId)
-          ) {
-            throw new Error(INVALID_DONE_ERROR);
-          }
+          const doneEvent = parseChatDoneEvent(data, knownSessionId);
 
           receivedDone = true;
           setMessages((current) =>
             current.map((message) =>
               message.id === targetMessageId
-                ? {
-                    ...message,
-                    content: receivedDelta ? message.content : data.answer,
-                    status: "complete",
-                    streamPhase: "COMPLETED",
-                    backendMessageId: confirmedMessageId,
-                    sessionId: confirmedSessionId,
-                    ...(Array.isArray(data.sources)
-                      ? { sources: data.sources }
-                      : {}),
-                    ...(Array.isArray(data.suggestedPrompts)
-                      ? { suggestedPrompts: data.suggestedPrompts }
-                      : {}),
-                    ...(typeof data.answerStatus === "string"
-                      ? { answerStatus: data.answerStatus }
-                      : {}),
-                    createdAt: formatTime(new Date()),
-                  }
+                ? completeAssistantMessage(message, doneEvent, {
+                    receivedDelta,
+                  })
                 : message,
             ),
           );
 
           notify(onConversationCompletedRef.current, {
-            sessionId: confirmedSessionId,
-            messageId: confirmedMessageId,
-            answerStatus: data.answerStatus,
-            usage: data.usage ?? null,
+            sessionId: doneEvent.sessionId,
+            messageId: doneEvent.messageId,
+            answerStatus: doneEvent.answerStatus,
+            usage: doneEvent.usage,
             isNewSession: createdNewSession,
             context: cloneContextSnapshot(contextSnapshot),
           });
           continue;
         }
 
-        if (type === "sources" && !Array.isArray(data)) {
-          throw new Error("Danh sách nguồn từ AI không hợp lệ.");
-        }
-        if (type === "delta" && typeof data?.text !== "string") {
-          throw new Error("Dữ liệu phản hồi AI không hợp lệ.");
-        }
+        const progressEvent = validateChatProgressEvent(type, data);
         if (type === "delta") receivedDelta = true;
 
-        setMessages((current) => {
-          const message = current.find((item) => item.id === targetMessageId);
-          if (!message) return current;
-
-          const nextMessage = { ...message };
-          if (type === "status") {
-            nextMessage.status = "streaming";
-            nextMessage.streamPhase = data.phase;
-            if (
-              data.phase === "generating" &&
-              nextMessage.content === PENDING_CONTENT
-            ) {
-              nextMessage.content = "";
-            }
-          } else if (type === "sources") {
-            nextMessage.status = "streaming";
-            nextMessage.sources = data;
-            if (nextMessage.content === PENDING_CONTENT) {
-              nextMessage.content = "";
-            }
-          } else if (type === "delta") {
-            nextMessage.status = "streaming";
-            if (nextMessage.content === PENDING_CONTENT) {
-              nextMessage.content = "";
-            }
-            nextMessage.content += data.text;
-          }
-
-          return current.map((item) =>
-            item.id === targetMessageId ? nextMessage : item,
-          );
-        });
+        setMessages((current) =>
+          current.map((message) =>
+            message.id === targetMessageId
+              ? applyChatProgressEvent(message, progressEvent)
+              : message,
+          ),
+        );
       }
 
       if (!isValidStreamRequest() || requestController.signal.aborted) {
