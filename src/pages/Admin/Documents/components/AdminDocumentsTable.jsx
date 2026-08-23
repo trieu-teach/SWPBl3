@@ -8,7 +8,6 @@ import {
   IconButton,
   Pagination,
   Skeleton,
-  Stack,
   Table,
   TableBody,
   TableCell,
@@ -24,54 +23,11 @@ import {
   RefreshOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
-import {
-  getDocumentModerationFlagPresentation,
-  getDocumentModerationStatusPresentation,
-  isQueuedDocumentModerationStatus,
-} from "../../../../lib/moderation.js";
 
 function formatSubmittedAt(value) {
   if (!value) return "—";
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString("vi-VN");
-}
-
-function ModerationSummary({ document }) {
-  const status = getDocumentModerationStatusPresentation(
-    document.moderationStatus,
-  );
-  const flag = getDocumentModerationFlagPresentation(document.moderationFlag);
-  const matchedKeywords = Array.isArray(document.matchedKeywords)
-    ? document.matchedKeywords.filter(Boolean)
-    : [];
-
-  return (
-    <Stack spacing={0.75} alignItems="flex-start">
-      <Chip
-        size="small"
-        label={status.label}
-        color={status.color}
-        variant="outlined"
-      />
-      {document.moderationFlag && (
-        <Chip
-          size="small"
-          label={`Máy quét: ${flag.label}`}
-          color={flag.color}
-          variant="outlined"
-        />
-      )}
-      {matchedKeywords.length > 0 && (
-        <Typography
-          variant="caption"
-          color="error.main"
-          sx={{ maxWidth: 240, overflowWrap: "anywhere" }}
-        >
-          Từ khóa: {matchedKeywords.join(", ")}
-        </Typography>
-      )}
-    </Stack>
-  );
 }
 
 export default function AdminDocumentsTable({ admin }) {
@@ -200,7 +156,24 @@ export default function AdminDocumentsTable({ admin }) {
                       />
                     </TableCell>
                     <TableCell>
-                      <ModerationSummary document={document} />
+                      <Chip
+                        size="small"
+                        label={
+                          document.moderationStatus === "APPROVED"
+                            ? "Đã duyệt"
+                            : document.moderationStatus === "REJECTED"
+                              ? "Từ chối"
+                              : "Chờ duyệt"
+                        }
+                        color={
+                          document.moderationStatus === "APPROVED"
+                            ? "success"
+                            : document.moderationStatus === "REJECTED"
+                              ? "error"
+                              : "warning"
+                        }
+                        variant="outlined"
+                      />
                     </TableCell>
                     <TableCell>
                       <Chip
@@ -221,9 +194,7 @@ export default function AdminDocumentsTable({ admin }) {
                       </Tooltip>
                       <Tooltip
                         title={
-                          isQueuedDocumentModerationStatus(
-                            document.moderationStatus,
-                          )
+                          document.moderationStatus === "PENDING"
                             ? "Chi tiết và kiểm duyệt"
                             : "Xem chi tiết"
                         }

@@ -8,7 +8,6 @@ import HistoryOutlined from "@mui/icons-material/HistoryOutlined";
 import LocalOfferOutlined from "@mui/icons-material/LocalOfferOutlined";
 import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
 import ReportProblemOutlined from "@mui/icons-material/ReportProblemOutlined";
-import RateReviewOutlined from "@mui/icons-material/RateReviewOutlined";
 import ShoppingCartOutlined from "@mui/icons-material/ShoppingCartOutlined";
 import SmartToyOutlined from "@mui/icons-material/SmartToyOutlined";
 import UploadFileOutlined from "@mui/icons-material/UploadFileOutlined";
@@ -67,11 +66,6 @@ const ADMIN_NAVIGATION = [
     icon: DownloadOutlined,
   },
   { label: "Báo cáo", path: "/admin/reports", icon: AssessmentOutlined },
-  {
-    label: "Khiếu nại kiểm duyệt",
-    path: "/moderator/appeals",
-    icon: RateReviewOutlined,
-  },
 ];
 
 const MODERATOR_NAVIGATION = [
@@ -79,11 +73,6 @@ const MODERATOR_NAVIGATION = [
     label: "Báo cáo vi phạm",
     path: "/moderator/reports",
     icon: ReportProblemOutlined,
-  },
-  {
-    label: "Khiếu nại",
-    path: "/moderator/appeals",
-    icon: RateReviewOutlined,
   },
 ];
 

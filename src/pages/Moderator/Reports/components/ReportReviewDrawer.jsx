@@ -13,7 +13,6 @@ import {
 import CloseOutlined from "@mui/icons-material/CloseOutlined";
 import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
 import {
-  canUnhideModeratedDocument,
   formatModerationDate,
   getReportReasonLabel,
   getReportStatusPresentation,
@@ -39,7 +38,7 @@ export default function ReportReviewDrawer({ moderation }) {
   const documentTitle = document?.title || report?.document?.title || "Tài liệu";
   const isPending = report?.status === "PENDING";
   const canHide = document?.status === "ACTIVE";
-  const canUnhide = canUnhideModeratedDocument(document);
+  const canUnhide = document?.status === "HIDDEN";
 
   function requestAction(type) {
     moderation.setAction({ type, documentTitle });

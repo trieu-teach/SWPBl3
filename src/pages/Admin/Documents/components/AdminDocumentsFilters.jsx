@@ -1,9 +1,5 @@
 import { Box, Button, Card, MenuItem, TextField } from "@mui/material";
 import { RefreshOutlined, SearchOutlined } from "@mui/icons-material";
-import {
-  DOCUMENT_MODERATION_FLAG,
-  DOCUMENT_MODERATION_STATUS,
-} from "../../../../lib/moderation.js";
 
 export default function AdminDocumentsFilters({ admin }) {
   return (
@@ -15,8 +11,7 @@ export default function AdminDocumentsFilters({ admin }) {
           display: "grid",
           gridTemplateColumns: {
             xs: "1fr",
-            md: "repeat(2,minmax(0,1fr))",
-            xl: "minmax(220px,1fr) repeat(6,minmax(130px,160px)) auto auto",
+            lg: "minmax(220px,1fr) repeat(4,160px) auto auto",
           },
           gap: 1.25,
         }}
@@ -50,44 +45,9 @@ export default function AdminDocumentsFilters({ admin }) {
           }
         >
           <MenuItem value="">Tất cả</MenuItem>
-          {Object.entries(DOCUMENT_MODERATION_STATUS).map(
-            ([value, presentation]) => (
-              <MenuItem key={value} value={value}>
-                {presentation.label}
-              </MenuItem>
-            ),
-          )}
-        </TextField>
-        <TextField
-          select
-          size="small"
-          label="Cờ máy quét"
-          value={admin.filters.moderationFlag}
-          onChange={(event) =>
-            admin.updateFilter("moderationFlag", event.target.value)
-          }
-        >
-          <MenuItem value="">Tất cả</MenuItem>
-          {Object.entries(DOCUMENT_MODERATION_FLAG).map(
-            ([value, presentation]) => (
-              <MenuItem key={value} value={value}>
-                {presentation.label}
-              </MenuItem>
-            ),
-          )}
-        </TextField>
-        <TextField
-          select
-          size="small"
-          label="Nhóm kiểm duyệt"
-          value={admin.filters.moderationBucket}
-          onChange={(event) =>
-            admin.updateFilter("moderationBucket", event.target.value)
-          }
-        >
-          <MenuItem value="">Tất cả</MenuItem>
-          <MenuItem value="NEEDS_ACTION">Cần xử lý</MenuItem>
-          <MenuItem value="REVIEWED">Đã xem xét</MenuItem>
+          <MenuItem value="PENDING">Chờ duyệt</MenuItem>
+          <MenuItem value="APPROVED">Đã duyệt</MenuItem>
+          <MenuItem value="REJECTED">Từ chối</MenuItem>
         </TextField>
         <TextField
           select
