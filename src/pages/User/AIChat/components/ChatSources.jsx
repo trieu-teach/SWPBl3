@@ -1,22 +1,54 @@
-import { Box, Button, Chip, Stack, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  IconButton,
+  Stack,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import ExpandMoreRounded from "@mui/icons-material/ExpandMoreRounded";
 import ExpandLessRounded from "@mui/icons-material/ExpandLessRounded";
+import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
 import { useState } from "react";
 
 const MAX_VISIBLE_SOURCES = 2;
 
-function SourceItem({ source, index, onSourceSelect }) {
+function SourceItem({ source, index, onSourceSelect, onPreviewDocument, loadingId }) {
   const isSelectable = typeof onSourceSelect === "function";
+  // citationId is the only document identifier available in the source object.
+  // It is used as the documentId for preview — if the API returns 404, the
+  // ToastProvider will surface the error without crashing the UI.
+  const previewableId = source.citationId || null;
+  const isPreviewLoading = loadingId === previewableId;
+
+  function handleKeyDown(event) {
+    if (!isSelectable) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onSourceSelect(source);
+    }
+  }
+
+  function handlePreviewClick(event) {
+    event.stopPropagation();
+    if (onPreviewDocument && previewableId) {
+      onPreviewDocument(previewableId, source.title);
+    }
+  }
 
   return (
     <Stack
-      component={isSelectable ? "button" : "div"}
-      type={isSelectable ? "button" : undefined}
+      // Always a div — avoids <button><button/></button> when adding the
+      // preview IconButton. Click / keyboard behaviour is restored below.
+      component="div"
+      role={isSelectable ? "button" : undefined}
+      tabIndex={isSelectable ? 0 : undefined}
       direction="row"
       spacing={1}
-      onClick={
-        isSelectable ? () => onSourceSelect(source) : undefined
-      }
+      onClick={isSelectable ? () => onSourceSelect(source) : undefined}
+      onKeyDown={handleKeyDown}
       sx={{
         alignItems: "flex-start",
         px: 1,
@@ -24,12 +56,9 @@ function SourceItem({ source, index, onSourceSelect }) {
         borderRadius: 1.5,
         bgcolor: "action.hover",
         border: 0,
+        cursor: isSelectable ? "pointer" : "default",
         ...(isSelectable && {
           width: "100%",
-          color: "inherit",
-          font: "inherit",
-          textAlign: "left",
-          cursor: "pointer",
           "&:hover": { bgcolor: "action.selected" },
           "&:focus-visible": {
             outline: "2px solid",
@@ -82,11 +111,43 @@ function SourceItem({ source, index, onSourceSelect }) {
           </Typography>
         )}
       </Box>
+
+      {/* Preview button — only rendered when a valid document ID exists */}
+      {previewableId && typeof onPreviewDocument === "function" && (
+        <Tooltip title="Xem trước tài liệu">
+          <span>
+            <IconButton
+              size="small"
+              onClick={handlePreviewClick}
+              disabled={isPreviewLoading}
+              aria-label={`Xem trước ${source.title || "tài liệu"}`}
+              sx={{
+                flexShrink: 0,
+                alignSelf: "center",
+                p: 0.5,
+                color: "text.secondary",
+                "&:hover": { color: "primary.main" },
+              }}
+            >
+              {isPreviewLoading ? (
+                <CircularProgress size={14} thickness={4} />
+              ) : (
+                <VisibilityOutlined sx={{ fontSize: 15 }} />
+              )}
+            </IconButton>
+          </span>
+        </Tooltip>
+      )}
     </Stack>
   );
 }
 
-export default function ChatSources({ sources = [], onSourceSelect }) {
+export default function ChatSources({
+  sources = [],
+  onSourceSelect,
+  onPreviewDocument,
+  loadingId,
+}) {
   const [expanded, setExpanded] = useState(false);
 
   if (!sources || sources.length === 0) return null;
@@ -129,6 +190,8 @@ export default function ChatSources({ sources = [], onSourceSelect }) {
             source={source}
             index={index}
             onSourceSelect={onSourceSelect}
+            onPreviewDocument={onPreviewDocument}
+            loadingId={loadingId}
           />
         ))}
       </Stack>

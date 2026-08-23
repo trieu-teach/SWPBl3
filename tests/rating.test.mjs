@@ -1,9 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {
-  rateChatMessage,
-  rateDocument,
-} from "../src/api/rating.api.js";
+import { rateChatMessage } from "../src/api/chat-ratings.api.js";
+import { rateDocument } from "../src/api/document-ratings.api.js";
 
 test("rateChatMessage validates messageId requirement", async () => {
   await assert.rejects(

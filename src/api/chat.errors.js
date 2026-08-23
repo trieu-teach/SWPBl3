@@ -19,6 +19,18 @@ const ERROR_PRESENTATIONS = {
     message: "Câu hỏi này đang được xử lý. Vui lòng chờ phản hồi.",
     retryable: false,
   },
+  BAD_REQUEST: {
+    message: "Câu hỏi chưa hợp lệ. Vui lòng kiểm tra lại nội dung.",
+    retryable: false,
+  },
+  CONFLICT: {
+    message: "Yêu cầu không phù hợp với trạng thái hiện tại.",
+    retryable: false,
+  },
+  STREAM_REQUEST_FAILED: {
+    message: "AI không thể hoàn tất yêu cầu. Vui lòng thử lại.",
+    retryable: true,
+  },
   NOT_FOUND: {
     message: "Không tìm thấy phiên chat hoặc tài liệu.",
     resetSession: true,
@@ -38,6 +50,17 @@ export function getChatErrorPresentation(error) {
       code: error.code,
       details: error.details,
       message: configured.message,
+    };
+  }
+
+  if (
+    error?.name === "TypeError" &&
+    /fetch|network|load failed/i.test(error?.message ?? "")
+  ) {
+    return {
+      message:
+        "Không thể kết nối tới AI Study Hub. Vui lòng kiểm tra mạng và thử lại.",
+      retryable: true,
     };
   }
 

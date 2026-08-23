@@ -28,6 +28,10 @@ import {
   UploadFileOutlined,
 } from "@mui/icons-material";
 import { Link } from "react-router-dom";
+import {
+  LIBRARY_DOCUMENT_LIMIT_MESSAGE,
+  MAX_LIBRARY_DOCUMENTS,
+} from "../../../../api/chat.constants.js";
 import { filterLibraryDocumentsBySubjects } from "../chatContext.js";
 
 const SIDEBAR_WIDTH = 328;
@@ -51,10 +55,14 @@ function DocumentRow({
   selected,
   onToggle,
   selectionLocked,
+  selectionLimitReached,
+  onPreviewDocument,
 }) {
   const selectable = isSelectable(document);
   const selectionDisabled =
-    selectionLocked || (!selectable && !selected);
+    selectionLocked ||
+    (!selectable && !selected) ||
+    (selectionLimitReached && !selected);
   const extension =
     document.fileName?.split(".").pop()?.toUpperCase() ||
     document.fileType?.split("/").pop()?.toUpperCase() ||
@@ -84,10 +92,7 @@ function DocumentRow({
         slotProps={{ input: { "aria-label": `Chọn ${document.title}` } }}
         sx={{ mt: 0.15, mr: 0.25, p: 0.75 }}
       />
-      <DescriptionOutlined
-        sx={{ mt: 0.85, mr: 0.9, fontSize: 18, color: "text.secondary" }}
-      />
-      <Box sx={{ minWidth: 0, flex: 1 }}>
+      <Box sx={{ minWidth: 0, flex: 1, mt: 0.45 }}>
         <Typography
           component="span"
           variant="body2"
@@ -130,6 +135,19 @@ function DocumentRow({
           />
         </Stack>
       </Box>
+      <IconButton
+        size="small"
+        onClick={() => onPreviewDocument?.(document.id, document.title)}
+        aria-label={`Xem trước ${document.title}`}
+        sx={{
+          mt: 0.4,
+          ml: 0.5,
+          color: "text.secondary",
+          "&:hover": { color: "primary.main" },
+        }}
+      >
+        <DescriptionOutlined sx={{ fontSize: 18 }} />
+      </IconButton>
     </ListItem>
   );
 }
@@ -140,6 +158,8 @@ function DocumentSection({
   selectedIds,
   onToggle,
   selectionLocked,
+  selectionLimitReached,
+  onPreviewDocument,
 }) {
   return (
     <Box component="section" sx={{ py: 0.75 }}>
@@ -185,6 +205,8 @@ function DocumentSection({
               selected={selectedIds.has(document.id)}
               onToggle={onToggle}
               selectionLocked={selectionLocked}
+              selectionLimitReached={selectionLimitReached}
+              onPreviewDocument={onPreviewDocument}
             />
           ))}
         </List>
@@ -220,10 +242,14 @@ function SidebarContent({
   onClose,
   showCloseButton,
   selectionLocked,
+  onPreviewDocument,
 }) {
   const selectedIds = new Set(
-    selectedDocuments.map((document) => document.id),
+    Array.isArray(scope?.documentIds)
+      ? scope.documentIds
+      : selectedDocuments.map((document) => document.id),
   );
+  const selectionLimitReached = selectedIds.size >= MAX_LIBRARY_DOCUMENTS;
   const subjectOptions = library.subjects;
   const selectedSubjectsSet = new Set(selectedSubjectIds);
   const subjectDocumentCounts = new Map();
@@ -403,6 +429,14 @@ function SidebarContent({
         </Box>
       )}
 
+      {!selectionLocked && selectionLimitReached && (
+        <Box sx={{ px: 2, pb: 1.1 }}>
+          <Alert severity="info" sx={{ py: 0, fontSize: "0.72rem" }}>
+            {LIBRARY_DOCUMENT_LIMIT_MESSAGE}
+          </Alert>
+        </Box>
+      )}
+
       <Divider />
 
       <Box
@@ -426,6 +460,8 @@ function SidebarContent({
           selectedIds={selectedIds}
           onToggle={onToggleDocument}
           selectionLocked={selectionLocked}
+          selectionLimitReached={selectionLimitReached}
+          onPreviewDocument={onPreviewDocument}
         />
       </Box>
 
@@ -457,6 +493,7 @@ export default function LibraryDocumentSidebar({
   mobileOpen = false,
   onMobileClose,
   selectionLocked = false,
+  onPreviewDocument,
 }) {
   const commonProps = {
     library,
@@ -467,6 +504,7 @@ export default function LibraryDocumentSidebar({
     onChangeSubjects,
     previewError,
     selectionLocked,
+    onPreviewDocument,
   };
 
   return (
