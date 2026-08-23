@@ -91,7 +91,13 @@ export default function DocumentCard({ document, actionId, onOpen }) {
         <Typography variant="body2" color="text.secondary" noWrap>
           {document.fileName}
         </Typography>
-        <Stack direction="row" gap={0.75} flexWrap="wrap" sx={{ my: 2 }}>
+        <Stack
+          direction="row"
+          gap={1}
+          rowGap={1}
+          flexWrap="wrap"
+          sx={{ my: 2 }}
+        >
           <Chip
             size="small"
             label={displayFileType(document)}
