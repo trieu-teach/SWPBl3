@@ -20,6 +20,7 @@ import {
   SmartToyOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
+import DocumentAppealForm from "./DocumentAppealForm.jsx";
 
 export default function DocumentActions({ details }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -99,9 +100,14 @@ export default function DocumentActions({ details }) {
           />
         </RadioGroup>
         <Typography variant="caption" color="text.secondary">
-          Tài liệu công khai sạch có thể được hệ thống đưa lên Cộng đồng tự
-          động; trường hợp cần xem xét sẽ được thông báo riêng.
+          Tài liệu công khai được hệ thống kiểm tra trước khi xuất hiện trong
+          cộng đồng.
         </Typography>
+        <DocumentAppealForm
+          document={document}
+          loading={details.appealing}
+          onSubmit={details.submitAppeal}
+        />
         <Divider sx={{ my: 3 }} />
         <Button
           fullWidth

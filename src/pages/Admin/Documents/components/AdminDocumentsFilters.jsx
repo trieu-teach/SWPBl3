@@ -1,9 +1,6 @@
 import { Box, Button, Card, MenuItem, TextField } from "@mui/material";
 import { RefreshOutlined, SearchOutlined } from "@mui/icons-material";
-import {
-  DOCUMENT_MODERATION_FLAG,
-  DOCUMENT_MODERATION_STATUS,
-} from "../../../../lib/moderation.js";
+import { ADMIN_MODERATION_STATUS } from "../utils/admin-document-status.js";
 
 export default function AdminDocumentsFilters({ admin }) {
   return (
@@ -15,8 +12,7 @@ export default function AdminDocumentsFilters({ admin }) {
           display: "grid",
           gridTemplateColumns: {
             xs: "1fr",
-            md: "repeat(2,minmax(0,1fr))",
-            xl: "minmax(220px,1fr) repeat(6,minmax(130px,160px)) auto auto",
+            lg: "minmax(220px,1fr) repeat(4,160px) auto auto",
           },
           gap: 1.25,
         }}
@@ -32,6 +28,7 @@ export default function AdminDocumentsFilters({ admin }) {
           size="small"
           label="Quyền riêng tư"
           value={admin.filters.visibility}
+          disabled={admin.reviewQueueOnly}
           onChange={(event) =>
             admin.updateFilter("visibility", event.target.value)
           }
@@ -45,60 +42,30 @@ export default function AdminDocumentsFilters({ admin }) {
           size="small"
           label="Kiểm duyệt"
           value={admin.filters.moderationStatus}
+          disabled={admin.reviewQueueOnly}
           onChange={(event) =>
             admin.updateFilter("moderationStatus", event.target.value)
           }
         >
           <MenuItem value="">Tất cả</MenuItem>
-          {Object.entries(DOCUMENT_MODERATION_STATUS).map(
-            ([value, presentation]) => (
-              <MenuItem key={value} value={value}>
-                {presentation.label}
-              </MenuItem>
-            ),
-          )}
-        </TextField>
-        <TextField
-          select
-          size="small"
-          label="Cờ máy quét"
-          value={admin.filters.moderationFlag}
-          onChange={(event) =>
-            admin.updateFilter("moderationFlag", event.target.value)
-          }
-        >
-          <MenuItem value="">Tất cả</MenuItem>
-          {Object.entries(DOCUMENT_MODERATION_FLAG).map(
-            ([value, presentation]) => (
-              <MenuItem key={value} value={value}>
-                {presentation.label}
-              </MenuItem>
-            ),
-          )}
-        </TextField>
-        <TextField
-          select
-          size="small"
-          label="Nhóm kiểm duyệt"
-          value={admin.filters.moderationBucket}
-          onChange={(event) =>
-            admin.updateFilter("moderationBucket", event.target.value)
-          }
-        >
-          <MenuItem value="">Tất cả</MenuItem>
-          <MenuItem value="NEEDS_ACTION">Cần xử lý</MenuItem>
-          <MenuItem value="REVIEWED">Đã xem xét</MenuItem>
+          {Object.entries(ADMIN_MODERATION_STATUS).map(([value, option]) => (
+            <MenuItem key={value} value={value}>
+              {option.label}
+            </MenuItem>
+          ))}
         </TextField>
         <TextField
           select
           size="small"
           label="Tài liệu"
           value={admin.filters.status}
+          disabled={admin.reviewQueueOnly}
           onChange={(event) => admin.updateFilter("status", event.target.value)}
         >
           <MenuItem value="">Tất cả</MenuItem>
           <MenuItem value="ACTIVE">Hoạt động</MenuItem>
           <MenuItem value="HIDDEN">Đã ẩn</MenuItem>
+          <MenuItem value="DELETED">Đã xóa</MenuItem>
         </TextField>
         <TextField
           select

@@ -1,52 +1,24 @@
 import {
-  Alert,
   Box,
   Button,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
-  Paper,
   Stack,
   Typography,
 } from "@mui/material";
 import {
-  canBanOwnerFromModerationReview,
-  canDecideDocumentModeration,
-  canHideModeratedDocument,
-  canUnhideModeratedDocument,
-  getDocumentModerationFlagPresentation,
-  getDocumentModerationStatusPresentation,
-  normalizeModerationKeyword,
-} from "../../../../lib/moderation.js";
-
-const CONTEXT_FIELD_LABELS = {
-  title: "Tiêu đề",
-  description: "Mô tả",
-  extractedText: "Nội dung tài liệu",
-};
-
-function formatDate(value, fallback = "—") {
-  if (!value) return fallback;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime())
-    ? fallback
-    : date.toLocaleString("vi-VN");
-}
-
-function getMatchedKeywordName(value) {
-  if (typeof value === "string") return value;
-  return value?.keyword || "";
-}
-
-function getOwnerRoleLabel(role) {
-  if (role === "ADMIN") return "Quản trị viên";
-  if (role === "MODERATOR") return "Kiểm duyệt viên";
-  return "Người dùng";
-}
+  canAdminDecide,
+  canAdminHide,
+  canAdminUnhide,
+  getAdminDocumentModeration,
+  getAdminDocumentStatus,
+} from "../utils/admin-document-status.js";
+import AdminKeywordMatchesPanel from "./AdminKeywordMatchesPanel.jsx";
+import AdminDocumentOwnerReviewPanel from "./AdminDocumentOwnerReviewPanel.jsx";
 
 function Field({ label, value }) {
   return (
@@ -60,43 +32,26 @@ function Field({ label, value }) {
 }
 export default function AdminDocumentDetailDialog({
   document,
-  acting,
-  claimed,
-  moderationKeywordIds,
   onClose,
   onPreview,
   onAction,
   onClaim,
-  onExceptKeyword,
-  onBanOwner,
+  claimed,
+  loading,
+  keywordCatalog,
+  onAddKeywordException,
+  onBlockOwner,
 }) {
   if (!document) return null;
 
-  const canDecide = canDecideDocumentModeration(document);
-  const canHide = canHideModeratedDocument(document);
-  const canUnhide = canUnhideModeratedDocument(document);
-  const moderationStatus = getDocumentModerationStatusPresentation(
-    document.moderationStatus,
-  );
-  const moderationFlag = getDocumentModerationFlagPresentation(
-    document.moderationFlag,
-  );
-  const matchedKeywords = Array.isArray(document.matchedKeywords)
-    ? document.matchedKeywords.filter(getMatchedKeywordName)
-    : [];
-  const matchedContexts = Array.isArray(document.matchedContexts)
-    ? document.matchedContexts
-    : [];
-  const ownerReview = document.ownerReview;
-  const canBanOwner = canBanOwnerFromModerationReview(ownerReview);
+  const moderation = getAdminDocumentModeration(document);
+  const status = getAdminDocumentStatus(document.status);
+  const canDecide = canAdminDecide(document);
+  const canHide = canAdminHide(document);
+  const canUnhide = canAdminUnhide(document);
 
   return (
-    <Dialog
-      open
-      onClose={acting ? undefined : onClose}
-      fullWidth
-      maxWidth="md"
-    >
+    <Dialog open onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>Chi tiết tài liệu</DialogTitle>
       <DialogContent dividers>
         <Typography variant="h6" fontWeight={750}>
@@ -114,33 +69,13 @@ export default function AdminDocumentDetailDialog({
           />
           <Chip
             size="small"
-            label={moderationStatus.label}
-            color={moderationStatus.color}
+            label={moderation.label}
+            color={moderation.color}
           />
-          {document.moderationFlag && (
-            <Chip
-              size="small"
-              label={`Máy quét: ${moderationFlag.label}`}
-              color={moderationFlag.color}
-              variant="outlined"
-            />
-          )}
-          {document.severityBand && (
-            <Chip
-              size="small"
-              label={`Mức độ: ${document.severityBand}`}
-              color={
-                ["HIGH", "CRITICAL"].includes(document.severityBand)
-                  ? "error"
-                  : "warning"
-              }
-              variant="outlined"
-            />
-          )}
           <Chip
             size="small"
-            label={document.status === "HIDDEN" ? "Đã ẩn" : "Hoạt động"}
-            color={document.status === "HIDDEN" ? "error" : "success"}
+            label={status.label}
+            color={status.color}
             variant="outlined"
           />
         </Stack>
@@ -167,18 +102,16 @@ export default function AdminDocumentDetailDialog({
           <Field label="Trạng thái AI" value={document.aiStatus} />
           <Field
             label="Ngày tải lên"
-            value={formatDate(document.createdAt)}
+            value={new Date(document.createdAt).toLocaleString("vi-VN")}
           />
           <Field
             label="Ngày kiểm duyệt"
-            value={formatDate(document.reviewedAt, "Chưa kiểm duyệt")}
+            value={
+              document.reviewedAt
+                ? new Date(document.reviewedAt).toLocaleString("vi-VN")
+                : "Chưa kiểm duyệt"
+            }
           />
-          {document.appealDeadline && (
-            <Field
-              label="Hạn khiếu nại"
-              value={formatDate(document.appealDeadline)}
-            />
-          )}
           <Box sx={{ gridColumn: "1 / -1" }}>
             <Field label="Mô tả" value={document.description} />
           </Box>
@@ -188,231 +121,62 @@ export default function AdminDocumentDetailDialog({
             </Box>
           )}
         </Box>
-
-        {ownerReview && (
-          <Paper
-            variant="outlined"
-            sx={{
-              mt: 3,
-              p: 2,
-              borderRadius: 3,
-              borderColor:
-                document.severityBand === "CRITICAL"
-                  ? "error.main"
-                  : "warning.main",
-              bgcolor: "action.hover",
-            }}
-          >
-            <Stack
-              direction={{ xs: "column", sm: "row" }}
-              alignItems={{ sm: "center" }}
-              justifyContent="space-between"
-              gap={1.5}
-            >
-              <Box>
-                <Typography variant="subtitle1" fontWeight={800}>
-                  Đánh giá chủ tài liệu
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Tóm tắt rủi ro của tài khoản sở hữu tài liệu này.
-                </Typography>
-              </Box>
-              <Stack direction="row" gap={1} flexWrap="wrap">
-                <Chip
-                  size="small"
-                  label={getOwnerRoleLabel(ownerReview.role)}
-                  variant="outlined"
-                />
-                <Chip
-                  size="small"
-                  label={
-                    ownerReview.status === "ACTIVE"
-                      ? "Tài khoản hoạt động"
-                      : "Tài khoản đã khóa"
-                  }
-                  color={
-                    ownerReview.status === "ACTIVE" ? "success" : "error"
-                  }
-                />
-              </Stack>
-            </Stack>
-
-            <Stack direction="row" gap={1} flexWrap="wrap" sx={{ mt: 2 }}>
-              {Object.entries(ownerReview.documentCounts || {}).map(
-                ([status, count]) => {
-                  const presentation =
-                    getDocumentModerationStatusPresentation(status);
-                  return (
-                    <Chip
-                      key={status}
-                      size="small"
-                      label={`${presentation.label}: ${count}`}
-                      color={presentation.color}
-                      variant="outlined"
-                    />
-                  );
-                },
-              )}
-            </Stack>
-
-            {canBanOwner && (
-              <Button
-                color="error"
-                variant="contained"
-                sx={{ mt: 2 }}
-                disabled={acting}
-                onClick={() => onBanOwner(ownerReview)}
-              >
-                Khóa tài khoản
-              </Button>
-            )}
-          </Paper>
-        )}
-
-        {canDecide && (
-          <Alert severity={claimed ? "success" : "info"} sx={{ mt: 3 }}>
-            {claimed
-              ? "Bạn đang giữ tài liệu này để xử lý. Khóa tự hết hạn sau 30 phút."
-              : "Hãy nhận xử lý trước khi duyệt, từ chối hoặc tạo ngoại lệ từ khóa."}
-          </Alert>
-        )}
-
-        {matchedKeywords.length > 0 && (
-          <Box sx={{ mt: 3 }}>
-            <Divider sx={{ mb: 2 }} />
-            <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 1 }}>
-              Từ khóa máy quét phát hiện
-            </Typography>
-            <Stack spacing={1}>
-              {matchedKeywords.map((match, index) => {
-                const keyword = getMatchedKeywordName(match);
-                const keywordId =
-                  match?.id ||
-                  moderationKeywordIds?.[normalizeModerationKeyword(keyword)];
-
-                return (
-                  <Paper
-                    key={`${keyword}-${index}`}
-                    variant="outlined"
-                    sx={{ p: 1.5, borderRadius: 2 }}
-                  >
-                    <Stack
-                      direction={{ xs: "column", sm: "row" }}
-                      alignItems={{ sm: "center" }}
-                      justifyContent="space-between"
-                      gap={1}
-                    >
-                      <Typography fontWeight={700}>{keyword}</Typography>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        disabled={!claimed || !keywordId || acting}
-                        title={
-                          !keywordId
-                            ? "Không tìm thấy mã từ khóa đang hoạt động."
-                            : undefined
-                        }
-                        onClick={() => onExceptKeyword(keywordId)}
-                      >
-                        Bỏ qua từ khóa này
-                      </Button>
-                    </Stack>
-                  </Paper>
-                );
-              })}
-            </Stack>
-          </Box>
-        )}
-
-        {matchedContexts.length > 0 && (
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="subtitle1" fontWeight={750} sx={{ mb: 1 }}>
-              Vị trí khớp trong tài liệu
-            </Typography>
-            <Stack spacing={1}>
-              {matchedContexts.map((context, index) => (
-                <Paper
-                  key={`${context.keyword}-${context.field}-${index}`}
-                  variant="outlined"
-                  sx={{ p: 1.5, borderRadius: 2 }}
-                >
-                  <Stack direction="row" gap={1} flexWrap="wrap" sx={{ mb: 1 }}>
-                    <Chip size="small" label={context.keyword || "Từ khóa"} />
-                    <Chip
-                      size="small"
-                      variant="outlined"
-                      label={CONTEXT_FIELD_LABELS[context.field] || context.field}
-                    />
-                  </Stack>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
-                  >
-                    {context.excerpt || "Không có đoạn trích."}
-                  </Typography>
-                </Paper>
-              ))}
-            </Stack>
-          </Box>
-        )}
+        <AdminKeywordMatchesPanel
+          document={document}
+          keywordCatalog={keywordCatalog}
+          claimed={claimed}
+          loading={loading}
+          onAddException={onAddKeywordException}
+        />
+        <AdminDocumentOwnerReviewPanel
+          document={document}
+          loading={loading}
+          onBlockOwner={onBlockOwner}
+        />
       </DialogContent>
       <DialogActions sx={{ flexWrap: "wrap" }}>
-        <Button onClick={() => onPreview(document)} disabled={acting}>
-          Xem file
-        </Button>
-        {canDecide && !claimed && (
-          <Button
-            variant="contained"
-            onClick={() => onClaim(document)}
-            disabled={acting}
-          >
-            {acting ? (
-              <CircularProgress size={18} color="inherit" />
-            ) : (
-              "Nhận xử lý"
-            )}
-          </Button>
-        )}
-        {canDecide && claimed && (
+        <Button onClick={() => onPreview(document)}>Xem file</Button>
+        {canDecide && (
           <>
+            {!claimed && (
+              <Button
+                variant="contained"
+                onClick={onClaim}
+                disabled={loading}
+              >
+                Nhận xử lý
+              </Button>
+            )}
             <Button
               color="success"
-              disabled={acting}
+              disabled={!claimed || loading}
               onClick={() => onAction({ type: "approve", document })}
             >
               Duyệt
             </Button>
             <Button
               color="error"
-              disabled={acting}
+              disabled={!claimed || loading}
               onClick={() => onAction({ type: "reject", document })}
             >
               Từ chối
             </Button>
           </>
         )}
-        {canHide && (
+        {(canHide || canUnhide) && (
           <Button
-            color="error"
-            disabled={acting}
-            onClick={() => onAction({ type: "hide", document })}
+            color={canUnhide ? "success" : "error"}
+            onClick={() =>
+              onAction({
+                type: canUnhide ? "unhide" : "hide",
+                document,
+              })
+            }
           >
-            Ẩn
+            {canUnhide ? "Khôi phục" : "Ẩn"}
           </Button>
         )}
-        {canUnhide && (
-          <Button
-            color="success"
-            disabled={acting}
-            onClick={() => onAction({ type: "unhide", document })}
-          >
-            Khôi phục
-          </Button>
-        )}
-        <Button onClick={onClose} disabled={acting}>
-          Đóng
-        </Button>
+        <Button onClick={onClose}>Đóng</Button>
       </DialogActions>
     </Dialog>
   );

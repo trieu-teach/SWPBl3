@@ -13,8 +13,8 @@ import { ArrowBackOutlined, DescriptionOutlined } from "@mui/icons-material";
 import UserLayout from "../Layout/UserLayout.jsx";
 import DocumentPreviewDialog from "../DocumentLibrary/components/DocumentPreviewDialog.jsx";
 import DocumentActions from "./components/DocumentActions.jsx";
-import DocumentAppealForm from "./components/DocumentAppealForm.jsx";
 import DocumentEditForm from "./components/DocumentEditForm.jsx";
+import DocumentModerationAlert from "./components/DocumentModerationAlert.jsx";
 import useDocumentDetails from "./hooks/useDocumentDetails.js";
 import {
   AI_STATUS,
@@ -24,10 +24,6 @@ import {
   getModerationStatus,
   normalizeTags,
 } from "../DocumentLibrary/utils/document-formatters.js";
-import {
-  getDocumentAppealState,
-  getOwnerModerationNotice,
-} from "../../../lib/moderation.js";
 
 export default function DocumentDetails() {
   const details = useDocumentDetails();
@@ -57,8 +53,6 @@ export default function DocumentDetails() {
   const document = details.document;
   const status = AI_STATUS[document.aiStatus] || AI_STATUS.PENDING;
   const moderation = getModerationStatus(document);
-  const moderationNotice = getOwnerModerationNotice(document);
-  const appealState = getDocumentAppealState(document);
   const tags = normalizeTags(document.tags);
 
   return (
@@ -83,27 +77,7 @@ export default function DocumentDetails() {
         </Alert>
       )}
 
-      {moderationNotice && (
-        <Alert severity={moderationNotice.severity} sx={{ mb: 2 }}>
-          <Typography fontWeight={700}>{moderationNotice.title}</Typography>
-          <Typography variant="body2">{moderationNotice.message}</Typography>
-          {appealState === "expired" &&
-            ["REJECTED", "AUTO_BLOCKED"].includes(
-              document.moderationStatus,
-            ) && (
-              <Typography variant="body2" sx={{ mt: 0.5 }}>
-                Thời hạn khiếu nại đã kết thúc hoặc tài liệu không còn đủ điều
-                kiện gửi thêm khiếu nại.
-              </Typography>
-            )}
-        </Alert>
-      )}
-
-      <DocumentAppealForm
-        document={document}
-        loading={details.appealing}
-        onSubmit={details.submitAppeal}
-      />
+      <DocumentModerationAlert document={document} />
 
       <Paper
         variant="outlined"

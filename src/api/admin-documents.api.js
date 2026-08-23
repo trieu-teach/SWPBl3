@@ -12,9 +12,12 @@ function withQuery(path, params = {}) {
 
 export const getAdminDocuments = (params) =>
   apiRequest(withQuery("/admin/documents", params));
+
 export const getPendingAdminDocuments = (params) =>
   apiRequest(withQuery("/admin/documents/pending", params));
+
 export const getAdminDocument = (id) => apiRequest(`/admin/documents/${id}`);
+
 export const getAdminDocumentPreview = (id) =>
   apiRequest(`/admin/documents/${id}/preview`);
 

@@ -76,8 +76,8 @@ const Reports = lazy(() => import("./pages/Admin/Reports/Reports.jsx"));
 const ModeratorReports = lazy(
   () => import("./pages/Moderator/Reports/ModeratorReports.jsx"),
 );
-const ModeratorAppeals = lazy(
-  () => import("./pages/Moderator/Appeals/ModeratorAppeals.jsx"),
+const ModeratorDocuments = lazy(
+  () => import("./pages/Moderator/Documents/ModeratorDocuments.jsx"),
 );
 const Homepage = lazy(() => import("./pages/Home/Homepage.jsx"));
 
@@ -387,14 +387,6 @@ export default function App() {
                       }
                     />
                     <Route
-                      path="/moderator/appeals"
-                      element={
-                        <RequireAuth allowedRoles={["ADMIN", "MODERATOR"]}>
-                          <ModeratorAppeals />
-                        </RequireAuth>
-                      }
-                    />
-                    <Route
                       path="/moderator/dashboard"
                       element={
                         <RequireAuth allowedRoles={["ADMIN", "MODERATOR"]}>
@@ -405,8 +397,8 @@ export default function App() {
                     <Route
                       path="/moderator/moderation"
                       element={
-                        <RequireAuth allowedRoles={["ADMIN", "MODERATOR"]}>
-                          <Navigate to="/moderator/reports" replace />
+                        <RequireAuth allowedRoles={["MODERATOR"]}>
+                          <ModeratorDocuments />
                         </RequireAuth>
                       }
                     />
