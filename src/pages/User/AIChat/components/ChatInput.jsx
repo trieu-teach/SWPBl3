@@ -18,8 +18,9 @@ export default function ChatInput({
   onStop,
   isSending,
   error,
+  sourceRequired = false,
 }) {
-  const isDisabled = !value.trim();
+  const isDisabled = !value.trim() || sourceRequired;
 
   function handleKeyDown(event) {
     if (event.key === "Enter" && !event.shiftKey) {
@@ -28,9 +29,11 @@ export default function ChatInput({
     }
   }
 
-  const placeholder = isLibraryContext(chatContext)
-    ? "Hỏi về tài liệu trong thư viện của bạn..."
-    : "Nhập câu hỏi học tập của bạn...";
+  const placeholder = sourceRequired
+    ? "Chọn ít nhất một tài liệu để bắt đầu trò chuyện"
+    : isLibraryContext(chatContext)
+      ? "Hỏi về tài liệu trong thư viện của bạn..."
+      : "Nhập câu hỏi học tập của bạn...";
 
   return (
     <Paper
@@ -83,7 +86,7 @@ export default function ChatInput({
           fullWidth
           size="small"
           variant="standard"
-          disabled={isSending}
+          disabled={isSending || sourceRequired}
           slotProps={{ htmlInput: { "aria-label": "Nhập câu hỏi cho AI" } }}
           sx={{
             "& .MuiInputBase-root": {

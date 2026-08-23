@@ -1,6 +1,7 @@
 import { Box, CircularProgress, Typography } from "@mui/material";
 import ChatInput from "./ChatInput.jsx";
 import ChatMessageList from "./ChatMessageList.jsx";
+import LibrarySourceEmptyState from "./LibrarySourceEmptyState.jsx";
 
 export default function ChatConversation({
   chatContext,
@@ -18,8 +19,13 @@ export default function ChatConversation({
   hasMoreHistory = false,
   onLoadOlder,
   disabled = false,
+  sourceRequired = false,
 }) {
   const messageActionsDisabled = isSending || disabled;
+
+  // When sourceRequired and there are no messages yet, show a dedicated
+  // full-screen prompt instead of the regular empty state / message list.
+  const showFullscreenSourcePrompt = sourceRequired && messages.length === 0;
 
   return (
     <Box
@@ -55,6 +61,8 @@ export default function ChatConversation({
             Đang tải cuộc hội thoại...
           </Typography>
         </Box>
+      ) : showFullscreenSourcePrompt ? (
+        <LibrarySourceEmptyState variant="fullscreen" />
       ) : (
         <ChatMessageList
           chatContext={chatContext}
@@ -82,13 +90,19 @@ export default function ChatConversation({
           border: 0,
         }}
       >
+        {/* Banner: shown above input when source was deselected mid-chat */}
+        {sourceRequired && messages.length > 0 && (
+          <LibrarySourceEmptyState variant="banner" />
+        )}
         <ChatInput
           chatContext={chatContext}
           value={inputValue}
           onChange={onInputChange}
           onSend={onSend}
+          onStop={onStop}
           isSending={isSending}
-          error={error}
+          error={sourceRequired ? null : error}
+          sourceRequired={sourceRequired}
         />
       </Box>
     </Box>
