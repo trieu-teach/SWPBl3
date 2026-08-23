@@ -5,6 +5,7 @@ import CommunityDocumentGrid from "./components/CommunityDocumentGrid.jsx";
 import CommunityFilters from "./components/CommunityFilters.jsx";
 import CommunityHeader from "./components/CommunityHeader.jsx";
 import ReportDocumentDialog from "./components/ReportDocumentDialog.jsx";
+import TopRatedDocumentsWidget from "../../../components/TopRatedDocuments/TopRatedDocumentsWidget.jsx";
 import useCommunityLibrary from "./hooks/useCommunityLibrary.js";
 
 export default function CommunityLibrary() {
@@ -13,6 +14,7 @@ export default function CommunityLibrary() {
   return (
     <UserLayout>
       <CommunityHeader />
+      <TopRatedDocumentsWidget onPreview={community.openPreview} limit={3} />
       <CommunityFilters community={community} />
 
       {community.error && (
