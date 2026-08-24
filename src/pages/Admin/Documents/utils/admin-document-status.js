@@ -1,12 +1,12 @@
 export const ADMIN_MODERATION_STATUS = {
-  PENDING: { label: "Chờ duyệt / không đọc được", color: "warning" },
+  PENDING: { label: "Chờ kiểm duyệt", color: "warning" },
   APPROVED: { label: "Đã duyệt", color: "success" },
   REJECTED: { label: "Bị từ chối", color: "error" },
-  FLAGGED: { label: "Cần xem (cờ từ khóa)", color: "warning" },
-  AUTO_BLOCKED: { label: "Máy đã ẩn", color: "error" },
-  UNDER_REVIEW: { label: "Đang được xem", color: "info" },
-  APPEALED: { label: "Đang khiếu nại", color: "info" },
-  SYSTEM_CLEARED: { label: "Máy đã gỡ cờ", color: "success" },
+  FLAGGED: { label: "Cần xem xét", color: "warning" },
+  AUTO_BLOCKED: { label: "Đã tạm ẩn", color: "error" },
+  UNDER_REVIEW: { label: "Đang kiểm duyệt", color: "info" },
+  APPEALED: { label: "Đang xử lý khiếu nại", color: "info" },
+  SYSTEM_CLEARED: { label: "Đã gỡ cảnh báo", color: "success" },
   EXPIRED: { label: "Hết hạn khiếu nại", color: "default" },
 };
 
