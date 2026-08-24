@@ -47,6 +47,9 @@ const CommunityLibrary = lazy(
 const SavedDocuments = lazy(
   () => import("./pages/User/SavedDocuments/SavedDocuments.jsx"),
 );
+const DocumentAppeals = lazy(
+  () => import("./pages/User/DocumentAppeals/DocumentAppeals.jsx"),
+);
 const Subscription = lazy(
   () => import("./pages/User/Subscription/Subscription.jsx"),
 );
@@ -76,6 +79,12 @@ const DownloadLogs = lazy(
 const Reports = lazy(() => import("./pages/Admin/Reports/Reports.jsx"));
 const ModeratorReports = lazy(
   () => import("./pages/Moderator/Reports/ModeratorReports.jsx"),
+);
+const ModeratorDocuments = lazy(
+  () => import("./pages/Moderator/Documents/ModeratorDocuments.jsx"),
+);
+const ModeratorAppeals = lazy(
+  () => import("./pages/Moderator/Appeals/ModeratorAppeals.jsx"),
 );
 const Homepage = lazy(() => import("./pages/Home/Homepage.jsx"));
 
@@ -396,8 +405,24 @@ export default function App() {
                     <Route
                       path="/moderator/moderation"
                       element={
-                        <RequireAuth allowedRoles={["ADMIN", "MODERATOR"]}>
-                          <Navigate to="/moderator/reports" replace />
+                        <RequireAuth allowedRoles={["MODERATOR"]}>
+                          <ModeratorDocuments />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/appeals"
+                      element={
+                        <RequireAuth allowedRoles={["USER"]}>
+                          <DocumentAppeals />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/moderator/appeals"
+                      element={
+                        <RequireAuth allowedRoles={["MODERATOR"]}>
+                          <ModeratorAppeals />
                         </RequireAuth>
                       }
                     />

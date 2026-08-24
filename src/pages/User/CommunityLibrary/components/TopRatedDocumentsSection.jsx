@@ -68,18 +68,21 @@ export default function TopRatedDocumentsSection({
   return (
     <Wrapper {...wrapperProps}>
       {/* Header section with Title, SortBy and Pagination buttons */}
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        justifyContent="space-between"
-        alignItems={{ xs: "flex-start", sm: "center" }}
-        spacing={2}
-        sx={{ mb: 3 }}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1fr) auto" },
+          alignItems: "center",
+          gap: 2,
+          mb: 3,
+        }}
       >
-        <Stack direction="row" alignItems="center" spacing={1.5}>
+        <Stack direction="row" alignItems="center" spacing={1.75} sx={{ minWidth: 0 }}>
           <Box
             sx={{
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
+              flexShrink: 0,
               display: "grid",
               placeItems: "center",
               borderRadius: 2,
@@ -89,8 +92,8 @@ export default function TopRatedDocumentsSection({
           >
             <EmojiEventsOutlined />
           </Box>
-          <Box>
-            <Typography variant="h6" fontWeight={800}>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="h6" fontWeight={800} sx={{ lineHeight: 1.25 }}>
               {title}
             </Typography>
             <Typography variant="caption" color="text.secondary">
@@ -105,12 +108,25 @@ export default function TopRatedDocumentsSection({
           <Stack
             direction="row"
             alignItems="center"
-            spacing={1.5}
             flexWrap="wrap"
-            sx={{ width: { xs: "100%", sm: "auto" }, justifyContent: "space-between" }}
+            sx={{
+              gap: 1.25,
+              justifyContent: { xs: "flex-start", lg: "flex-end" },
+            }}
           >
             {/* SortBy Switch */}
-            <ButtonGroup size="small" variant="outlined">
+            <ButtonGroup
+              size="small"
+              variant="outlined"
+              sx={{
+                height: 44,
+                "& .MuiButton-root": {
+                  minHeight: 44,
+                  px: 2,
+                  whiteSpace: "nowrap",
+                },
+              }}
+            >
               <Button
                 variant={sortBy === "rating" ? "contained" : "outlined"}
                 startIcon={<ThumbUpAltOutlined sx={{ fontSize: 16 }} />}
@@ -128,8 +144,12 @@ export default function TopRatedDocumentsSection({
             </ButtonGroup>
 
             {/* Pagination Next / Prev */}
-            <Stack direction="row" spacing={0.5} alignItems="center">
-              <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
+            <Stack direction="row" spacing={0.75} alignItems="center">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ minWidth: 40, textAlign: "center", fontWeight: 700 }}
+              >
                 {meta.page}/{meta.totalPages || 1}
               </Typography>
               <Button
@@ -138,7 +158,7 @@ export default function TopRatedDocumentsSection({
                 disabled={!meta.hasPrevious && page <= 1}
                 onClick={previousPage}
                 aria-label="Trang trước"
-                sx={{ minWidth: 36, px: 1 }}
+                sx={{ minWidth: 44, width: 44, height: 44, p: 0, borderRadius: 2 }}
               >
                 <ArrowBackIosNewOutlined sx={{ fontSize: 12 }} />
               </Button>
@@ -148,14 +168,14 @@ export default function TopRatedDocumentsSection({
                 disabled={!meta.hasNext && page >= (meta.totalPages || 1)}
                 onClick={nextPage}
                 aria-label="Trang tiếp theo"
-                sx={{ minWidth: 36, px: 1 }}
+                sx={{ minWidth: 44, width: 44, height: 44, p: 0, borderRadius: 2 }}
               >
                 <ArrowForwardIosOutlined sx={{ fontSize: 12 }} />
               </Button>
             </Stack>
           </Stack>
         )}
-      </Stack>
+      </Box>
 
       {/* Error state */}
       {error && (

@@ -2,9 +2,11 @@ import AssessmentOutlined from "@mui/icons-material/AssessmentOutlined";
 import BookmarkOutlined from "@mui/icons-material/BookmarkOutlined";
 import DashboardOutlined from "@mui/icons-material/DashboardOutlined";
 import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
+import FactCheckOutlined from "@mui/icons-material/FactCheckOutlined";
 import DownloadOutlined from "@mui/icons-material/DownloadOutlined";
 import FolderOpenOutlined from "@mui/icons-material/FolderOpenOutlined";
 import HistoryOutlined from "@mui/icons-material/HistoryOutlined";
+import GavelOutlined from "@mui/icons-material/GavelOutlined";
 import LocalOfferOutlined from "@mui/icons-material/LocalOfferOutlined";
 import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
 import ReportProblemOutlined from "@mui/icons-material/ReportProblemOutlined";
@@ -23,10 +25,23 @@ const USER_NAVIGATION = [
     path: "/documents/upload",
     icon: UploadFileOutlined,
   },
+  { label: "Khiếu nại", path: "/appeals", icon: GavelOutlined },
   { label: "Đã lưu", path: "/saved-documents", icon: BookmarkOutlined },
-  { label: "Đăng ký gói", path: "/subscription", icon: ShoppingCartOutlined },
-    { label: "Hỏi AI", path: "/hoi-ai", icon: SmartToyOutlined },
   { label: "Cộng đồng", path: "/community", icon: PeopleAltOutlined },
+  {
+    label: "Hỏi AI",
+    eyebrow: "TRỢ LÝ HỌC TẬP",
+    path: "/hoi-ai",
+    icon: SmartToyOutlined,
+    highlight: "ai",
+  },
+  {
+    label: "Mua gói",
+    eyebrow: "NÂNG CẤP",
+    path: "/subscription",
+    icon: ShoppingCartOutlined,
+    highlight: "subscription",
+  },
 ];
 
 const ADMIN_NAVIGATION = [
@@ -57,6 +72,16 @@ const ADMIN_NAVIGATION = [
 ];
 
 const MODERATOR_NAVIGATION = [
+  {
+    label: "Hàng chờ tài liệu",
+    path: "/moderator/moderation",
+    icon: FactCheckOutlined,
+  },
+  {
+    label: "Khiếu nại",
+    path: "/moderator/appeals",
+    icon: GavelOutlined,
+  },
   {
     label: "Báo cáo vi phạm",
     path: "/moderator/reports",

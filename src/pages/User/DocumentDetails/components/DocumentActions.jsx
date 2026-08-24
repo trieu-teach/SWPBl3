@@ -17,10 +17,10 @@ import {
 import {
   CloudDownloadOutlined,
   DeleteOutlined,
-  SendOutlined,
   SmartToyOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
+import DocumentAppealForm from "./DocumentAppealForm.jsx";
 
 export default function DocumentActions({ details }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -100,26 +100,14 @@ export default function DocumentActions({ details }) {
           />
         </RadioGroup>
         <Typography variant="caption" color="text.secondary">
-          Tài liệu công khai sẽ được gửi duyệt trước khi xuất hiện trong cộng
-          đồng.
+          Tài liệu công khai được hệ thống kiểm tra trước khi xuất hiện trong
+          cộng đồng.
         </Typography>
-        {document.visibility === "PUBLIC" &&
-          document.moderationStatus === "REJECTED" && (
-            <Stack spacing={1} sx={{ mt: 2 }}>
-              <Typography variant="caption" color="error.main">
-                Hãy lưu nội dung đã chỉnh sửa trước khi gửi duyệt lại.
-              </Typography>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<SendOutlined />}
-                onClick={details.resubmitForReview}
-                disabled={details.saving}
-              >
-                Gửi duyệt lại
-              </Button>
-            </Stack>
-          )}
+        <DocumentAppealForm
+          document={document}
+          loading={details.appealing}
+          onSubmit={details.submitAppeal}
+        />
         <Divider sx={{ my: 3 }} />
         <Button
           fullWidth

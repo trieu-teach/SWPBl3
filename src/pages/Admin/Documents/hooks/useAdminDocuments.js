@@ -1,12 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  addKeywordException,
   approveAdminDocument,
+  claimAdminDocument,
   getAdminDocument,
   getAdminDocumentPreview,
   getAdminDocuments,
+  getPendingAdminDocuments,
   rejectAdminDocument,
+  removeKeywordException,
   setAdminDocumentHidden,
 } from "../../../../api/admin-documents.api.js";
+import { getAdminModerationKeywords } from "../../../../api/admin-moderation-keywords.api.js";
+import { updateAdminUserStatus } from "../../../../api/admin-users.api.js";
 import { useToast } from "../../../../components/Toast/ToastProvider.jsx";
 
 const INITIAL_FILTERS = {
@@ -33,6 +39,9 @@ export default function useAdminDocuments() {
   const [preview, setPreview] = useState(null);
   const [action, setAction] = useState(null);
   const [acting, setActing] = useState(false);
+  const [reviewQueueOnly, setReviewQueueOnly] = useState(false);
+  const [claimedDocumentId, setClaimedDocumentId] = useState(null);
+  const [moderationKeywords, setModerationKeywords] = useState([]);
 
   const query = useMemo(
     () => ({ ...filters, ...sort, page, limit: 20 }),
@@ -44,7 +53,19 @@ export default function useAdminDocuments() {
     setError("");
 
     try {
-      const response = await getAdminDocuments(query);
+      const requestQuery = reviewQueueOnly
+        ? {
+            keyword: query.keyword,
+            aiStatus: query.aiStatus,
+            sortBy: query.sortBy,
+            sortOrder: query.sortOrder,
+            page: query.page,
+            limit: query.limit,
+          }
+        : query;
+      const response = reviewQueueOnly
+        ? await getPendingAdminDocuments(requestQuery)
+        : await getAdminDocuments(requestQuery);
       setDocuments(response?.items || response?.data || []);
       setMeta(response?.meta || { totalItems: 0, totalPages: 0 });
     } catch (requestError) {
@@ -52,7 +73,7 @@ export default function useAdminDocuments() {
     } finally {
       setLoading(false);
     }
-  }, [query]);
+  }, [query, reviewQueueOnly]);
 
   useEffect(() => {
     load();
@@ -74,6 +95,13 @@ export default function useAdminDocuments() {
     setPage(1);
   }
 
+  function toggleReviewQueue() {
+    setSearchInput("");
+    setFilters(INITIAL_FILTERS);
+    setPage(1);
+    setReviewQueueOnly((current) => !current);
+  }
+
   function toggleSort(field, firstOrder) {
     setPage(1);
     setSort((current) => {
@@ -93,9 +121,149 @@ export default function useAdminDocuments() {
   async function openDetail(document) {
     setActing(true);
     try {
-      setDetail(await getAdminDocument(document.id));
+      const documentDetail = await getAdminDocument(document.id);
+      setDetail(documentDetail);
+
+      if (documentDetail?.matchedKeywords?.length) {
+        try {
+          const keywordCatalog = await getAdminModerationKeywords();
+          setModerationKeywords(
+            Array.isArray(keywordCatalog)
+              ? keywordCatalog
+              : keywordCatalog?.items || keywordCatalog?.data || [],
+          );
+        } catch {
+          setModerationKeywords([]);
+          toast.warning(
+            "Không tải được mã từ khóa. Bạn vẫn có thể xem nội dung bị phát hiện.",
+          );
+        }
+      } else {
+        setModerationKeywords([]);
+      }
     } catch (requestError) {
       toast.error(requestError.message || "Không thể tải chi tiết tài liệu.");
+    } finally {
+      setActing(false);
+    }
+  }
+
+  async function refreshDetail(documentId) {
+    const refreshed = await getAdminDocument(documentId);
+    setDetail(refreshed);
+    return refreshed;
+  }
+
+  function handleReviewConflict(requestError) {
+    if (requestError.status !== 409) return false;
+
+    setAction(null);
+    setDetail(null);
+    setClaimedDocumentId(null);
+    void load();
+    toast.warning(
+      "Tài liệu đang được người khác xem hoặc đã ra khỏi hàng chờ.",
+    );
+    return true;
+  }
+
+  async function claimDetail() {
+    if (!detail) return;
+    setActing(true);
+
+    try {
+      const claimed = await claimAdminDocument(detail.id);
+      setClaimedDocumentId(detail.id);
+      setDetail((current) =>
+        current?.id === detail.id ? { ...current, ...claimed } : current,
+      );
+      toast.success("Đã nhận tài liệu để kiểm duyệt.");
+      await load();
+    } catch (requestError) {
+      if (!handleReviewConflict(requestError)) {
+        toast.error(requestError.message || "Không thể nhận tài liệu để duyệt.");
+      }
+    } finally {
+      setActing(false);
+    }
+  }
+
+  async function createKeywordException(keywordId, reason = "") {
+    if (!detail) return false;
+    setActing(true);
+
+    try {
+      await addKeywordException(detail.id, keywordId, reason);
+      await refreshDetail(detail.id);
+      toast.success("Đã bỏ qua từ khóa cho tài liệu này và quét lại nội dung.");
+      return true;
+    } catch (requestError) {
+      if (!handleReviewConflict(requestError)) {
+        toast.error(requestError.message || "Không thể thêm ngoại lệ từ khóa.");
+      }
+      return false;
+    } finally {
+      setActing(false);
+    }
+  }
+
+  async function deleteKeywordException(keywordId) {
+    if (!detail) return false;
+    setActing(true);
+
+    try {
+      await removeKeywordException(detail.id, keywordId);
+      await refreshDetail(detail.id);
+      toast.success("Đã xóa ngoại lệ từ khóa và quét lại nội dung.");
+      return true;
+    } catch (requestError) {
+      if (!handleReviewConflict(requestError)) {
+        toast.error(requestError.message || "Không thể xóa ngoại lệ từ khóa.");
+      }
+      return false;
+    } finally {
+      setActing(false);
+    }
+  }
+
+  async function blockDocumentOwner(reason) {
+    const ownerReview = detail?.ownerReview;
+    if (!ownerReview?.canBan || !ownerReview.ownerId) return false;
+    setActing(true);
+
+    try {
+      await updateAdminUserStatus(
+        ownerReview.ownerId,
+        "BLOCKED",
+        reason.trim(),
+      );
+      setDetail((current) =>
+        current
+          ? {
+              ...current,
+              ownerReview: current.ownerReview
+                ? {
+                    ...current.ownerReview,
+                    status: "BLOCKED",
+                    canBan: false,
+                  }
+                : null,
+            }
+          : current,
+      );
+      toast.success("Đã khóa tài khoản chủ tài liệu.");
+
+      try {
+        await refreshDetail(detail.id);
+      } catch {
+        toast.warning(
+          "Tài khoản đã được khóa nhưng chưa tải lại được chi tiết tài liệu.",
+        );
+      }
+      return true;
+    } catch (requestError) {
+      toast.error(requestError.message || "Không thể khóa tài khoản.");
+      return false;
     } finally {
       setActing(false);
     }
@@ -153,21 +321,10 @@ export default function useAdminDocuments() {
 
       setAction(null);
       setDetail(null);
+      setClaimedDocumentId(null);
       await load();
     } catch (requestError) {
-      if (
-        requestError.status === 409 &&
-        requestError.message?.includes("no longer pending moderation")
-      ) {
-        setAction(null);
-        setDetail(null);
-        await load();
-        toast.warning(
-          "Tài liệu đã được kiểm duyệt trước đó. Danh sách đã được cập nhật.",
-        );
-        return;
-      }
-
+      if (handleReviewConflict(requestError)) return;
       toast.error(requestError.message || "Không thể cập nhật tài liệu.");
     } finally {
       setActing(false);
@@ -187,14 +344,22 @@ export default function useAdminDocuments() {
     preview,
     action,
     acting,
+    reviewQueueOnly,
+    claimedDocumentId,
+    moderationKeywords,
     setSearchInput,
     setPage,
     updateFilter,
     search,
     resetFilters,
+    toggleReviewQueue,
     toggleSort,
     load,
     openDetail,
+    claimDetail,
+    createKeywordException,
+    deleteKeywordException,
+    blockDocumentOwner,
     openPreview,
     setDetail,
     setPreview,

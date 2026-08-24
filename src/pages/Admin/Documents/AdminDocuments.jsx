@@ -12,7 +12,7 @@ export default function AdminDocuments() {
 
   return (
     <AdminLayout>
-      <AdminDocumentsHeader />
+      <AdminDocumentsHeader admin={admin} />
       <AdminDocumentsFilters admin={admin} />
       <AdminDocumentsTable admin={admin} />
       <AdminDocumentDetailDialog
@@ -20,6 +20,12 @@ export default function AdminDocuments() {
         onClose={() => admin.setDetail(null)}
         onPreview={admin.openPreview}
         onAction={admin.setAction}
+        onClaim={admin.claimDetail}
+        claimed={admin.claimedDocumentId === admin.detail?.id}
+        loading={admin.acting}
+        keywordCatalog={admin.moderationKeywords}
+        onAddKeywordException={admin.createKeywordException}
+        onBlockOwner={admin.blockDocumentOwner}
       />
       <ModerationDialog
         action={admin.action}
