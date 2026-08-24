@@ -1,9 +1,11 @@
 import {
+  Avatar,
   Box,
   Button,
   Chip,
   CircularProgress,
   Paper,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -17,6 +19,16 @@ import { getModeratorAppealStatus } from "../utils/moderator-appeal-status.js";
 
 function formatDate(value) {
   return value ? new Date(value).toLocaleString("vi-VN") : "—";
+}
+
+function getInitials(value) {
+  return (value || "?")
+    .trim()
+    .split(/\s+/)
+    .slice(-2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
 }
 
 export default function ModeratorAppealsTable({ moderation }) {
@@ -58,11 +70,11 @@ export default function ModeratorAppealsTable({ moderation }) {
         </Box>
       ) : (
         <TableContainer>
-          <Table sx={{ minWidth: 860 }}>
+          <Table sx={{ minWidth: 1080 }}>
             <TableHead>
               <TableRow>
                 <TableCell>Lý do</TableCell>
-                <TableCell>Mã tài liệu</TableCell>
+                <TableCell>Tài liệu</TableCell>
                 <TableCell>Người gửi</TableCell>
                 <TableCell>Trạng thái</TableCell>
                 <TableCell>Ngày gửi</TableCell>
@@ -82,8 +94,45 @@ export default function ModeratorAppealsTable({ moderation }) {
                         {appeal.description || "Không có mô tả bổ sung"}
                       </Typography>
                     </TableCell>
-                    <TableCell>{appeal.documentId}</TableCell>
-                    <TableCell>{appeal.userId}</TableCell>
+                    <TableCell sx={{ minWidth: 230, maxWidth: 320 }}>
+                      <Typography fontWeight={700} noWrap>
+                        {appeal.document?.title || "Không xác định"}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        noWrap
+                        sx={{ display: "block" }}
+                      >
+                        {appeal.document?.fileName || "Chưa có tên tệp"}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ minWidth: 240 }}>
+                      <Stack direction="row" alignItems="center" gap={1.25}>
+                        <Avatar
+                          src={appeal.user?.avatarUrl || undefined}
+                          alt={appeal.user?.fullName || appeal.user?.email || ""}
+                          sx={{ width: 36, height: 36, fontSize: 14 }}
+                        >
+                          {getInitials(
+                            appeal.user?.fullName || appeal.user?.email,
+                          )}
+                        </Avatar>
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography fontWeight={700} noWrap>
+                            {appeal.user?.fullName || "Không xác định"}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            noWrap
+                            sx={{ display: "block" }}
+                          >
+                            {appeal.user?.email || "Chưa có email"}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </TableCell>
                     <TableCell>
                       <Chip size="small" label={status.label} color={status.color} />
                     </TableCell>
