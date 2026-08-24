@@ -9,6 +9,7 @@ import HistoryOutlined from "@mui/icons-material/HistoryOutlined";
 import GavelOutlined from "@mui/icons-material/GavelOutlined";
 import LocalOfferOutlined from "@mui/icons-material/LocalOfferOutlined";
 import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
+import PolicyOutlined from "@mui/icons-material/PolicyOutlined";
 import ReportProblemOutlined from "@mui/icons-material/ReportProblemOutlined";
 import ShoppingCartOutlined from "@mui/icons-material/ShoppingCartOutlined";
 import SmartToyOutlined from "@mui/icons-material/SmartToyOutlined";
@@ -48,6 +49,11 @@ const ADMIN_NAVIGATION = [
   { label: "Tổng quan", path: "/admin/dashboard", icon: DashboardOutlined },
   { label: "Người dùng", path: "/admin/users", icon: PeopleAltOutlined },
   { label: "Tài liệu", path: "/admin/documents", icon: DescriptionOutlined },
+  {
+    label: "Từ khóa kiểm duyệt",
+    path: "/admin/moderation-keywords",
+    icon: PolicyOutlined,
+  },
   {
     label: "Gói dịch vụ",
     path: "/admin/subscription-plans",
