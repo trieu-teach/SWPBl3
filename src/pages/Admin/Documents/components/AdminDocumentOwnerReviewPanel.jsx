@@ -9,7 +9,6 @@ import {
   DialogContent,
   DialogTitle,
   Paper,
-  Stack,
   TextField,
   Typography,
   alpha,
@@ -72,14 +71,17 @@ export default function AdminDocumentOwnerReviewPanel({
         bgcolor: (theme) => alpha(theme.palette.error.main, 0.06),
       }}
     >
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        alignItems={{ xs: "flex-start", sm: "center" }}
-        justifyContent="space-between"
-        gap={1.5}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", sm: "minmax(0, 1fr) auto" },
+          alignItems: "center",
+          columnGap: 3,
+          rowGap: 1.5,
+        }}
       >
-        <Stack direction="row" alignItems="center" gap={1.25}>
-          <AccountCircleOutlined color="error" />
+        <Box sx={{ display: "flex", alignItems: "flex-start", minWidth: 0 }}>
+          <AccountCircleOutlined color="error" sx={{ mr: 1.25, mt: 0.25 }} />
           <Box>
             <Typography variant="subtitle1" fontWeight={750}>
               Đánh giá chủ tài liệu
@@ -88,8 +90,15 @@ export default function AdminDocumentOwnerReviewPanel({
               Chỉ xuất hiện với tài liệu nghiêm trọng hoặc bị máy tự động chặn.
             </Typography>
           </Box>
-        </Stack>
-        <Stack direction="row" gap={1} flexWrap="wrap">
+        </Box>
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: { xs: "flex-start", sm: "flex-end" },
+            "& .MuiChip-root": { mr: 1, mb: 1 },
+          }}
+        >
           <Chip
             size="small"
             label={ROLE_LABEL[ownerReview.role] || ownerReview.role}
@@ -100,8 +109,8 @@ export default function AdminDocumentOwnerReviewPanel({
             label={STATUS_LABEL[ownerReview.status] || ownerReview.status}
             color={ownerReview.status === "BLOCKED" ? "error" : "success"}
           />
-        </Stack>
-      </Stack>
+        </Box>
+      </Box>
 
       <Box sx={{ mt: 2 }}>
         <Typography fontWeight={700}>
@@ -147,16 +156,17 @@ export default function AdminDocumentOwnerReviewPanel({
       )}
 
       {canBlock && (
-        <Stack alignItems="flex-end" sx={{ mt: 2 }}>
+        <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
           <Button
             color="error"
             variant="contained"
             startIcon={<BlockOutlined />}
             onClick={() => setConfirmOpen(true)}
+            sx={{ width: "fit-content", px: 2.5 }}
           >
             Khóa tài khoản
           </Button>
-        </Stack>
+        </Box>
       )}
 
       {ownerReview.status === "BLOCKED" && (

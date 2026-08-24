@@ -11,6 +11,7 @@
   aiChat: "/hoi-ai",
   community: "/community",
   savedDocuments: "/saved-documents",
+  appeals: "/appeals",
   adminDashboard: "/admin/dashboard",
   adminUsers: "/admin/users",
   adminDocuments: "/admin/documents",
