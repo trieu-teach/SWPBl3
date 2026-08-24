@@ -12,8 +12,6 @@ import BookmarkOutlined from "@mui/icons-material/BookmarkOutlined";
 import FolderOutlined from "@mui/icons-material/FolderOutlined";
 import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import UploadOutlined from "@mui/icons-material/UploadOutlined";
-import ThumbUpOutlined from "@mui/icons-material/ThumbUpOutlined";
-import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
 import AdminLayout from "../Layout/AdminLayout.jsx";
 import ReportFilters from "./components/ReportFilters.jsx";
 import UploadStatsChart from "./components/UploadStatsChart.jsx";
@@ -407,77 +405,6 @@ export default function Reports() {
                 barColor="#f59e0b"
                 showStorage={true}
               />
-            </Box>
-          </ChartCard>
-
-          {/* Row 5: Top Rated + Most Useful */}
-          <ChartCard error={reports.topRatedError} errorTitle="Top Rated">
-            <Box sx={styles.cardHeader}>
-              <SectionHeader
-                icon={<ThumbUpOutlined sx={{ fontSize: 20 }} />}
-                title="Tài liệu được đánh giá cao nhất"
-                subtitle="Điểm tin cậy từ đánh giá trên card — 1 phiếu không đứng trên 80/100 phiếu"
-                color="#ec4899"
-              />
-              <DateCaption
-                label="Top đánh giá"
-                dateRange={reports.topRatedRange}
-                getDateCaption={reports.getDateCaption}
-              />
-            </Box>
-            <Box sx={styles.cardContent}>
-              {(() => {
-                const chartData = (reports.topRated || []).map((item) => ({
-                  ...item,
-                  ratingPercent: Math.round(Number(item.ratingScore || 0) * 100),
-                  tooltipDetail: `${item.helpfulCount}/${item.totalRatings} phiếu · ${Math.round(Number(item.helpfulRating || 0) * 100)}% thô`,
-                }));
-                return (
-                  <TopDocumentsChart
-                    data={chartData}
-                    loading={reports.topRatedLoading}
-                    metricKey="ratingPercent"
-                    metricLabel="% tin cậy"
-                    barColor="#ec4899"
-                    hideSummary
-                  />
-                );
-              })()}
-            </Box>
-          </ChartCard>
-
-          <ChartCard error={reports.mostUsefulError} errorTitle="Most Useful">
-            <Box sx={styles.cardHeader}>
-              <SectionHeader
-                icon={<AutoAwesomeOutlined sx={{ fontSize: 20 }} />}
-                title="Tài liệu hữu ích nhất khi hỏi AI"
-                subtitle="Điểm tin cậy khi AI trích dẫn tài liệu; câu chat được 👍/👎"
-                color="#0ea5e9"
-              />
-              <DateCaption
-                label="Top hữu ích"
-                dateRange={reports.mostUsefulRange}
-                getDateCaption={reports.getDateCaption}
-              />
-            </Box>
-            <Box sx={styles.cardContent}>
-              {(() => {
-                const chartData = (reports.mostUseful || []).map((item) => ({
-                  ...item,
-                  usefulPercent: Math.round(Number(item.usefulScore || 0) * 100),
-                  tooltipDetail: `${item.citationCount} lần trích · TB thô ${Number(item.averageRelevance || 0).toFixed(2)}`,
-                }));
-                return (
-                  <TopDocumentsChart
-                    data={chartData}
-                    loading={reports.mostUsefulLoading}
-                    metricKey="usefulPercent"
-                    metricLabel="% tin cậy"
-                    barColor="#0ea5e9"
-                    hideSummary
-                  />
-                );
-              })()}
             </Box>
           </ChartCard>
         </Box>

@@ -6,8 +6,6 @@ import {
   getHeaviestDocuments,
   getTopContributors,
   getTopUploaders,
-  getTopRatedReport,
-  getMostUsefulDocuments,
 } from "../../../../api/admin-reports.api.js";
 import { getAdminSubscriptionStats } from "../../../../api/admin-subscriptions.api.js";
 import { formatDateShort } from "../../utils/admin-formatters.js";
@@ -71,20 +69,6 @@ export default function useReports() {
   const [uploadersError, setUploadersError] = useState("");
   const [uploadersRange, setUploadersRange] = useState(getDefaultDateRange);
   const [uploadersLimit, setUploadersLimit] = useState(10);
-
-  // === TOP RATED STATE ===
-  const [topRated, setTopRated] = useState([]);
-  const [topRatedLoading, setTopRatedLoading] = useState(true);
-  const [topRatedError, setTopRatedError] = useState("");
-  const [topRatedRange, setTopRatedRange] = useState(getDefaultDateRange);
-  const [topRatedLimit, setTopRatedLimit] = useState(10);
-
-  // === MOST USEFUL STATE ===
-  const [mostUseful, setMostUseful] = useState([]);
-  const [mostUsefulLoading, setMostUsefulLoading] = useState(true);
-  const [mostUsefulError, setMostUsefulError] = useState("");
-  const [mostUsefulRange, setMostUsefulRange] = useState(getDefaultDateRange);
-  const [mostUsefulLimit, setMostUsefulLimit] = useState(10);
 
   // === DRAFT STATE (for filter UI) ===
   const [draftRange, setDraftRange] = useState(getDefaultDateRange);
@@ -153,24 +137,6 @@ export default function useReports() {
       limit: uploadersLimit,
     }),
     [uploadersRange, uploadersLimit],
-  );
-
-  const topRatedQuery = useMemo(
-    () => ({
-      from: topRatedRange.from || undefined,
-      to: topRatedRange.to || undefined,
-      limit: topRatedLimit,
-    }),
-    [topRatedRange, topRatedLimit],
-  );
-
-  const mostUsefulQuery = useMemo(
-    () => ({
-      from: mostUsefulRange.from || undefined,
-      to: mostUsefulRange.to || undefined,
-      limit: mostUsefulLimit,
-    }),
-    [mostUsefulRange, mostUsefulLimit],
   );
 
   // === LOADERS ===
@@ -275,34 +241,6 @@ export default function useReports() {
     }
   }, [uploadersQuery]);
 
-  const loadTopRated = useCallback(async () => {
-    setTopRatedLoading(true);
-    setTopRatedError("");
-    try {
-      const response = await getTopRatedReport(topRatedQuery);
-      const data = response?.data || response?.items || response || [];
-      setTopRated(data);
-    } catch (err) {
-      setTopRatedError(err.message || "Không thể tải top đánh giá cao.");
-    } finally {
-      setTopRatedLoading(false);
-    }
-  }, [topRatedQuery]);
-
-  const loadMostUseful = useCallback(async () => {
-    setMostUsefulLoading(true);
-    setMostUsefulError("");
-    try {
-      const response = await getMostUsefulDocuments(mostUsefulQuery);
-      const data = response?.data || response?.items || response || [];
-      setMostUseful(data);
-    } catch (err) {
-      setMostUsefulError(err.message || "Không thể tải top hữu ích nhất.");
-    } finally {
-      setMostUsefulLoading(false);
-    }
-  }, [mostUsefulQuery]);
-
   // === INITIAL LOAD ===
   useEffect(() => {
     loadUploadStats();
@@ -331,14 +269,6 @@ export default function useReports() {
   useEffect(() => {
     loadTopUploaders();
   }, [loadTopUploaders]);
-
-  useEffect(() => {
-    loadTopRated();
-  }, [loadTopRated]);
-
-  useEffect(() => {
-    loadMostUseful();
-  }, [loadMostUseful]);
 
   // === FILTER ACTIONS (Auto-apply) ===
   
@@ -370,10 +300,6 @@ export default function useReports() {
         setContributorsLimit(draftLimit);
         setUploadersRange(newRange);
         setUploadersLimit(draftLimit);
-        setTopRatedRange(newRange);
-        setTopRatedLimit(draftLimit);
-        setMostUsefulRange(newRange);
-        setMostUsefulLimit(draftLimit);
         break;
       case "upload":
         setUploadRange(newRange);
@@ -402,14 +328,6 @@ export default function useReports() {
         setUploadersRange(newRange);
         setUploadersLimit(draftLimit);
         break;
-      case "topRated":
-        setTopRatedRange(newRange);
-        setTopRatedLimit(draftLimit);
-        break;
-      case "mostUseful":
-        setMostUsefulRange(newRange);
-        setMostUsefulLimit(draftLimit);
-        break;
       default:
         break;
     }
@@ -435,8 +353,6 @@ export default function useReports() {
       setHeaviestLimit(value);
       setContributorsLimit(value);
       setUploadersLimit(value);
-      setTopRatedLimit(value);
-      setMostUsefulLimit(value);
     } else if (selectedTarget === "downloaded") {
       setDownloadedLimit(value);
     } else if (selectedTarget === "saved") {
@@ -447,10 +363,6 @@ export default function useReports() {
       setContributorsLimit(value);
     } else if (selectedTarget === "uploaders") {
       setUploadersLimit(value);
-    } else if (selectedTarget === "topRated") {
-      setTopRatedLimit(value);
-    } else if (selectedTarget === "mostUseful") {
-      setMostUsefulLimit(value);
     }
   }
 
@@ -462,8 +374,6 @@ export default function useReports() {
     loadHeaviestDocuments();
     loadTopContributors();
     loadTopUploaders();
-    loadTopRated();
-    loadMostUseful();
   }
 
   // === HELPERS ===
@@ -497,18 +407,8 @@ export default function useReports() {
     topUploaders,
     uploadersLoading,
     uploadersError,
-    topRated,
-    topRatedLoading,
-    topRatedError,
-    mostUseful,
-    mostUsefulLoading,
-    mostUsefulError,
 
     // === RANGES (for captions) ===
-    topRatedRange,
-    mostUsefulRange,
-
-    // === DRAFT STATE ===
     uploadRange,
     downloadedRange,
     savedRange,

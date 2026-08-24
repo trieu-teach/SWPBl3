@@ -9,6 +9,7 @@ export const REPORT_STATUS_OPTIONS = [
   { value: "PENDING", label: "Chờ xử lý" },
   { value: "RESOLVED", label: "Đã xử lý" },
   { value: "DISMISSED", label: "Đã bỏ qua" },
+  { value: "REVERTED", label: "Đã đảo quyết định" },
 ];
 
 const reasonLabels = Object.fromEntries(
@@ -19,6 +20,7 @@ const statusPresentation = {
   PENDING: { label: "Chờ xử lý", color: "warning" },
   RESOLVED: { label: "Đã xử lý", color: "success" },
   DISMISSED: { label: "Đã bỏ qua", color: "default" },
+  REVERTED: { label: "Đã đảo quyết định", color: "info" },
 };
 
 export function getReportReasonLabel(reason) {

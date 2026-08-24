@@ -77,29 +77,3 @@ export function getTopUploaders(params = {}) {
   const qs = searchParams.toString();
   return apiRequest(`/admin/reports/top-uploaders${qs ? `?${qs}` : ""}`);
 }
-
-/**
- * Fetch top rated documents report (sorted by ratingScore).
- * @param {{ from?: string, to?: string, limit?: number }} params
- */
-export function getTopRatedReport(params = {}) {
-  const searchParams = new URLSearchParams();
-  if (params.from) searchParams.set("from", params.from);
-  if (params.to) searchParams.set("to", params.to);
-  if (params.limit && params.limit !== 10) searchParams.set("limit", String(params.limit));
-  const qs = searchParams.toString();
-  return apiRequest(`/admin/reports/top-rated${qs ? `?${qs}` : ""}`);
-}
-
-/**
- * Fetch most useful documents report (sorted by usefulScore).
- * @param {{ from?: string, to?: string, limit?: number }} params
- */
-export function getMostUsefulDocuments(params = {}) {
-  const searchParams = new URLSearchParams();
-  if (params.from) searchParams.set("from", params.from);
-  if (params.to) searchParams.set("to", params.to);
-  if (params.limit && params.limit !== 10) searchParams.set("limit", String(params.limit));
-  const qs = searchParams.toString();
-  return apiRequest(`/admin/reports/most-useful${qs ? `?${qs}` : ""}`);
-}
