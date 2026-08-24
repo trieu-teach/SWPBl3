@@ -16,6 +16,8 @@ export default function useModeratorAppeals() {
   const toast = useToast();
   const [appeals, setAppeals] = useState([]);
   const [status, setStatus] = useState("PENDING");
+  const [searchInput, setSearchInput] = useState("");
+  const [keyword, setKeyword] = useState("");
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState(EMPTY_META);
   const [loading, setLoading] = useState(true);
@@ -28,7 +30,10 @@ export default function useModeratorAppeals() {
   const [acting, setActing] = useState(false);
   const [preview, setPreview] = useState(null);
 
-  const query = useMemo(() => ({ status, page, limit: 20 }), [status, page]);
+  const query = useMemo(
+    () => ({ status, keyword, page, limit: 20 }),
+    [status, keyword, page],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -50,6 +55,13 @@ export default function useModeratorAppeals() {
 
   function changeStatus(nextStatus) {
     setStatus(nextStatus);
+    setPage(1);
+    closeDetail();
+  }
+
+  function submitSearch(event) {
+    event?.preventDefault();
+    setKeyword(searchInput.trim());
     setPage(1);
     closeDetail();
   }
@@ -167,6 +179,7 @@ export default function useModeratorAppeals() {
   return {
     appeals,
     status,
+    searchInput,
     page,
     meta,
     loading,
@@ -179,9 +192,11 @@ export default function useModeratorAppeals() {
     acting,
     preview,
     setPage,
+    setSearchInput,
     setDecision,
     setPreview,
     changeStatus,
+    submitSearch,
     load,
     openDetail,
     closeDetail,

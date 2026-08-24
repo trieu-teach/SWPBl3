@@ -9,10 +9,12 @@ import {
   Pagination,
   Select,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
 import GavelOutlined from "@mui/icons-material/GavelOutlined";
 import RefreshOutlined from "@mui/icons-material/RefreshOutlined";
+import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import ModeratorLayout from "../Layout/ModeratorLayout.jsx";
 import ModeratorDocumentPreviewDialog from "../Documents/components/ModeratorDocumentPreviewDialog.jsx";
 import ModeratorAppealDecisionDialog from "./components/ModeratorAppealDecisionDialog.jsx";
@@ -36,16 +38,36 @@ export default function ModeratorAppeals() {
         </Box>
       </Stack>
 
-      <Card variant="outlined" sx={{ p: 2, mb: 3, borderRadius: 3 }}>
+      <Card
+        component="form"
+        onSubmit={moderation.submitSearch}
+        variant="outlined"
+        sx={{ p: 2, mb: 3, borderRadius: 3 }}
+      >
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "240px auto" },
+            gridTemplateColumns: {
+              xs: "1fr",
+              md: "minmax(280px, 1fr) 240px auto auto",
+            },
             columnGap: 2,
             rowGap: 1.5,
-            justifyContent: { sm: "end" },
+            alignItems: "center",
           }}
         >
+          <TextField
+            size="small"
+            label="Tìm kiếm"
+            placeholder="Tên tài liệu, người gửi, lý do..."
+            value={moderation.searchInput}
+            onChange={(event) => moderation.setSearchInput(event.target.value)}
+            slotProps={{
+              input: {
+                startAdornment: <SearchOutlined color="action" sx={{ mr: 1 }} />,
+              },
+            }}
+          />
           <FormControl size="small" sx={{ minWidth: 220 }}>
             <InputLabel>Trạng thái</InputLabel>
             <Select value={moderation.status} label="Trạng thái" onChange={(event) => moderation.changeStatus(event.target.value)}>
@@ -55,6 +77,15 @@ export default function ModeratorAppeals() {
             </Select>
           </FormControl>
           <Button
+            type="submit"
+            variant="contained"
+            startIcon={<SearchOutlined />}
+            sx={{ minHeight: 40, px: 2.5 }}
+          >
+            Tìm
+          </Button>
+          <Button
+            type="button"
             variant="outlined"
             startIcon={<RefreshOutlined />}
             onClick={moderation.load}

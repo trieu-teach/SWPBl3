@@ -49,7 +49,11 @@ export default function ModeratorAppealDetailDialog({ moderation }) {
 
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2, mt: 3 }}>
           <Field label="Mã khiếu nại" value={appeal.id} />
-          <Field label="Mã người gửi" value={appeal.userId} />
+          <Field
+            label="Người gửi"
+            value={appeal.user?.fullName || "Không xác định"}
+          />
+          <Field label="Email người gửi" value={appeal.user?.email} />
           <Field
             label="Nguồn khiếu nại"
             value={getModeratorAppealSourceLabel(appeal.source)}
