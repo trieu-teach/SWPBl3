@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import {
   canDecideAppeal,
+  getModeratorAppealSourceLabel,
   getModeratorAppealStatus,
 } from "../utils/moderator-appeal-status.js";
 
@@ -49,7 +50,10 @@ export default function ModeratorAppealDetailDialog({ moderation }) {
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2, mt: 3 }}>
           <Field label="Mã khiếu nại" value={appeal.id} />
           <Field label="Mã người gửi" value={appeal.userId} />
-          <Field label="Nguồn khiếu nại" value={appeal.source} />
+          <Field
+            label="Nguồn khiếu nại"
+            value={getModeratorAppealSourceLabel(appeal.source)}
+          />
           <Field label="Ngày gửi" value={appeal.createdAt ? new Date(appeal.createdAt).toLocaleString("vi-VN") : "—"} />
           {appeal.reviewNote && <Field label="Ghi chú xử lý" value={appeal.reviewNote} />}
         </Box>

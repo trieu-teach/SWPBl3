@@ -23,6 +23,15 @@ export function getModeratorAppealStatus(status) {
   };
 }
 
+export function getModeratorAppealSourceLabel(source) {
+  const labels = {
+    KEYWORD_MODERATION: "Kiểm duyệt từ khóa",
+    USER_REPORT: "Báo cáo cộng đồng",
+  };
+
+  return labels[source] || source || "Kiểm duyệt tài liệu";
+}
+
 export function canDecideAppeal(appeal) {
   return appeal?.status === "PENDING";
 }

@@ -26,6 +26,6 @@ export function getUserAppealStatus(status) {
 
 export function getAppealSourceLabel(source) {
   if (source === "KEYWORD_MODERATION") return "Kiểm duyệt từ khóa";
-  if (source === "COMMUNITY_REPORT") return "Báo cáo cộng đồng";
+  if (source === "USER_REPORT") return "Báo cáo cộng đồng";
   return source || "Kiểm duyệt tài liệu";
 }
