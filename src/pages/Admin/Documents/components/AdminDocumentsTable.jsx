@@ -14,6 +14,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -22,6 +23,17 @@ import {
   RefreshOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
+import {
+  canAdminDecide,
+  getAdminDocumentModeration,
+  getAdminDocumentStatus,
+} from "../utils/admin-document-status.js";
+
+function formatSubmittedAt(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString("vi-VN");
+}
 
 export default function AdminDocumentsTable({ admin }) {
   if (admin.error)
@@ -56,7 +68,32 @@ export default function AdminDocumentsTable({ admin }) {
           <Table>
             <TableHead>
               <TableRow sx={{ bgcolor: "action.hover" }}>
-                <TableCell>Tài liệu</TableCell>
+                <TableCell>
+                  <TableSortLabel
+                    active={admin.sort.sortBy === "title"}
+                    direction={
+                      admin.sort.sortBy === "title"
+                        ? admin.sort.sortOrder
+                        : "asc"
+                    }
+                    onClick={() => admin.toggleSort("title", "asc")}
+                  >
+                    Tài liệu
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell>
+                  <TableSortLabel
+                    active={admin.sort.sortBy === "submittedAt"}
+                    direction={
+                      admin.sort.sortBy === "submittedAt"
+                        ? admin.sort.sortOrder
+                        : "desc"
+                    }
+                    onClick={() => admin.toggleSort("submittedAt", "desc")}
+                  >
+                    Ngày nộp
+                  </TableSortLabel>
+                </TableCell>
                 <TableCell>Người đăng</TableCell>
                 <TableCell>Quyền</TableCell>
                 <TableCell>Kiểm duyệt</TableCell>
@@ -68,14 +105,14 @@ export default function AdminDocumentsTable({ admin }) {
               {admin.loading &&
                 Array.from({ length: 6 }).map((_, index) => (
                   <TableRow key={index}>
-                    <TableCell colSpan={6}>
+                    <TableCell colSpan={7}>
                       <Skeleton height={42} />
                     </TableCell>
                   </TableRow>
                 ))}
               {!admin.loading && admin.documents.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
                     <Typography fontWeight={700}>
                       Không tìm thấy tài liệu
                     </Typography>
@@ -86,8 +123,12 @@ export default function AdminDocumentsTable({ admin }) {
                 </TableRow>
               )}
               {!admin.loading &&
-                admin.documents.map((document) => (
-                  <TableRow key={document.id} hover>
+                admin.documents.map((document) => {
+                  const moderation = getAdminDocumentModeration(document);
+                  const status = getAdminDocumentStatus(document.status);
+
+                  return (
+                    <TableRow key={document.id} hover>
                     <TableCell sx={{ maxWidth: 300 }}>
                       <Typography
                         fontWeight={700}
@@ -100,6 +141,7 @@ export default function AdminDocumentsTable({ admin }) {
                         {document.fileName}
                       </Typography>
                     </TableCell>
+                    <TableCell>{formatSubmittedAt(document.submittedAt)}</TableCell>
                     <TableCell>
                       <Typography>{document.owner?.fullName}</Typography>
                       <Typography variant="caption" color="text.secondary">
@@ -125,32 +167,16 @@ export default function AdminDocumentsTable({ admin }) {
                     <TableCell>
                       <Chip
                         size="small"
-                        label={
-                          document.moderationStatus === "APPROVED"
-                            ? "Đã duyệt"
-                            : document.moderationStatus === "REJECTED"
-                              ? "Từ chối"
-                              : "Chờ duyệt"
-                        }
-                        color={
-                          document.moderationStatus === "APPROVED"
-                            ? "success"
-                            : document.moderationStatus === "REJECTED"
-                              ? "error"
-                              : "warning"
-                        }
+                        label={moderation.label}
+                        color={moderation.color}
                         variant="outlined"
                       />
                     </TableCell>
                     <TableCell>
                       <Chip
                         size="small"
-                        label={
-                          document.status === "HIDDEN" ? "Đã ẩn" : "Hoạt động"
-                        }
-                        color={
-                          document.status === "HIDDEN" ? "error" : "success"
-                        }
+                        label={status.label}
+                        color={status.color}
                       />
                     </TableCell>
                     <TableCell align="right">
@@ -161,7 +187,7 @@ export default function AdminDocumentsTable({ admin }) {
                       </Tooltip>
                       <Tooltip
                         title={
-                          document.moderationStatus === "PENDING"
+                          canAdminDecide(document)
                             ? "Chi tiết và kiểm duyệt"
                             : "Xem chi tiết"
                         }
@@ -174,8 +200,9 @@ export default function AdminDocumentsTable({ admin }) {
                         </IconButton>
                       </Tooltip>
                     </TableCell>
-                  </TableRow>
-                ))}
+                    </TableRow>
+                  );
+                })}
             </TableBody>
           </Table>
         </TableContainer>

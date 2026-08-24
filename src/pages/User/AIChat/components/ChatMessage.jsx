@@ -205,6 +205,8 @@ export default function ChatMessage({
   onRetry,
   onSend,
   onSourceSelect,
+  onPreviewDocument,
+  loadingId,
 }) {
   const [copied, setCopied] = useState(false);
   const isUser = message.role === "user";
@@ -318,6 +320,8 @@ export default function ChatMessage({
                     <ChatSources
                       sources={message.sources}
                       onSourceSelect={onSourceSelect}
+                      onPreviewDocument={onPreviewDocument}
+                      loadingId={loadingId}
                     />
                   )}
                 </Box>
@@ -390,6 +394,8 @@ export default function ChatMessage({
                 <ChatSources
                   sources={message.sources}
                   onSourceSelect={onSourceSelect}
+                  onPreviewDocument={onPreviewDocument}
+                  loadingId={loadingId}
                 />
               )}
 

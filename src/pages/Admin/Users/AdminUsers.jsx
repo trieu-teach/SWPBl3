@@ -16,6 +16,8 @@ export default function AdminUsers() {
       <AdminUsersTable adminUsers={adminUsers} />
       <AdminUserDetailDialog
         user={adminUsers.selectedUser}
+        loading={adminUsers.detailLoading}
+        error={adminUsers.detailError}
         onClose={() => adminUsers.setSelectedUser(null)}
         onChangeStatus={(user) => {
           adminUsers.setSelectedUser(null);

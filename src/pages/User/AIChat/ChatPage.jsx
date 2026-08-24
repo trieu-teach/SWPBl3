@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Box, Paper } from "@mui/material";
 import UserLayout from "../Layout/UserLayout.jsx";
@@ -16,7 +16,10 @@ import {
   CHAT_MODE_LIBRARY,
   createLibraryContext,
   getLibraryScopePresentation,
+  hasSameLibrarySource,
+  hasSelectedSource,
   setLibrarySubjectScopes,
+  shouldStartNewLibraryChatOnSourceChange,
   toggleLibraryDocumentScope,
 } from "./chatContext.js";
 
@@ -94,6 +97,9 @@ function persistSubjectScopes(scopes) {
   }
 }
 
+import useDocumentPreview from "./hooks/useDocumentPreview.js";
+import DocumentPreviewDialog from "../DocumentLibrary/components/DocumentPreviewDialog.jsx";
+
 function ChatPageLayout({
   chatContext,
   libraryScope,
@@ -123,6 +129,8 @@ function ChatPageLayout({
 }) {
   const [documentsOpen, setDocumentsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  
+  const { preview, loadingId, openPreview, closePreview } = useDocumentPreview();
 
   return (
     <UserLayout>
@@ -148,6 +156,7 @@ function ChatPageLayout({
           selectionLocked={selectionLocked}
           mobileOpen={documentsOpen}
           onMobileClose={() => setDocumentsOpen(false)}
+          onPreviewDocument={openPreview}
         />
 
         <Box
@@ -175,7 +184,9 @@ function ChatPageLayout({
             selectionLocked={selectionLocked}
           />
 
-          {children}
+          {typeof children === "function" 
+            ? children({ onPreviewDocument: openPreview, loadingPreviewId: loadingId }) 
+            : React.cloneElement(children, { onPreviewDocument: openPreview, loadingPreviewId: loadingId })}
         </Box>
       </Paper>
 
@@ -199,6 +210,8 @@ function ChatPageLayout({
         actionError={sessionActionError}
         onClearActionError={onClearSessionActionError}
       />
+      
+      <DocumentPreviewDialog preview={preview} onClose={closePreview} />
     </UserLayout>
   );
 }
@@ -288,6 +301,41 @@ function LibraryChatRuntime({ preselectedDocument }) {
     return startNewChat();
   }, [resetConversation, startNewChat]);
 
+  const activeSessionId = validatedSessionId ?? requestedSessionId;
+  const selectionLocked = isValidating || conversation.isSending;
+
+  const applyLibrarySourceChange = useCallback(
+    (nextContext, nextSubjectIds) => {
+      if (selectionLocked) return false;
+
+      const sourceChanged = !hasSameLibrarySource(libraryContext, nextContext);
+      if (
+        sourceChanged &&
+        shouldStartNewLibraryChatOnSourceChange({
+          sessionId: activeSessionId,
+          messages: conversation.messages,
+        })
+      ) {
+        resetConversation();
+        startNewChat();
+      }
+
+      if (Array.isArray(nextSubjectIds)) {
+        setSelectedSubjectIds(nextSubjectIds);
+      }
+      setLibraryContext(nextContext);
+      return sourceChanged;
+    },
+    [
+      activeSessionId,
+      conversation.messages,
+      libraryContext,
+      resetConversation,
+      selectionLocked,
+      startNewChat,
+    ],
+  );
+
   useEffect(() => {
     if (!validatedSessionId || !validatedSession) return;
     const sessionSubjectId = normalizeId(
@@ -356,46 +404,54 @@ function LibraryChatRuntime({ preselectedDocument }) {
     [libraryDocuments.subjects, selectedSubjectIds],
   );
 
-  const toggleDocument = useCallback((document) => {
-    if (validatedSessionId) return;
-    setLibraryContext((current) => {
-      const next = toggleLibraryDocumentScope(current, document);
-      return next.libraryFilters?.documentIds?.length
+  const toggleDocument = useCallback(
+    (document) => {
+      const next = toggleLibraryDocumentScope(libraryContext, document);
+      const nextContext = next.libraryFilters?.documentIds?.length
         ? next
         : setLibrarySubjectScopes(selectedSubjects);
-    });
-  }, [selectedSubjects, validatedSessionId]);
+      applyLibrarySourceChange(nextContext);
+    },
+    [applyLibrarySourceChange, libraryContext, selectedSubjects],
+  );
 
-  const removeDocument = useCallback((documentId) => {
-    if (validatedSessionId) return;
-    setLibraryContext((current) => {
+  const removeDocument = useCallback(
+    (documentId) => {
       const next = toggleLibraryDocumentScope(
-        current,
+        libraryContext,
         { id: documentId },
         false,
       );
-      return next.libraryFilters?.documentIds?.length
+      const nextContext = next.libraryFilters?.documentIds?.length
         ? next
         : setLibrarySubjectScopes(selectedSubjects);
-    });
-  }, [selectedSubjects, validatedSessionId]);
+      applyLibrarySourceChange(nextContext);
+    },
+    [applyLibrarySourceChange, libraryContext, selectedSubjects],
+  );
 
-  const changeSubjects = useCallback((subjectIds) => {
-    if (validatedSessionId) return;
-    const normalizedIds = [...new Set(
-      (Array.isArray(subjectIds) ? subjectIds : [])
-        .map(normalizeId)
-        .filter(Boolean),
-    )];
-    const nextSubjects = normalizedIds.map((subjectId) =>
-      libraryDocuments.subjects.find((subject) => subject.id === subjectId) ?? {
-        id: subjectId,
-        name: "Môn học đã chọn",
-      });
+  const changeSubjects = useCallback(
+    (subjectIds) => {
+      const normalizedIds = [...new Set(
+        (Array.isArray(subjectIds) ? subjectIds : [])
+          .map(normalizeId)
+          .filter(Boolean),
+      )];
+      const nextSubjects = normalizedIds.map((subjectId) =>
+        libraryDocuments.subjects.find(
+          (subject) => subject.id === subjectId,
+        ) ?? {
+          id: subjectId,
+          name: "Môn học đã chọn",
+        });
 
-    setSelectedSubjectIds(normalizedIds);
-    setLibraryContext(setLibrarySubjectScopes(nextSubjects));
-  }, [libraryDocuments.subjects, validatedSessionId]);
+      applyLibrarySourceChange(
+        setLibrarySubjectScopes(nextSubjects),
+        normalizedIds,
+      );
+    },
+    [applyLibrarySourceChange, libraryDocuments.subjects],
+  );
 
   const handleDeleteSession = useCallback(async (sessionId) => {
     const deleted = await deleteSession(sessionId);
@@ -417,9 +473,12 @@ function LibraryChatRuntime({ preselectedDocument }) {
     [selectSession],
   );
 
-  const activeSessionId = validatedSessionId ?? requestedSessionId;
   const conversationError =
     routeError || conversation.historyError || conversation.error;
+
+  // True when no primary source (subject or document) is selected.
+  // Used to block sending and show the "select a source" prompt.
+  const sourceRequired = !hasSelectedSource(libraryContext.libraryFilters);
 
   return (
     <ChatPageLayout
@@ -446,7 +505,7 @@ function LibraryChatRuntime({ preselectedDocument }) {
       deletingSessionId={deletingSessionId}
       sessionActionError={sessionActionError}
       onClearSessionActionError={clearSessionActionError}
-      selectionLocked={Boolean(activeSessionId)}
+      selectionLocked={selectionLocked}
     >
       <ChatConversation
         chatContext={libraryContext}
@@ -465,6 +524,7 @@ function LibraryChatRuntime({ preselectedDocument }) {
         hasMoreHistory={conversation.hasMoreHistory}
         onLoadOlder={conversation.loadOlderMessages}
         disabled={!conversationEnabled}
+        sourceRequired={sourceRequired}
       />
     </ChatPageLayout>
   );

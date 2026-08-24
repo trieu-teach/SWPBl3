@@ -7,9 +7,17 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
-  Stack,
   Typography,
 } from "@mui/material";
+import {
+  canAdminDecide,
+  canAdminHide,
+  canAdminUnhide,
+  getAdminDocumentModeration,
+  getAdminDocumentStatus,
+} from "../utils/admin-document-status.js";
+import AdminKeywordMatchesPanel from "./AdminKeywordMatchesPanel.jsx";
+import AdminDocumentOwnerReviewPanel from "./AdminDocumentOwnerReviewPanel.jsx";
 
 function Field({ label, value }) {
   return (
@@ -26,48 +34,61 @@ export default function AdminDocumentDetailDialog({
   onClose,
   onPreview,
   onAction,
+  onClaim,
+  claimed,
+  loading,
+  keywordCatalog,
+  onAddKeywordException,
+  onBlockOwner,
 }) {
   if (!document) return null;
 
-  const isPendingPublicDocument =
-    document.visibility === "PUBLIC" && document.moderationStatus === "PENDING";
-  const canToggleHidden = document.moderationStatus === "APPROVED";
+  const moderation = getAdminDocumentModeration(document);
+  const status = getAdminDocumentStatus(document.status);
+  const canDecide = canAdminDecide(document);
+  const canHide = canAdminHide(document);
+  const canUnhide = canAdminUnhide(document);
 
   return (
     <Dialog open onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>Chi tiết tài liệu</DialogTitle>
       <DialogContent dividers>
-        <Typography variant="h6" fontWeight={750}>
-          {document.title}
-        </Typography>
-        <Typography color="text.secondary">{document.fileName}</Typography>
-        <Stack direction="row" gap={1} flexWrap="wrap" sx={{ my: 2 }}>
-          <Chip
-            size="small"
-            color={
-              document.visibility === "PUBLIC" ? "success" : "secondary"
-            }
-            variant="outlined"
-            label={document.visibility === "PUBLIC" ? "Công khai" : "Riêng tư"}
-          />
-          <Chip
-            size="small"
-            label={document.moderationStatus}
-            color={
-              document.moderationStatus === "APPROVED"
-                ? "success"
-                : document.moderationStatus === "REJECTED"
-                  ? "error"
-                  : "warning"
-            }
-          />
-          <Chip
-            size="small"
-            label={document.status === "HIDDEN" ? "Đã ẩn" : "Hoạt động"}
-            color={document.status === "HIDDEN" ? "error" : "success"}
-            variant="outlined"
-          />
-        </Stack>
+        <Box sx={{ mb: 2.5 }}>
+          <Typography variant="h6" fontWeight={750}>
+            {document.title}
+          </Typography>
+          <Typography color="text.secondary" sx={{ mt: 0.75 }}>
+            {document.fileName}
+          </Typography>
+          <Box
+            sx={{
+              mt: 2,
+              display: "flex",
+              flexWrap: "wrap",
+              "& .MuiChip-root": { mr: 1, mb: 1 },
+            }}
+          >
+            <Chip
+              size="small"
+              color={
+                document.visibility === "PUBLIC" ? "success" : "secondary"
+              }
+              variant="outlined"
+              label={document.visibility === "PUBLIC" ? "Công khai" : "Riêng tư"}
+            />
+            <Chip
+              size="small"
+              label={moderation.label}
+              color={moderation.color}
+            />
+            <Chip
+              size="small"
+              label={status.label}
+              color={status.color}
+              variant="outlined"
+            />
+          </Box>
+        </Box>
         <Divider sx={{ mb: 2 }} />
         <Box
           sx={{
@@ -110,36 +131,59 @@ export default function AdminDocumentDetailDialog({
             </Box>
           )}
         </Box>
+        <AdminKeywordMatchesPanel
+          document={document}
+          keywordCatalog={keywordCatalog}
+          claimed={claimed}
+          loading={loading}
+          onAddException={onAddKeywordException}
+        />
+        <AdminDocumentOwnerReviewPanel
+          document={document}
+          loading={loading}
+          onBlockOwner={onBlockOwner}
+        />
       </DialogContent>
       <DialogActions sx={{ flexWrap: "wrap" }}>
         <Button onClick={() => onPreview(document)}>Xem file</Button>
-        {isPendingPublicDocument && (
+        {canDecide && (
           <>
+            {!claimed && (
+              <Button
+                variant="contained"
+                onClick={onClaim}
+                disabled={loading}
+              >
+                Nhận xử lý
+              </Button>
+            )}
             <Button
               color="success"
+              disabled={!claimed || loading}
               onClick={() => onAction({ type: "approve", document })}
             >
               Duyệt
             </Button>
             <Button
               color="error"
+              disabled={!claimed || loading}
               onClick={() => onAction({ type: "reject", document })}
             >
               Từ chối
             </Button>
           </>
         )}
-        {canToggleHidden && (
+        {(canHide || canUnhide) && (
           <Button
-            color={document.status === "HIDDEN" ? "success" : "error"}
+            color={canUnhide ? "success" : "error"}
             onClick={() =>
               onAction({
-                type: document.status === "HIDDEN" ? "unhide" : "hide",
+                type: canUnhide ? "unhide" : "hide",
                 document,
               })
             }
           >
-            {document.status === "HIDDEN" ? "Khôi phục" : "Ẩn"}
+            {canUnhide ? "Khôi phục" : "Ẩn"}
           </Button>
         )}
         <Button onClick={onClose}>Đóng</Button>

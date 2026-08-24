@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getAdminDocument,
   getAdminDocumentPreview,
-  setAdminDocumentHidden,
 } from "../../../../api/admin-documents.api.js";
 import {
   getModerationReports,
@@ -20,6 +19,29 @@ const EMPTY_META = {
 };
 
 const OFFICE_EXTENSIONS = ["doc", "docx", "xls", "xlsx", "ppt", "pptx"];
+
+const REPORT_RESOLUTIONS = {
+  dismiss: {
+    status: "DISMISSED",
+    action: "NONE",
+    successMessage: "Đã bỏ qua báo cáo.",
+  },
+  resolve: {
+    status: "RESOLVED",
+    action: "NONE",
+    successMessage: "Đã đánh dấu báo cáo là đã xử lý.",
+  },
+  hide: {
+    status: "RESOLVED",
+    action: "HIDE_DOCUMENT",
+    successMessage: "Đã đóng báo cáo và ẩn tài liệu.",
+  },
+  delete: {
+    status: "RESOLVED",
+    action: "DELETE_DOCUMENT",
+    successMessage: "Đã đóng báo cáo và xóa tài liệu.",
+  },
+};
 
 export default function useModerationReports() {
   const toast = useToast();
@@ -156,41 +178,19 @@ export default function useModerationReports() {
     closeReport();
   }
 
-  async function confirmAction(reason) {
+  async function confirmAction() {
     if (!action || !selectedReport) return;
+    const resolution = REPORT_RESOLUTIONS[action.type];
+    if (!resolution) return;
+
     setActing(true);
     try {
-      if (action.type === "hide" || action.type === "unhide") {
-        const hidden = action.type === "hide";
-        const result = await setAdminDocumentHidden(
-          selectedDocumentId.current,
-          hidden,
-          reason,
-        );
-        setDocument((current) =>
-          current ? { ...current, status: result.status } : current,
-        );
-        setSelectedReport((current) =>
-          current
-            ? {
-                ...current,
-                document: { ...current.document, status: result.status },
-              }
-            : current,
-        );
-        toast.success(hidden ? "Đã ẩn tài liệu." : "Đã khôi phục tài liệu.");
-        setAction(null);
-        await loadReports();
-        return;
-      }
-
-      const nextStatus = action.type === "dismiss" ? "DISMISSED" : "RESOLVED";
-      await resolveModerationReport(selectedReport.id, nextStatus);
-      toast.success(
-        nextStatus === "DISMISSED"
-          ? "Đã bỏ qua báo cáo."
-          : "Đã đánh dấu báo cáo là đã xử lý.",
+      await resolveModerationReport(
+        selectedReport.id,
+        resolution.status,
+        resolution.action,
       );
+      toast.success(resolution.successMessage);
       setAction(null);
       detailGeneration.current += 1;
       selectedDocumentId.current = "";
@@ -201,7 +201,22 @@ export default function useModerationReports() {
       setPreviewLoading(false);
       await loadReports();
     } catch (requestError) {
-      toast.error(requestError.message || "Không thể hoàn tất thao tác kiểm duyệt.");
+      if (requestError.status === 409) {
+        toast.error("Báo cáo đã được người khác xử lý hoặc không còn hợp lệ.");
+        setAction(null);
+        detailGeneration.current += 1;
+        selectedDocumentId.current = "";
+        setSelectedReport(null);
+        setDocument(null);
+        setDetailLoading(false);
+        setPreview(null);
+        setPreviewLoading(false);
+        await loadReports();
+      } else {
+        toast.error(
+          requestError.message || "Không thể hoàn tất thao tác kiểm duyệt.",
+        );
+      }
     } finally {
       setActing(false);
     }

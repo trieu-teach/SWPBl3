@@ -1,8 +1,9 @@
 import { ApiError, apiRequest } from "../lib/http.js";
 import {
   buildChatSessionPayload,
-  sanitizeLibraryFilters,
+  requireLibrarySourceFilters,
 } from "./chat.filters.js";
+import { resolveChatRequestId } from "./chat.request-id.js";
 export {
   getChatErrorMessage,
   getHistoryErrorMessage,
@@ -25,17 +26,17 @@ function mapChatRequest({
   const body = {
     question,
     limit: DEFAULT_LIBRARY_LIMIT,
-    requestId,
+    requestId: resolveChatRequestId(requestId),
   };
 
   if (sessionId) {
     body.sessionId = sessionId;
   }
 
-  const cleanedFilters = sanitizeLibraryFilters(
+  const cleanedFilters = requireLibrarySourceFilters(
     filters ?? { subjectId, subjectIds, documentIds },
   );
-  if (cleanedFilters) body.filters = cleanedFilters;
+  body.filters = cleanedFilters;
 
   return body;
 }

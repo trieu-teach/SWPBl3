@@ -12,6 +12,7 @@ import {
   updateDocument,
   updateDocumentVisibility,
 } from "../../../../api/documents.api.js";
+import { createDocumentAppeal } from "../../../../api/document-appeals.api.js";
 import { useToast } from "../../../../components/Toast/ToastProvider.jsx";
 
 export default function useDocumentDetails() {
@@ -29,6 +30,7 @@ export default function useDocumentDetails() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [appealing, setAppealing] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -178,21 +180,35 @@ export default function useDocumentDetails() {
     }
   }
 
-  async function resubmitForReview() {
-    setSaving(true);
+  async function submitAppeal(reason, description) {
+    setAppealing(true);
     setError("");
     setSuccess("");
+
     try {
-      const updated = await updateDocumentVisibility(id, "PUBLIC");
+      await createDocumentAppeal(id, reason, description);
+      const updated = await getDocument(id);
       setDocument(updated);
-      setSuccess("Tài liệu đã được gửi duyệt lại.");
-      toast.success("Đã gửi tài liệu để kiểm duyệt lại.");
+      setSuccess("Khiếu nại đã được gửi và đang chờ xem xét.");
+      toast.success("Đã gửi khiếu nại tài liệu.");
+      return true;
     } catch (requestError) {
-      const message = requestError.message || "Không thể gửi duyệt lại.";
+      let message = requestError.message || "Không thể gửi khiếu nại.";
+
+      if (requestError.status === 409) {
+        message = "Tài liệu này đã có khiếu nại và không thể gửi thêm.";
+      } else if (
+        requestError.status === 400 &&
+        requestError.message?.toLowerCase().includes("appeal window")
+      ) {
+        message = "Đã hết thời hạn gửi khiếu nại cho tài liệu này.";
+      }
+
       setError(message);
       toast.error(message);
+      return false;
     } finally {
-      setSaving(false);
+      setAppealing(false);
     }
   }
 
@@ -246,6 +262,7 @@ export default function useDocumentDetails() {
     form,
     loading,
     saving,
+    appealing,
     deleting,
     error,
     success,
@@ -256,7 +273,7 @@ export default function useDocumentDetails() {
     updateField,
     save,
     changeVisibility,
-    resubmitForReview,
+    submitAppeal,
     openFile,
     remove,
     openDeleteDialog,

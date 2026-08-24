@@ -14,6 +14,7 @@ import UserLayout from "../Layout/UserLayout.jsx";
 import DocumentPreviewDialog from "../DocumentLibrary/components/DocumentPreviewDialog.jsx";
 import DocumentActions from "./components/DocumentActions.jsx";
 import DocumentEditForm from "./components/DocumentEditForm.jsx";
+import DocumentModerationAlert from "./components/DocumentModerationAlert.jsx";
 import useDocumentDetails from "./hooks/useDocumentDetails.js";
 import {
   AI_STATUS,
@@ -76,22 +77,7 @@ export default function DocumentDetails() {
         </Alert>
       )}
 
-      {document.visibility === "PUBLIC" &&
-        document.moderationStatus === "PENDING" && (
-          <Alert severity="info" sx={{ mb: 2 }}>
-            Tài liệu đang chờ kiểm duyệt và chưa xuất hiện trong Cộng đồng.
-          </Alert>
-        )}
-      {document.visibility === "PUBLIC" &&
-        document.moderationStatus === "REJECTED" && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            <Typography fontWeight={700}>Tài liệu đã bị từ chối.</Typography>
-            <Typography variant="body2">
-              {document.rejectionReason ||
-                "Chưa có lý do từ chối cụ thể."}
-            </Typography>
-          </Alert>
-        )}
+      <DocumentModerationAlert document={document} />
 
       <Paper
         variant="outlined"

@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import {
   Alert,
   Button,
@@ -6,20 +5,21 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  TextField,
   Typography,
 } from "@mui/material";
 
 const ACTION_COPY = {
   hide: {
     title: "Ẩn tài liệu",
-    consequence: "Tài liệu sẽ bị ẩn khỏi cộng đồng. Báo cáo vẫn cần được xử lý riêng.",
-    color: "error",
+    consequence:
+      "Báo cáo sẽ được đóng, tài liệu bị ẩn khỏi cộng đồng và chủ tài liệu có 7 ngày để khiếu nại.",
+    color: "warning",
   },
-  unhide: {
-    title: "Khôi phục tài liệu",
-    consequence: "Tài liệu sẽ hoạt động trở lại theo trạng thái công khai hiện tại.",
-    color: "success",
+  delete: {
+    title: "Xóa mềm tài liệu",
+    consequence:
+      "Báo cáo sẽ được đóng và tài liệu bị xóa mềm. Chủ tài liệu không thể khiếu nại để khôi phục.",
+    color: "error",
   },
   resolve: {
     title: "Đánh dấu đã xử lý",
@@ -39,11 +39,9 @@ export default function ModerationActionDialog({
   onClose,
   onConfirm,
 }) {
-  const [reason, setReason] = useState("");
-  useEffect(() => setReason(""), [action]);
   if (!action) return null;
   const copy = ACTION_COPY[action.type];
-  const acceptsReason = action.type === "hide" || action.type === "unhide";
+  if (!copy) return null;
 
   return (
     <Dialog open onClose={loading ? undefined : onClose} fullWidth maxWidth="xs">
@@ -52,20 +50,18 @@ export default function ModerationActionDialog({
         <Typography sx={{ mb: 2 }}>
           Xác nhận thao tác với <strong>{action.documentTitle}</strong>?
         </Typography>
-        <Alert severity={action.type === "hide" ? "warning" : "info"} sx={{ mb: 2 }}>
+        <Alert
+          severity={
+            action.type === "delete"
+              ? "error"
+              : action.type === "hide"
+                ? "warning"
+                : "info"
+          }
+          sx={{ mb: 2 }}
+        >
           {copy.consequence}
         </Alert>
-        {acceptsReason && (
-          <TextField
-            fullWidth
-            multiline
-            minRows={3}
-            label="Lý do (không bắt buộc)"
-            value={reason}
-            onChange={(event) => setReason(event.target.value)}
-            disabled={loading}
-          />
-        )}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={loading}>
@@ -74,7 +70,7 @@ export default function ModerationActionDialog({
         <Button
           variant="contained"
           color={copy.color}
-          onClick={() => onConfirm(reason.trim())}
+          onClick={onConfirm}
           disabled={loading}
         >
           {loading ? "Đang cập nhật..." : "Xác nhận"}

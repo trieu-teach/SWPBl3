@@ -9,6 +9,7 @@ import {
   CircularProgress,
   IconButton,
   Pagination,
+  TableSortLabel,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -204,7 +205,7 @@ function EmptyState() {
 }
 
 export default function AuditLogTable({ audit }) {
-  const { logs, loading, error, total, page, pageCount } = audit;
+  const { logs, loading, error, total, page, pageCount, sortOrder } = audit;
   const [selectedLog, setSelectedLog] = useState(null);
 
   if (error) {
@@ -283,9 +284,20 @@ export default function AuditLogTable({ audit }) {
             </Typography>
           </Box>
           <Box sx={{ gridColumn: 4 }}>
-            <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ letterSpacing: "0.06em", textTransform: "uppercase", fontSize: "0.68rem" }}>
+            <TableSortLabel
+              active
+              direction={sortOrder}
+              onClick={audit.toggleSort}
+              sx={{
+                color: "text.secondary",
+                fontSize: "0.68rem",
+                fontWeight: 700,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+              }}
+            >
               Thời gian
-            </Typography>
+            </TableSortLabel>
           </Box>
           <Box sx={{ gridColumn: 5 }} />
         </Box>

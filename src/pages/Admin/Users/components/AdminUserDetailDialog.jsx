@@ -1,8 +1,10 @@
 import {
+  Alert,
   Avatar,
   Box,
   Button,
   Chip,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -37,17 +39,68 @@ function formatDate(value, includeTime = false) {
     : new Date(value).toLocaleDateString("vi-VN");
 }
 
+function formatCurrency(value) {
+  return `${Number(value || 0).toLocaleString("vi-VN")} đ`;
+}
+
+function SummaryGrid({ children }) {
+  return (
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(4, 1fr)" },
+        gap: 2,
+        p: 2,
+        borderRadius: 3,
+        bgcolor: "action.hover",
+      }}
+    >
+      {children}
+    </Box>
+  );
+}
+
+function RecentItems({ items, renderItem, emptyText }) {
+  if (!items?.length) {
+    return (
+      <Typography color="text.secondary" variant="body2" sx={{ mt: 1.5 }}>
+        {emptyText}
+      </Typography>
+    );
+  }
+  return (
+    <Stack divider={<Divider flexItem />} sx={{ mt: 1.5 }}>
+      {items.slice(0, 5).map(renderItem)}
+    </Stack>
+  );
+}
+
 export default function AdminUserDetailDialog({
   user,
+  loading,
+  error,
   onClose,
   onChangeStatus,
   onChangeRole,
 }) {
   if (!user) return null;
+  const usage = user.usage || user;
+  const subscription = user.subscription || {
+    planCode: user.planCode,
+    planName: user.planName,
+    expiresAt: user.expiresAt,
+  };
   return (
     <Dialog open onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>Chi tiết người dùng</DialogTitle>
       <DialogContent dividers>
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {loading && (
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+            <CircularProgress size={18} />
+            <Typography color="text.secondary">Đang tải đầy đủ chi tiết...</Typography>
+          </Stack>
+        )}
         <Stack direction="row" gap={2} alignItems="center" sx={{ mb: 3 }}>
           <Avatar
             src={user.avatarUrl || undefined}
@@ -98,38 +151,28 @@ export default function AdminUserDetailDialog({
         <Typography fontWeight={750} sx={{ mb: 2 }}>
           Mức sử dụng
         </Typography>
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(4, 1fr)" },
-            gap: 2,
-            p: 2,
-            mb: 3,
-            borderRadius: 3,
-            bgcolor: "action.hover",
-          }}
-        >
+        <SummaryGrid>
           <DetailRow
             label="Tài liệu"
-            value={`${Number(user.documentCount || 0).toLocaleString("vi-VN")} tệp`}
+            value={`${Number(usage.documentCount || 0).toLocaleString("vi-VN")} tệp`}
           />
           <DetailRow
             label="Dung lượng đã dùng"
-            value={formatFileSize(user.storageUsedBytes || 0)}
+            value={formatFileSize(usage.storageUsedBytes || 0)}
           />
           <DetailRow
             label="Lượt tải"
-            value={Number(user.downloadCount || 0).toLocaleString("vi-VN")}
+            value={Number(usage.downloadCount || 0).toLocaleString("vi-VN")}
           />
           <DetailRow
             label="Lượt hỏi AI"
             value={
-              user.planCode
-                ? `${Number(user.aiChatsUsed || 0).toLocaleString("vi-VN")} / ${user.aiChatLimit == null ? "∞" : Number(user.aiChatLimit).toLocaleString("vi-VN")}`
+              subscription?.planCode
+                ? `${Number(usage.aiChatsUsed || 0).toLocaleString("vi-VN")} / ${usage.aiChatLimit == null ? "∞" : Number(usage.aiChatLimit).toLocaleString("vi-VN")}`
                 : "—"
             }
           />
-        </Box>
+        </SummaryGrid>
 
         <Typography fontWeight={750} sx={{ mb: 2 }}>
           Gói hiện tại
@@ -142,11 +185,11 @@ export default function AdminUserDetailDialog({
             mb: 3,
           }}
         >
-          <DetailRow label="Mã gói" value={user.planCode} />
-          <DetailRow label="Tên gói" value={user.planName} />
+          <DetailRow label="Mã gói" value={subscription?.planCode} />
+          <DetailRow label="Tên gói" value={subscription?.planName} />
           <DetailRow
             label="Ngày hết hạn"
-            value={user.expiresAt ? formatDate(user.expiresAt) : "Không giới hạn"}
+            value={subscription?.expiresAt ? formatDate(subscription.expiresAt) : "Không giới hạn"}
           />
         </Box>
         <Divider sx={{ mb: 3 }} />
@@ -181,6 +224,70 @@ export default function AdminUserDetailDialog({
             <DetailRow label="Firebase UID" value={user.firebaseUid} />
           </Box>
         </Box>
+
+        {user.documents && (
+          <>
+            <Divider sx={{ my: 3 }} />
+            <Typography fontWeight={750} sx={{ mb: 2 }}>Tài liệu</Typography>
+            <SummaryGrid>
+              <DetailRow label="Tổng tài liệu" value={user.documents.total} />
+              <DetailRow label="Công khai" value={user.documents.publicCount} />
+              <DetailRow label="Riêng tư" value={user.documents.privateCount} />
+              <DetailRow label="Chờ duyệt" value={user.documents.pendingCount} />
+            </SummaryGrid>
+            <RecentItems
+              items={user.documents.items}
+              emptyText="Người dùng chưa có tài liệu."
+              renderItem={(document) => (
+                <Stack key={document.id} direction="row" justifyContent="space-between" gap={2} sx={{ py: 1.25 }}>
+                  <Box minWidth={0}>
+                    <Typography fontWeight={650} noWrap>{document.title}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {formatDate(document.createdAt)} · {document.downloadCount} lượt tải
+                    </Typography>
+                  </Box>
+                  <Chip size="small" label={document.moderationStatus} variant="outlined" />
+                </Stack>
+              )}
+            />
+          </>
+        )}
+
+        {user.transactions && (
+          <>
+            <Divider sx={{ my: 3 }} />
+            <Typography fontWeight={750} sx={{ mb: 2 }}>Thanh toán</Typography>
+            <SummaryGrid>
+              <DetailRow label="Tổng chi tiêu" value={formatCurrency(user.transactions.totalSpent)} />
+              <DetailRow label="Số giao dịch" value={user.transactions.orderCount} />
+            </SummaryGrid>
+          </>
+        )}
+
+        {user.aiUsage && (
+          <>
+            <Divider sx={{ my: 3 }} />
+            <Typography fontWeight={750} sx={{ mb: 2 }}>Sử dụng AI</Typography>
+            <SummaryGrid>
+              <DetailRow label="Tổng câu hỏi" value={user.aiUsage.totalQuestions} />
+              <DetailRow label="Credit đã dùng" value={user.aiUsage.totalCreditsUsed} />
+              <DetailRow label="Phiên trò chuyện" value={user.aiUsage.sessionsCount} />
+              <DetailRow label="Tài liệu đã lưu" value={usage.savedDocuments} />
+            </SummaryGrid>
+          </>
+        )}
+
+        {user.reports && (
+          <>
+            <Divider sx={{ my: 3 }} />
+            <Typography fontWeight={750} sx={{ mb: 2 }}>Báo cáo và rủi ro</Typography>
+            <SummaryGrid>
+              <DetailRow label="Báo cáo đã gửi" value={user.reports.reportCount} />
+              <DetailRow label="Lần bị báo cáo" value={user.reports.reportedCount} />
+              <DetailRow label="Điểm spam" value={user.reports.spamScore} />
+            </SummaryGrid>
+          </>
+        )}
       </DialogContent>
       <DialogActions>
         {user.role !== "ADMIN" && (

@@ -7,7 +7,6 @@ const INITIAL_FILTERS = {
   result: "",
   from: "",
   to: "",
-  sortOrder: "desc",
 };
 
 export default function useAuditLogs() {
@@ -15,6 +14,7 @@ export default function useAuditLogs() {
   const [filters, setFilters] = useState(INITIAL_FILTERS);
   const [searchInput, setSearchInput] = useState("");
   const [page, setPage] = useState(1);
+  const [sortOrder, setSortOrder] = useState("desc");
   const [pageCount, setPageCount] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -24,7 +24,7 @@ export default function useAuditLogs() {
     const q = {
       page,
       limit: 20,
-      sortOrder: filters.sortOrder || "desc",
+      sortOrder,
     };
     if (filters.userRole) q.userRole = filters.userRole;
     if (filters.action) q.action = filters.action;
@@ -33,15 +33,13 @@ export default function useAuditLogs() {
     if (filters.to) q.to = filters.to;
     if (searchInput.trim()) q.keyword = searchInput.trim();
     return q;
-  }, [filters, page, searchInput]);
+  }, [filters, page, searchInput, sortOrder]);
 
   const loadLogs = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       const response = await getAuditLogs(query);
-      console.log("🔍 Audit Logs API Response:", response);
-      console.log("🔍 Query sent:", query);
       const data = response?.items || response?.data || [];
       const meta = response?.meta || {};
       const count = Number(meta.totalItems ?? data.length);
@@ -49,7 +47,6 @@ export default function useAuditLogs() {
       setTotal(count);
       setPageCount(Number(meta.totalPages ?? Math.max(1, Math.ceil(count / 10))));
     } catch (err) {
-      console.error("❌ Audit Logs API Error:", err);
       setError(err.message || "Không thể tải nhật ký kiểm tra.");
     } finally {
       setLoading(false);
@@ -76,6 +73,11 @@ export default function useAuditLogs() {
     setPage(1);
   }
 
+  function toggleSort() {
+    setPage(1);
+    setSortOrder((current) => (current === "desc" ? "asc" : "desc"));
+  }
+
   function retry() {
     loadLogs();
   }
@@ -85,6 +87,7 @@ export default function useAuditLogs() {
     filters,
     searchInput,
     page,
+    sortOrder,
     pageCount,
     total,
     loading,
@@ -94,6 +97,7 @@ export default function useAuditLogs() {
     updateFilter,
     applySearch,
     resetFilters,
+    toggleSort,
     retry,
   };
 }
