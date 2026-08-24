@@ -63,6 +63,9 @@ const AdminUsers = lazy(() => import("./pages/Admin/Users/AdminUsers.jsx"));
 const AdminDocuments = lazy(
   () => import("./pages/Admin/Documents/AdminDocuments.jsx"),
 );
+const ModerationKeywords = lazy(
+  () => import("./pages/Admin/ModerationKeywords/ModerationKeywords.jsx"),
+);
 const SubscriptionPlans = lazy(
   () => import("./pages/Admin/SubscriptionPlans/SubscriptionPlans.jsx"),
 );
@@ -342,6 +345,14 @@ export default function App() {
                       element={
                         <RequireAuth allowedRoles={["ADMIN"]}>
                           <AdminDocuments />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/admin/moderation-keywords"
+                      element={
+                        <RequireAuth allowedRoles={["ADMIN"]}>
+                          <ModerationKeywords />
                         </RequireAuth>
                       }
                     />

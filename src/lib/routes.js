@@ -15,6 +15,7 @@
   adminDashboard: "/admin/dashboard",
   adminUsers: "/admin/users",
   adminDocuments: "/admin/documents",
+  adminModerationKeywords: "/admin/moderation-keywords",
   moderatorDashboard: "/moderator/dashboard",
 };
 

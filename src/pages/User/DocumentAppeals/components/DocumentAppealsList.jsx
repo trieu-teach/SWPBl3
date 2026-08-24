@@ -20,9 +20,39 @@ function formatDate(value) {
 export default function DocumentAppealsList({ appeals }) {
   if (appeals.loading) {
     return (
-      <Paper variant="outlined" sx={{ borderRadius: 3 }}>
-        <Stack alignItems="center" gap={1.5} sx={{ py: 8 }}>
-          <CircularProgress size={30} />
+      <Paper
+        variant="outlined"
+        sx={{
+          width: "100%",
+          minHeight: 240,
+          borderRadius: 3,
+          display: "grid",
+          placeItems: "center",
+          overflow: "hidden",
+        }}
+      >
+        <Stack
+          gap={1.5}
+          sx={{
+            width: "100%",
+            px: 3,
+            py: 6,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+          }}
+        >
+          <Box
+            sx={{
+              width: "100%",
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            <CircularProgress size={30} />
+          </Box>
           <Typography color="text.secondary">Đang tải lịch sử...</Typography>
         </Stack>
       </Paper>
