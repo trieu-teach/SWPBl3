@@ -4,12 +4,16 @@ import DocumentPreviewDialog from "../DocumentLibrary/components/DocumentPreview
 import CommunityDocumentGrid from "./components/CommunityDocumentGrid.jsx";
 import CommunityFilters from "./components/CommunityFilters.jsx";
 import CommunityHeader from "./components/CommunityHeader.jsx";
+import ContributorDocumentList from "./components/ContributorDocumentList.jsx";
+import ContributorProfileDrawer from "./components/ContributorProfileDrawer.jsx";
 import ReportDocumentDialog from "./components/ReportDocumentDialog.jsx";
 import TopRatedDocumentsSection from "./components/TopRatedDocumentsSection.jsx";
 import useCommunityLibrary from "./hooks/useCommunityLibrary.js";
+import useContributorProfile from "./hooks/useContributorProfile.js";
 
 export default function CommunityLibrary() {
   const community = useCommunityLibrary();
+  const contributor = useContributorProfile();
 
   return (
     <UserLayout>
@@ -19,6 +23,7 @@ export default function CommunityLibrary() {
         onPreview={community.openPreview}
         onSave={community.toggleSave}
         actionId={community.actionId}
+        onContributorClick={contributor.openContributor}
       />
       <CommunityFilters community={community} />
 
@@ -42,7 +47,10 @@ export default function CommunityLibrary() {
           : `${community.meta.totalItems || 0} tài liệu công khai`}
       </Typography>
 
-      <CommunityDocumentGrid community={community} />
+      <CommunityDocumentGrid
+        community={community}
+        onContributorClick={contributor.openContributor}
+      />
 
       {!community.loading && community.meta.totalPages > 1 && (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
@@ -66,6 +74,13 @@ export default function CommunityLibrary() {
         onClose={community.closeReport}
         onSubmit={community.submitReport}
       />
+      <ContributorProfileDrawer contributor={contributor}>
+        <ContributorDocumentList
+          contributor={contributor}
+          onPreview={community.openPreview}
+          actionId={community.actionId}
+        />
+      </ContributorProfileDrawer>
     </UserLayout>
   );
 }

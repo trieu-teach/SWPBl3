@@ -2,6 +2,7 @@ import {
   Avatar,
   Box,
   Button,
+  ButtonBase,
   Card,
   CardActions,
   CardContent,
@@ -40,6 +41,7 @@ export default function TopRatedDocumentCard({
   onPreview,
   onSave,
   actionId,
+  onContributorClick,
 }) {
   const [isSaved, setIsSaved] = useState(Boolean(document.saved));
   const fileColors = getFileTypeColors(document);
@@ -48,6 +50,9 @@ export default function TopRatedDocumentCard({
     document.owner?.fullName ||
     "Tác giả ẩn danh";
   const avatarUrl = document.ownerAvatarUrl || document.owner?.avatarUrl;
+  const canOpenContributor = Boolean(
+    document.ownerId && onContributorClick,
+  );
 
   const helpfulPercent =
     document.helpfulRating !== undefined && document.helpfulRating !== null
@@ -164,7 +169,35 @@ export default function TopRatedDocumentCard({
         </Typography>
 
         {/* Author info with Fallback Avatar */}
-        <Stack direction="row" alignItems="center" spacing={1.25} sx={{ mt: 2 }}>
+        <ButtonBase
+          disabled={!canOpenContributor}
+          aria-label={
+            canOpenContributor
+              ? `Xem hồ sơ cộng đồng của ${ownerName}`
+              : undefined
+          }
+          onClick={() => onContributorClick?.(document.ownerId)}
+          sx={{
+            mt: 2,
+            p: 0.5,
+            mx: -0.5,
+            width: "calc(100% + 8px)",
+            minWidth: 0,
+            display: "flex",
+            justifyContent: "flex-start",
+            gap: 1.25,
+            borderRadius: 2,
+            textAlign: "left",
+            "&:hover": canOpenContributor
+              ? { bgcolor: "action.hover", color: "primary.main" }
+              : {},
+            "&.Mui-focusVisible": {
+              outline: "2px solid",
+              outlineColor: "primary.main",
+              outlineOffset: 2,
+            },
+          }}
+        >
           <Avatar
             src={avatarUrl || undefined}
             alt={ownerName}
@@ -188,7 +221,7 @@ export default function TopRatedDocumentCard({
           >
             {ownerName}
           </Typography>
-        </Stack>
+        </ButtonBase>
 
         {/* Metrics Grid */}
         <Box
