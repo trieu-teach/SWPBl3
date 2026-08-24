@@ -37,7 +37,6 @@ export default function ReportReviewDrawer({ moderation }) {
   const reportStatus = getReportStatusPresentation(report?.status);
   const documentTitle = document?.title || report?.document?.title || "Tài liệu";
   const isPending = report?.status === "PENDING";
-  const canHide = document?.status === "ACTIVE";
   const heldModerationStatuses = [
     "AUTO_BLOCKED",
     "REJECTED",
@@ -47,8 +46,8 @@ export default function ReportReviewDrawer({ moderation }) {
   const isHeldByModeration =
     heldModerationStatuses.includes(document?.moderationStatus) ||
     document?.moderationFlag === "FLAGGED";
-  const canUnhide =
-    document?.status === "HIDDEN" && !isHeldByModeration;
+  const canApplyDocumentAction =
+    Boolean(document) && document.status !== "DELETED";
 
   function requestAction(type) {
     moderation.setAction({ type, documentTitle });
@@ -237,24 +236,28 @@ export default function ReportReviewDrawer({ moderation }) {
             justifyContent="flex-end"
             sx={{ p: 2, borderTop: "1px solid", borderColor: "divider" }}
           >
-            {canHide && (
-              <Button color="error" onClick={() => requestAction("hide")}>
-                Ẩn tài liệu
-              </Button>
-            )}
-            {canUnhide && (
-              <Button color="success" onClick={() => requestAction("unhide")}>
-                Khôi phục tài liệu
-              </Button>
-            )}
             {isPending && (
               <>
                 <Button color="warning" onClick={() => requestAction("dismiss")}>
                   Bỏ qua báo cáo
                 </Button>
-                <Button variant="contained" onClick={() => requestAction("resolve")}>
+                <Button variant="outlined" onClick={() => requestAction("resolve")}>
                   Đánh dấu đã xử lý
                 </Button>
+                {canApplyDocumentAction && (
+                  <Button color="warning" onClick={() => requestAction("hide")}>
+                    Ẩn tài liệu
+                  </Button>
+                )}
+                {canApplyDocumentAction && (
+                  <Button
+                    color="error"
+                    variant="contained"
+                    onClick={() => requestAction("delete")}
+                  >
+                    Xóa mềm
+                  </Button>
+                )}
               </>
             )}
           </Stack>

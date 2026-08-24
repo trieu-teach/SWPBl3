@@ -24,26 +24,26 @@ const REPORT_RESOLUTIONS = {
   dismiss: {
     status: "DISMISSED",
     action: "NONE",
-    successMessage: "Đã bỏ qua báo cáo.",
+    message: "Đã bỏ qua báo cáo.",
   },
   resolve: {
     status: "RESOLVED",
     action: "NONE",
-    successMessage: "Đã đánh dấu báo cáo là đã xử lý.",
+    message: "Đã đánh dấu báo cáo là đã xử lý.",
   },
   hide: {
     status: "RESOLVED",
     action: "HIDE_DOCUMENT",
-    successMessage: "Đã đóng báo cáo và ẩn tài liệu.",
+    message: "Đã đóng báo cáo và ẩn tài liệu.",
   },
   delete: {
     status: "RESOLVED",
     action: "DELETE_DOCUMENT",
-    successMessage: "Đã đóng báo cáo và xóa tài liệu.",
+    message: "Đã đóng báo cáo và xóa tài liệu.",
   },
 };
 
-export default function useModerationReports() {
+export default function useAdminViolationReports() {
   const toast = useToast();
   const [reports, setReports] = useState([]);
   const [status, setStatus] = useState("PENDING");
@@ -77,7 +77,7 @@ export default function useModerationReports() {
       setMeta(response?.meta || EMPTY_META);
     } catch (requestError) {
       if (generation !== listGeneration.current) return;
-      setError(requestError.message || "Không thể tải hàng đợi báo cáo.");
+      setError(requestError.message || "Không thể tải báo cáo vi phạm.");
     } finally {
       if (generation === listGeneration.current) setLoading(false);
     }
@@ -94,6 +94,7 @@ export default function useModerationReports() {
     setDocument(null);
     setDetailError("");
     setDetailLoading(false);
+
     if (!documentId) {
       setDetailError("Báo cáo không có mã tài liệu hợp lệ.");
       return;
@@ -125,8 +126,7 @@ export default function useModerationReports() {
     loadSelectedDocument(report);
   }
 
-  function closeReport() {
-    if (acting) return;
+  function clearSelection() {
     detailGeneration.current += 1;
     previewGeneration.current += 1;
     selectedDocumentId.current = "";
@@ -138,9 +138,15 @@ export default function useModerationReports() {
     setPreviewLoading(false);
   }
 
+  function closeReport() {
+    if (acting) return;
+    clearSelection();
+  }
+
   async function openPreview() {
     const documentId = selectedDocumentId.current;
     if (!documentId || !document) return;
+
     const generation = ++previewGeneration.current;
     setPreviewLoading(true);
     try {
@@ -153,6 +159,7 @@ export default function useModerationReports() {
       ) {
         return;
       }
+
       const extension = document.fileName?.split(".").pop()?.toLowerCase();
       setPreview({
         title: document.title,
@@ -190,32 +197,18 @@ export default function useModerationReports() {
         resolution.status,
         resolution.action,
       );
-      toast.success(resolution.successMessage);
+      toast.success(resolution.message);
       setAction(null);
-      detailGeneration.current += 1;
-      selectedDocumentId.current = "";
-      setSelectedReport(null);
-      setDocument(null);
-      setDetailLoading(false);
-      setPreview(null);
-      setPreviewLoading(false);
+      clearSelection();
       await loadReports();
     } catch (requestError) {
       if (requestError.status === 409) {
         toast.error("Báo cáo đã được người khác xử lý hoặc không còn hợp lệ.");
         setAction(null);
-        detailGeneration.current += 1;
-        selectedDocumentId.current = "";
-        setSelectedReport(null);
-        setDocument(null);
-        setDetailLoading(false);
-        setPreview(null);
-        setPreviewLoading(false);
+        clearSelection();
         await loadReports();
       } else {
-        toast.error(
-          requestError.message || "Không thể hoàn tất thao tác kiểm duyệt.",
-        );
+        toast.error(requestError.message || "Không thể xử lý báo cáo.");
       }
     } finally {
       setActing(false);

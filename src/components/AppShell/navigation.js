@@ -69,6 +69,11 @@ const ADMIN_NAVIGATION = [
     icon: DownloadOutlined,
   },
   { label: "Báo cáo", path: "/admin/reports", icon: AssessmentOutlined },
+  {
+    label: "Báo cáo vi phạm",
+    path: "/admin/violation-reports",
+    icon: ReportProblemOutlined,
+  },
 ];
 
 const MODERATOR_NAVIGATION = [

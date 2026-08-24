@@ -17,7 +17,6 @@ import {
 } from "@mui/material";
 import { AuthProvider } from "./features/auth/AuthProvider.jsx";
 import { ToastProvider } from "./components/Toast/ToastProvider.jsx";
-import { NotificationProvider } from "./pages/User/Notifications/context/NotificationContext.jsx";
 import {
   GuestGuard,
   GuestRoute,
@@ -77,6 +76,9 @@ const DownloadLogs = lazy(
   () => import("./pages/Admin/DownloadLogs/DownloadLogs.jsx"),
 );
 const Reports = lazy(() => import("./pages/Admin/Reports/Reports.jsx"));
+const AdminViolationReports = lazy(
+  () => import("./pages/Admin/ViolationReports/AdminViolationReports.jsx"),
+);
 const ModeratorReports = lazy(
   () => import("./pages/Moderator/Reports/ModeratorReports.jsx"),
 );
@@ -188,9 +190,8 @@ export default function App() {
         <ToastProvider>
           <BrowserRouter>
             <AuthProvider>
-              <NotificationProvider>
-                <Suspense fallback={<RouteLoadingFallback />}>
-                  <Routes>
+              <Suspense fallback={<RouteLoadingFallback />}>
+                <Routes>
                     {/* ── Public (chỉ Guest mới vào được) ── */}
                     <Route
                       path="/"
@@ -384,6 +385,14 @@ export default function App() {
                         </RequireAuth>
                       }
                     />
+                    <Route
+                      path="/admin/violation-reports"
+                      element={
+                        <RequireAuth allowedRoles={["ADMIN"]}>
+                          <AdminViolationReports />
+                        </RequireAuth>
+                      }
+                    />
 
                     {/* ── Moderator ── */}
                     <Route
@@ -438,7 +447,6 @@ export default function App() {
                     />
                 </Routes>
               </Suspense>
-              </NotificationProvider>
             </AuthProvider>
           </BrowserRouter>
         </ToastProvider>
