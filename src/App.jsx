@@ -76,6 +76,9 @@ const DownloadLogs = lazy(
   () => import("./pages/Admin/DownloadLogs/DownloadLogs.jsx"),
 );
 const Reports = lazy(() => import("./pages/Admin/Reports/Reports.jsx"));
+const AdminViolationReports = lazy(
+  () => import("./pages/Admin/ViolationReports/AdminViolationReports.jsx"),
+);
 const ModeratorReports = lazy(
   () => import("./pages/Moderator/Reports/ModeratorReports.jsx"),
 );
@@ -379,6 +382,14 @@ export default function App() {
                       element={
                         <RequireAuth allowedRoles={["ADMIN"]}>
                           <Reports />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/admin/violation-reports"
+                      element={
+                        <RequireAuth allowedRoles={["ADMIN"]}>
+                          <AdminViolationReports />
                         </RequireAuth>
                       }
                     />

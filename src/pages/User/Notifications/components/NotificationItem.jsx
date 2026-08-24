@@ -21,6 +21,10 @@ const NOTIFICATION_ICONS = {
   DOCUMENT_FLAGGED_OWNER: WarningAmberOutlined,
   DOCUMENT_APPROVED: CheckCircleOutlineOutlined,
   DOCUMENT_REJECTED: CancelOutlined,
+  DOCUMENT_UNBLOCKED: CheckCircleOutlineOutlined,
+  APPEAL_SUBMITTED: WarningAmberOutlined,
+  APPEAL_APPROVED: CheckCircleOutlineOutlined,
+  APPEAL_REJECTED: CancelOutlined,
 };
 
 const NOTIFICATION_COLORS = {
@@ -35,10 +39,18 @@ const NOTIFICATION_COLORS = {
   DOCUMENT_FLAGGED_OWNER: "#f59e0b",
   DOCUMENT_APPROVED: "#22c55e",
   DOCUMENT_REJECTED: "#ef4444",
+  DOCUMENT_UNBLOCKED: "#22c55e",
+  APPEAL_SUBMITTED: "#f59e0b",
+  APPEAL_APPROVED: "#22c55e",
+  APPEAL_REJECTED: "#ef4444",
 };
 
 function getNotificationRoute(notification, userRole) {
-  const { type, referenceId } = notification;
+  const { type, referenceId, metadata } = notification;
+  const role = String(userRole || "USER").toUpperCase();
+  const documentId = metadata?.documentId || referenceId;
+  const isCommunityReport = metadata?.source === "USER_REPORT";
+
   switch (type) {
     case "PAYMENT_SUCCESS":
     case "PAYMENT_REFUNDED":
@@ -53,13 +65,23 @@ function getNotificationRoute(notification, userRole) {
     case "REPORT_RESOLVED":
       return null;
     case "DOCUMENT_FLAGGED":
-      return userRole === "MODERATOR"
-        ? "/moderator/reports"
+      if (isCommunityReport) {
+        return role === "MODERATOR"
+          ? "/moderator/reports"
+          : "/admin/violation-reports";
+      }
+      return role === "MODERATOR"
+        ? "/moderator/moderation"
         : "/admin/documents";
     case "DOCUMENT_FLAGGED_OWNER":
     case "DOCUMENT_APPROVED":
     case "DOCUMENT_REJECTED":
-      return referenceId ? `/documents/${referenceId}` : null;
+    case "DOCUMENT_UNBLOCKED":
+      return documentId ? `/documents/${documentId}` : null;
+    case "APPEAL_SUBMITTED":
+    case "APPEAL_APPROVED":
+    case "APPEAL_REJECTED":
+      return "/appeals";
     default:
       return null;
   }
@@ -92,8 +114,8 @@ export default function NotificationItem({ notification, onMarkAsRead, fullWidth
 
   const handleClick = async () => {
     const route = getNotificationRoute(notification, userRole);
+    await onMarkAsRead(notification.id);
     if (route) {
-      await onMarkAsRead(notification.id);
       navigate(route);
     }
   };

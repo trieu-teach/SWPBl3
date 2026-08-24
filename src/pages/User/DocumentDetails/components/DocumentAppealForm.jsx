@@ -31,14 +31,22 @@ export default function DocumentAppealForm({
   const [description, setDescription] = useState("");
   const [validationError, setValidationError] = useState("");
 
+  const deadline = getAppealDeadline(document?.appealDeadline);
+  const isKeywordModerationAppeal = APPEALABLE_STATUSES.includes(
+    document?.moderationStatus,
+  );
+  const isCommunityReportAppeal =
+    document?.status === "HIDDEN" &&
+    !isKeywordModerationAppeal &&
+    Boolean(deadline);
+
   if (
     document?.visibility !== "PUBLIC" ||
-    !APPEALABLE_STATUSES.includes(document.moderationStatus)
+    (!isKeywordModerationAppeal && !isCommunityReportAppeal)
   ) {
     return null;
   }
 
-  const deadline = getAppealDeadline(document.appealDeadline);
   const canAppeal = Boolean(deadline && deadline.getTime() > Date.now());
 
   function closeDialog() {
@@ -68,9 +76,15 @@ export default function DocumentAppealForm({
 
   return (
     <Stack spacing={1} sx={{ mt: 2 }}>
+      {canAppeal && isCommunityReportAppeal && (
+        <Alert severity="warning">
+          Tài liệu đã bị ẩn sau khi được cộng đồng báo cáo. Bạn có thể gửi
+          khiếu nại trước {deadline.toLocaleString("vi-VN")}.
+        </Alert>
+      )}
       {!canAppeal && (
         <Alert severity="warning">
-          Đã hết thời hạn hoặc chưa có thời hạn gửi khiếu nại.
+          Đã hết thời hạn gửi khiếu nại cho quyết định này.
         </Alert>
       )}
       <Button
@@ -81,7 +95,9 @@ export default function DocumentAppealForm({
         onClick={() => setOpen(true)}
         disabled={!canAppeal || loading}
       >
-        Gửi khiếu nại
+        {isCommunityReportAppeal
+          ? "Khiếu nại quyết định ẩn"
+          : "Gửi khiếu nại"}
       </Button>
 
       <Dialog
@@ -95,8 +111,9 @@ export default function DocumentAppealForm({
         <DialogTitle>Gửi khiếu nại tài liệu</DialogTitle>
         <DialogContent>
           <Typography color="text.secondary" sx={{ mb: 2 }}>
-            Hãy giải thích vì sao tài liệu “{document.title}” cần được xem xét
-            lại.
+            {isCommunityReportAppeal
+              ? `Hãy giải thích vì sao tài liệu “${document.title}” nên được khôi phục sau báo cáo cộng đồng.`
+              : `Hãy giải thích vì sao tài liệu “${document.title}” cần được xem xét lại.`}
           </Typography>
           {deadline && (
             <Alert severity="info" sx={{ mb: 2 }}>

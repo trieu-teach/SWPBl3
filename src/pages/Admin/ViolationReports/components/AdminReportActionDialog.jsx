@@ -9,31 +9,31 @@ import {
 } from "@mui/material";
 
 const ACTION_COPY = {
+  dismiss: {
+    title: "Bỏ qua báo cáo",
+    message: "Báo cáo sẽ được đóng mà không thay đổi tài liệu.",
+    color: "warning",
+  },
+  resolve: {
+    title: "Đánh dấu đã xử lý",
+    message: "Báo cáo sẽ được đóng mà không thay đổi tài liệu.",
+    color: "success",
+  },
   hide: {
     title: "Ẩn tài liệu",
-    consequence:
-      "Báo cáo sẽ được đóng, tài liệu bị ẩn khỏi cộng đồng và chủ tài liệu có 7 ngày để khiếu nại.",
+    message:
+      "Tài liệu sẽ bị ẩn khỏi cộng đồng. Chủ tài liệu có 7 ngày để khiếu nại.",
     color: "warning",
   },
   delete: {
     title: "Xóa mềm tài liệu",
-    consequence:
-      "Báo cáo sẽ được đóng và tài liệu bị xóa mềm. Chủ tài liệu không thể khiếu nại để khôi phục.",
+    message:
+      "Tài liệu sẽ bị xóa mềm và không thể khôi phục thông qua khiếu nại.",
     color: "error",
-  },
-  resolve: {
-    title: "Đánh dấu đã xử lý",
-    consequence: "Báo cáo sẽ được đóng. Trạng thái tài liệu không tự động thay đổi.",
-    color: "success",
-  },
-  dismiss: {
-    title: "Bỏ qua báo cáo",
-    consequence: "Báo cáo sẽ được đóng mà không thay đổi trạng thái tài liệu.",
-    color: "warning",
   },
 };
 
-export default function ModerationActionDialog({
+export default function AdminReportActionDialog({
   action,
   loading,
   onClose,
@@ -58,9 +58,8 @@ export default function ModerationActionDialog({
                 ? "warning"
                 : "info"
           }
-          sx={{ mb: 2 }}
         >
-          {copy.consequence}
+          {copy.message}
         </Alert>
       </DialogContent>
       <DialogActions>

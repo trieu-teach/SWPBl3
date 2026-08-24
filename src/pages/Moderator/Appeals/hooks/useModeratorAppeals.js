@@ -104,6 +104,14 @@ export default function useModeratorAppeals() {
 
   async function confirmDecision(reviewNote) {
     if (!selectedAppeal || !decision) return;
+    if (
+      selectedAppeal.source === "USER_REPORT" &&
+      decision === "REJECTED" &&
+      !reviewNote?.trim()
+    ) {
+      toast.warning("Vui lòng nhập ghi chú khi từ chối khiếu nại báo cáo.");
+      return;
+    }
     setActing(true);
     try {
       await decideModerationAppeal(
@@ -111,11 +119,30 @@ export default function useModeratorAppeals() {
         decision,
         reviewNote,
       );
-      toast.success(
+      let successMessage =
         decision === "APPROVED"
           ? "Đã chấp nhận khiếu nại."
-          : "Đã từ chối khiếu nại.",
-      );
+          : "Đã từ chối khiếu nại.";
+
+      if (
+        decision === "APPROVED" &&
+        selectedAppeal.source === "USER_REPORT"
+      ) {
+        try {
+          const refreshedDocument = await getAdminDocument(
+            selectedAppeal.documentId,
+          );
+          successMessage =
+            refreshedDocument?.status === "HIDDEN"
+              ? "Khiếu nại được chấp nhận. Tài liệu vẫn bị giữ vì lý do kiểm duyệt khác."
+              : "Khiếu nại được chấp nhận. Tài liệu đã được khôi phục.";
+        } catch {
+          successMessage =
+            "Khiếu nại được chấp nhận. Trạng thái tài liệu sẽ được cập nhật theo các điều kiện kiểm duyệt còn lại.";
+        }
+      }
+
+      toast.success(successMessage);
       setDecision(null);
       setSelectedAppeal(null);
       setDocument(null);
