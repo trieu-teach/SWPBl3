@@ -16,9 +16,9 @@ import {
 } from "recharts";
 import { getFileTypeColors, displayFileType } from "../../utils/admin-formatters.js";
 
-const CustomTooltipContent = ({ active, payload, barColor }) => {
+const CustomTooltipContent = ({ active, payload, barColor, metricLabel = "lượt" }) => {
   if (!active || !payload?.length) return null;
-  const { fullTitle, fileType, ownerFullName, subjectName, visibility, metricValue } = payload[0].payload;
+  const { fullTitle, fileType, ownerFullName, subjectName, visibility, metricValue, tooltipDetail } = payload[0].payload;
   const colors = getFileTypeColors(fileType);
   
   return (
@@ -92,8 +92,13 @@ const CustomTooltipContent = ({ active, payload, barColor }) => {
       )}
       <Box sx={{ mt: 0.75, pt: 0.75, borderTop: "1px solid", borderColor: "divider" }}>
         <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
-          <strong style={{ color: barColor }}>{metricValue}</strong> lượt
+          <strong style={{ color: barColor }}>{metricValue}</strong> {metricLabel}
         </Typography>
+        {tooltipDetail && (
+          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.25 }}>
+            {tooltipDetail}
+          </Typography>
+        )}
       </Box>
     </Box>
   );
@@ -115,8 +120,9 @@ export default function TopDocumentsChart({
   data, 
   loading, 
   metricKey, 
-  metricLabel,
+  metricLabel = "lượt",
   barColor = "#6366f1",
+  hideSummary = false,
 }) {
   const theme = useTheme();
 
@@ -170,48 +176,50 @@ export default function TopDocumentsChart({
   return (
     <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
       {/* Summary Stats */}
-      <Box
-        sx={{
-          display: "flex",
-          gap: { xs: 3, md: 4 },
-          mb: 2,
-          pb: 2,
-          borderBottom: "1px solid",
-          borderColor: "divider",
-          flexShrink: 0,
-        }}
-      >
-        <Box>
-          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: "0.65rem" }}>
-            TỔNG
-          </Typography>
-          <Typography
-            sx={{
-              fontWeight: 800,
-              color: barColor,
-              fontSize: "1.5rem",
-              lineHeight: 1.1,
-            }}
-          >
-            {totalValue.toLocaleString("vi-VN")}
-          </Typography>
+      {!hideSummary && (
+        <Box
+          sx={{
+            display: "flex",
+            gap: { xs: 3, md: 4 },
+            mb: 2,
+            pb: 2,
+            borderBottom: "1px solid",
+            borderColor: "divider",
+            flexShrink: 0,
+          }}
+        >
+          <Box>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: "0.65rem" }}>
+              TỔNG
+            </Typography>
+            <Typography
+              sx={{
+                fontWeight: 800,
+                color: barColor,
+                fontSize: "1.5rem",
+                lineHeight: 1.1,
+              }}
+            >
+              {totalValue.toLocaleString("vi-VN")}
+            </Typography>
+          </Box>
+          <Box>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: "0.65rem" }}>
+              TÀI LIỆU
+            </Typography>
+            <Typography
+              sx={{
+                fontWeight: 700,
+                color: "text.primary",
+                fontSize: "1.25rem",
+                lineHeight: 1.1,
+              }}
+            >
+              {data.length}
+            </Typography>
+          </Box>
         </Box>
-        <Box>
-          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: "0.65rem" }}>
-            TÀI LIỆU
-          </Typography>
-          <Typography
-            sx={{
-              fontWeight: 700,
-              color: "text.primary",
-              fontSize: "1.25rem",
-              lineHeight: 1.1,
-            }}
-          >
-            {data.length}
-          </Typography>
-        </Box>
-      </Box>
+      )}
 
       {/* Chart - stretches to fill available space */}
       <Box sx={{ flex: 1, minHeight: 200 }}>
@@ -245,7 +253,7 @@ export default function TopDocumentsChart({
               width={180}
             />
             <RechartsTooltip
-              content={<CustomTooltipContent barColor={barColor} />}
+              content={<CustomTooltipContent barColor={barColor} metricLabel={metricLabel} />}
               contentStyle={{ background: "transparent", border: "none", padding: 0 }}
               wrapperStyle={{ background: "transparent" }}
               cursor={{
