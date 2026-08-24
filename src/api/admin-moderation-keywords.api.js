@@ -14,3 +14,23 @@ export function getAdminModerationKeywords(params = {}) {
     `/admin/moderation-keywords${search ? `?${search}` : ""}`,
   );
 }
+
+export function createAdminModerationKeyword(payload) {
+  return apiRequest("/admin/moderation-keywords", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function updateAdminModerationKeyword(id, payload) {
+  return apiRequest(`/admin/moderation-keywords/${id}`, {
+    method: "PATCH",
+    body: payload,
+  });
+}
+
+export function deleteAdminModerationKeyword(id) {
+  return apiRequest(`/admin/moderation-keywords/${id}`, {
+    method: "DELETE",
+  });
+}

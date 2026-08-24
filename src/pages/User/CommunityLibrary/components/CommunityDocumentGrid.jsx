@@ -12,7 +12,10 @@ const gridSx = {
   gap: 2,
 };
 
-export default function CommunityDocumentGrid({ community }) {
+export default function CommunityDocumentGrid({
+  community,
+  onContributorClick,
+}) {
   if (community.loading) {
     return (
       <Box sx={gridSx}>
@@ -36,6 +39,7 @@ export default function CommunityDocumentGrid({ community }) {
           onDownload={community.downloadDocument}
           onSave={community.toggleSave}
           onReport={community.openReport}
+          onContributorClick={onContributorClick}
         />
       ))}
     </Box>

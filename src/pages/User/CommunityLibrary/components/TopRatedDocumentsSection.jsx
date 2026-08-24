@@ -36,6 +36,7 @@ export default function TopRatedDocumentsSection({
   onPreview,
   onSave,
   actionId,
+  onContributorClick,
   showControls = true,
   variant = "paper", // "paper" | "plain"
 }) {
@@ -230,6 +231,7 @@ export default function TopRatedDocumentsSection({
               onPreview={onPreview}
               onSave={onSave}
               actionId={actionId}
+              onContributorClick={onContributorClick}
             />
           ))}
         </Box>
