@@ -24,17 +24,12 @@ const REPORT_RESOLUTIONS = {
   dismiss: {
     status: "DISMISSED",
     action: "NONE",
-    successMessage: "Đã bỏ qua báo cáo.",
-  },
-  resolve: {
-    status: "RESOLVED",
-    action: "NONE",
-    successMessage: "Đã đánh dấu báo cáo là đã xử lý.",
+    successMessage: "Đã kết luận tài liệu không vi phạm.",
   },
   hide: {
     status: "RESOLVED",
     action: "HIDE_DOCUMENT",
-    successMessage: "Đã đóng báo cáo và ẩn tài liệu.",
+    successMessage: "Đã đóng báo cáo và ẩn tạm thời tài liệu.",
   },
   delete: {
     status: "RESOLVED",

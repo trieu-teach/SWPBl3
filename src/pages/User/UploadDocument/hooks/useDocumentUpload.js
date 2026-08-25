@@ -76,11 +76,17 @@ export default function useDocumentUpload() {
   }, [form.subjectId]);
 
   function updateField(name, value) {
+    setSubmitError("");
     setForm((current) => ({
       ...current,
       [name]: value,
       ...(name === "subjectId" ? { categoryId: "" } : {}),
     }));
+  }
+
+  function updateAcceptedUploadTerms(value) {
+    setSubmitError("");
+    setAcceptedUploadTerms(value);
   }
 
   function openTaxonomyDialog(type) {
@@ -171,6 +177,7 @@ export default function useDocumentUpload() {
   }
 
   function selectFile(nextFile) {
+    setSubmitError("");
     const error = validateFile(nextFile);
     setFileError(error);
     if (error) return;
@@ -181,6 +188,7 @@ export default function useDocumentUpload() {
   function removeFile() {
     setFile(null);
     setFileError("");
+    setSubmitError("");
   }
 
   function addTag() {
@@ -270,7 +278,7 @@ export default function useDocumentUpload() {
     setTagInput,
     addTag,
     removeTag,
-    setAcceptedUploadTerms,
+    setAcceptedUploadTerms: updateAcceptedUploadTerms,
     openTaxonomyDialog,
     closeTaxonomyDialog,
     submitTaxonomy,
