@@ -16,6 +16,8 @@ export default function ChatMessageList({
   isSending,
   onRetry,
   onSend,
+  onApplyDeepDive,
+  onAskDeepDive,
   onSourceSelect,
   onPreviewDocument,
   loadingPreviewId,
@@ -127,6 +129,8 @@ export default function ChatMessageList({
             isSending={isSending}
             onRetry={onRetry}
             onSend={onSend}
+            onApplyDeepDive={onApplyDeepDive}
+            onAskDeepDive={onAskDeepDive}
             onSourceSelect={onSourceSelect}
             onPreviewDocument={onPreviewDocument}
             loadingId={loadingPreviewId}

@@ -32,7 +32,9 @@ import {
 
 const LIBRARY_BASE_PATH = "/hoi-ai";
 const LIBRARY_PRESELECTION_KEY = "libraryDocumentPreselection";
-const SUBJECT_SCOPE_STORAGE_KEY = "aiChatSubjectScopes";
+// Keep the existing key for backward compatibility; values now remember both
+// subject discovery scopes and document deep-dive scopes.
+const SESSION_SCOPE_STORAGE_KEY = "aiChatSubjectScopes";
 // AppShell header plus its responsive page-content padding.
 const CHAT_WORKSPACE_HEIGHT = {
   xs: "calc(100dvh - 104px)",
@@ -117,10 +119,10 @@ function getDocumentSubject(document) {
   return { id, name: name || "Môn học đã chọn" };
 }
 
-function readStoredSubjectScopes() {
+function readStoredSessionScopes() {
   if (typeof sessionStorage === "undefined") return new Map();
   try {
-    const parsed = JSON.parse(sessionStorage.getItem(SUBJECT_SCOPE_STORAGE_KEY));
+    const parsed = JSON.parse(sessionStorage.getItem(SESSION_SCOPE_STORAGE_KEY));
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       return new Map();
     }
@@ -130,16 +132,48 @@ function readStoredSubjectScopes() {
   }
 }
 
-function persistSubjectScopes(scopes) {
+function persistSessionScopes(scopes) {
   if (typeof sessionStorage === "undefined") return;
   try {
     sessionStorage.setItem(
-      SUBJECT_SCOPE_STORAGE_KEY,
+      SESSION_SCOPE_STORAGE_KEY,
       JSON.stringify(Object.fromEntries(scopes)),
     );
   } catch {
     // The in-memory map still keeps the active tab working when storage is blocked.
   }
+}
+
+function getDeepDiveDocuments(suggestedDocuments, libraryDocuments) {
+  const libraryById = new Map(
+    (Array.isArray(libraryDocuments) ? libraryDocuments : [])
+      .filter((document) => normalizeId(document?.id))
+      .map((document) => [normalizeId(document.id), document]),
+  );
+  const documentsById = new Map();
+
+  (Array.isArray(suggestedDocuments) ? suggestedDocuments : []).forEach(
+    (suggestedDocument) => {
+      const id = normalizeId(suggestedDocument?.id);
+      if (!id || documentsById.has(id)) return;
+
+      const libraryDocument = libraryById.get(id);
+      documentsById.set(id, {
+        ...libraryDocument,
+        ...suggestedDocument,
+        id,
+        title:
+          suggestedDocument?.title || libraryDocument?.title || "Tài liệu",
+        subjectId: normalizeId(
+          libraryDocument?.subjectId ?? libraryDocument?.subject?.id,
+        ),
+        aiUsable: libraryDocument?.aiUsable !== false,
+        available: libraryDocument?.available !== false,
+      });
+    },
+  );
+
+  return [...documentsById.values()].slice(0, MAX_LIBRARY_DOCUMENTS);
 }
 
 import useDocumentPreview from "./hooks/useDocumentPreview.js";
@@ -153,6 +187,7 @@ function ChatPageLayout({
   onRemoveDocument,
   onToggleDocument,
   onChangeSubject,
+  onClearDeepDiveScope,
   libraryDocuments,
   sessions,
   sessionsLoading,
@@ -170,6 +205,7 @@ function ChatPageLayout({
   sessionActionError,
   onClearSessionActionError,
   selectionLocked,
+  scopeTransitionLocked,
   sourceLockedByConversation,
   creditPresentation,
   children,
@@ -232,7 +268,9 @@ function ChatPageLayout({
             chatContext={chatContext}
             selectedDocuments={selectedDocuments}
             onRemove={onRemoveDocument}
+            onClearDeepDiveScope={onClearDeepDiveScope}
             selectionLocked={selectionLocked}
+            scopeTransitionLocked={scopeTransitionLocked}
           />
 
           {typeof children === "function" 
@@ -274,9 +312,9 @@ function LibraryChatRuntime({ preselectedDocument }) {
   const [libraryContext, setLibraryContext] = useState(() =>
     createInitialLibraryContext(preselectedDocument),
   );
-  const sessionSubjectScopesRef = useRef(null);
-  if (sessionSubjectScopesRef.current === null) {
-    sessionSubjectScopesRef.current = readStoredSubjectScopes();
+  const sessionScopesRef = useRef(null);
+  if (sessionScopesRef.current === null) {
+    sessionScopesRef.current = readStoredSessionScopes();
   }
   const libraryDocuments = useLibraryDocuments();
   const {
@@ -331,22 +369,39 @@ function LibraryChatRuntime({ preselectedDocument }) {
 
   const handleSessionCreated = useCallback(
     (sessionId, { createdSession } = {}) => {
+      const documentIds = Array.isArray(
+        libraryContext.libraryFilters?.documentIds,
+      )
+        ? libraryContext.libraryFilters.documentIds
+        : [];
       const subjectIds = Array.isArray(
         libraryContext.libraryFilters?.subjectIds,
       )
         ? libraryContext.libraryFilters.subjectIds
         : [];
-      if (subjectIds.length > 0) {
+
+      if (documentIds.length > 0) {
+        const documents = Array.isArray(
+          libraryContext.libraryFilters?._documentMeta,
+        )
+          ? libraryContext.libraryFilters._documentMeta
+          : documentIds.map((id) => ({ id, title: "Tài liệu" }));
+        sessionScopesRef.current.set(sessionId, {
+          documentIds,
+          documents,
+        });
+        persistSessionScopes(sessionScopesRef.current);
+      } else if (subjectIds.length > 0) {
         const subjects = Array.isArray(
           libraryContext.libraryFilters?._subjectsMeta,
         )
           ? libraryContext.libraryFilters._subjectsMeta
           : subjectIds.map((id) => ({ id, name: "Môn học đã chọn" }));
-        sessionSubjectScopesRef.current.set(sessionId, {
+        sessionScopesRef.current.set(sessionId, {
           subjectIds,
           subjects,
         });
-        persistSubjectScopes(sessionSubjectScopesRef.current);
+        persistSessionScopes(sessionScopesRef.current);
       }
       acceptCreatedSession(sessionId, createdSession);
       void refreshSessions();
@@ -381,6 +436,7 @@ function LibraryChatRuntime({ preselectedDocument }) {
     onSessionUnavailable: startNewChat,
   });
   const resetConversation = conversation.reset;
+  const sendConversationMessage = conversation.sendMessage;
 
   const handleNewChat = useCallback(() => {
     resetConversation();
@@ -392,8 +448,8 @@ function LibraryChatRuntime({ preselectedDocument }) {
     sessionId: activeSessionId,
     messages: conversation.messages,
   });
-  const selectionLocked =
-    isValidating || conversation.isSending || sourceLockedByConversation;
+  const scopeTransitionLocked = isValidating || conversation.isSending;
+  const selectionLocked = scopeTransitionLocked || sourceLockedByConversation;
 
   const applyLibrarySourceChange = useCallback(
     (nextContext) => {
@@ -443,7 +499,7 @@ function LibraryChatRuntime({ preselectedDocument }) {
   useEffect(() => {
     if (!validatedSessionId || !validatedSession) return;
     const sessionDocuments = getSessionDocuments(validatedSession);
-    const rememberedSubjectScope = sessionSubjectScopesRef.current.get(
+    const rememberedSessionScope = sessionScopesRef.current.get(
       validatedSessionId,
     );
     const directSubjectIds = [
@@ -453,15 +509,39 @@ function LibraryChatRuntime({ preselectedDocument }) {
         : []),
     ].filter(Boolean);
     const rememberedSubjectIds = [
-      normalizeId(rememberedSubjectScope?.subjectId),
-      ...(Array.isArray(rememberedSubjectScope?.subjectIds)
-        ? rememberedSubjectScope.subjectIds.map(normalizeId)
+      normalizeId(rememberedSessionScope?.subjectId),
+      ...(Array.isArray(rememberedSessionScope?.subjectIds)
+        ? rememberedSessionScope.subjectIds.map(normalizeId)
         : []),
     ].filter(Boolean);
+    const rememberedDocumentIds = Array.isArray(
+      rememberedSessionScope?.documentIds,
+    )
+      ? rememberedSessionScope.documentIds.map(normalizeId).filter(Boolean)
+      : [];
+    const rememberedDocumentsById = new Map(
+      (Array.isArray(rememberedSessionScope?.documents)
+        ? rememberedSessionScope.documents
+        : []
+      )
+        .filter((document) => normalizeId(document?.id))
+        .map((document) => [normalizeId(document.id), document]),
+    );
     const documentsById = new Map(
       libraryDocuments.current.documents.map((document) => [document.id, document]),
     );
-    const hydratedDocuments = sessionDocuments.map((document) => ({
+    const rememberedDocuments = rememberedDocumentIds.map((documentId) => ({
+      ...documentsById.get(documentId),
+      ...rememberedDocumentsById.get(documentId),
+      id: documentId,
+      title:
+        rememberedDocumentsById.get(documentId)?.title ||
+        documentsById.get(documentId)?.title ||
+        "Tài liệu",
+    }));
+    const effectiveDocuments =
+      rememberedDocuments.length > 0 ? rememberedDocuments : sessionDocuments;
+    const hydratedDocuments = effectiveDocuments.map((document) => ({
       ...documentsById.get(document.id),
       ...document,
       subjectId:
@@ -475,26 +555,27 @@ function LibraryChatRuntime({ preselectedDocument }) {
       ),
     ];
 
-    if (sessionSubjectIds.length === 0) {
+    if (hydratedDocuments.length > 0) {
       setLibraryContext(
-        createLibraryContext(
-          hydratedDocuments.length > 0
-            ? {
-                documentIds: hydratedDocuments.map((document) => document.id),
-                _documentMeta: hydratedDocuments,
-              }
-            : null,
-        ),
+        createLibraryContext({
+          documentIds: hydratedDocuments.map((document) => document.id),
+          _documentMeta: hydratedDocuments,
+        }),
       );
       return;
     }
 
+    if (sessionSubjectIds.length === 0) {
+      setLibraryContext(createLibraryContext(null));
+      return;
+    }
+
     const rememberedSubjects = [
-      ...(Array.isArray(rememberedSubjectScope?.subjects)
-        ? rememberedSubjectScope.subjects
+      ...(Array.isArray(rememberedSessionScope?.subjects)
+        ? rememberedSessionScope.subjects
         : []),
-      ...(rememberedSubjectScope?.subject
-        ? [rememberedSubjectScope.subject]
+      ...(rememberedSessionScope?.subject
+        ? [rememberedSessionScope.subject]
         : []),
     ];
     const rememberedSubjectsById = new Map(
@@ -517,19 +598,13 @@ function LibraryChatRuntime({ preselectedDocument }) {
       createLibraryContext({
         subjectIds: sessionSubjectIds,
         _subjectsMeta: subjects,
-        ...(hydratedDocuments.length > 0
-          ? {
-              documentIds: hydratedDocuments.map((document) => document.id),
-              _documentMeta: hydratedDocuments,
-            }
-          : {}),
       }),
     );
-    sessionSubjectScopesRef.current.set(validatedSessionId, {
+    sessionScopesRef.current.set(validatedSessionId, {
       subjectIds: sessionSubjectIds,
       subjects,
     });
-    persistSubjectScopes(sessionSubjectScopesRef.current);
+    persistSessionScopes(sessionScopesRef.current);
   }, [
     libraryDocuments.current.documents,
     libraryDocuments.subjects,
@@ -573,6 +648,82 @@ function LibraryChatRuntime({ preselectedDocument }) {
     },
     [libraryContext, libraryDocuments.subjects, selectedSubjectIds],
   );
+
+  const rememberDocumentScope = useCallback(
+    (documents) => {
+      if (!activeSessionId) return;
+
+      const rememberedDocuments = documents.map((document) => ({
+        id: document.id,
+        title: document.title,
+        subjectId: document.subjectId,
+        accessType: document.accessType,
+        visibility: document.visibility,
+        aiUsable: document.aiUsable !== false,
+        available: document.available !== false,
+        unavailableReason: document.unavailableReason ?? null,
+      }));
+      sessionScopesRef.current.set(activeSessionId, {
+        documentIds: rememberedDocuments.map((document) => document.id),
+        documents: rememberedDocuments,
+      });
+      persistSessionScopes(sessionScopesRef.current);
+    },
+    [activeSessionId],
+  );
+
+  const applyDeepDiveScope = useCallback(
+    (suggestedDocuments) => {
+      if (scopeTransitionLocked) return null;
+
+      const documents = getDeepDiveDocuments(
+        suggestedDocuments,
+        libraryDocuments.current.documents,
+      );
+      if (documents.length === 0) {
+        toast.warning("Không có tài liệu hợp lệ để chuyển sang chế độ hỏi sâu.");
+        return null;
+      }
+
+      const nextContext = createLibraryContext({
+        documentIds: documents.map((document) => document.id),
+        _documentMeta: documents,
+      });
+      setLibraryContext(nextContext);
+      rememberDocumentScope(documents);
+      return nextContext;
+    },
+    [
+      libraryDocuments.current.documents,
+      rememberDocumentScope,
+      scopeTransitionLocked,
+      toast,
+    ],
+  );
+
+  const askDeepDive = useCallback(
+    (suggestedDocuments, prompt) => {
+      const question = typeof prompt === "string" ? prompt.trim() : "";
+      if (!question) return false;
+
+      const nextContext = applyDeepDiveScope(suggestedDocuments);
+      if (!nextContext) return false;
+
+      return sendConversationMessage(question, { context: nextContext });
+    },
+    [applyDeepDiveScope, sendConversationMessage],
+  );
+
+  const clearDeepDiveScope = useCallback(() => {
+    if (scopeTransitionLocked) return false;
+
+    setLibraryContext(createLibraryContext(null));
+    if (activeSessionId) {
+      sessionScopesRef.current.delete(activeSessionId);
+      persistSessionScopes(sessionScopesRef.current);
+    }
+    return true;
+  }, [activeSessionId, scopeTransitionLocked]);
 
   const removeDocument = useCallback(
     (documentId) => {
@@ -663,8 +814,8 @@ function LibraryChatRuntime({ preselectedDocument }) {
   const handleDeleteSession = useCallback(async (sessionId) => {
     const deleted = await deleteSession(sessionId);
     if (deleted) {
-      sessionSubjectScopesRef.current.delete(sessionId);
-      persistSubjectScopes(sessionSubjectScopesRef.current);
+      sessionScopesRef.current.delete(sessionId);
+      persistSessionScopes(sessionScopesRef.current);
     }
     if (deleted && sessionId === (validatedSessionId ?? requestedSessionId)) {
       resetConversation();
@@ -696,6 +847,7 @@ function LibraryChatRuntime({ preselectedDocument }) {
         onRemoveDocument={removeDocument}
         onToggleDocument={toggleDocument}
         onChangeSubject={changeSubjects}
+        onClearDeepDiveScope={clearDeepDiveScope}
         libraryDocuments={libraryDocuments}
         sessions={sessions}
         sessionsLoading={sessionsLoading}
@@ -713,6 +865,7 @@ function LibraryChatRuntime({ preselectedDocument }) {
         sessionActionError={sessionActionError}
         onClearSessionActionError={clearSessionActionError}
         selectionLocked={selectionLocked}
+        scopeTransitionLocked={scopeTransitionLocked}
         sourceLockedByConversation={sourceLockedByConversation}
         creditPresentation={creditPresentation}
       >
@@ -721,9 +874,11 @@ function LibraryChatRuntime({ preselectedDocument }) {
           messages={conversation.messages}
           inputValue={conversation.inputValue}
           onInputChange={conversation.setInputValue}
-          onSend={conversation.sendMessage}
+          onSend={sendConversationMessage}
           onRetry={conversation.retryMessage}
           onStop={conversation.abort}
+          onApplyDeepDive={applyDeepDiveScope}
+          onAskDeepDive={askDeepDive}
           isSending={conversation.isSending}
           error={conversationError}
           isLoadingHistory={

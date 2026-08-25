@@ -22,6 +22,10 @@ export default function ChatInput({
   creditBlocked = false,
 }) {
   const isDisabled = !value.trim() || sourceRequired || creditBlocked;
+  const isDeepDive =
+    isLibraryContext(chatContext) &&
+    Array.isArray(chatContext.libraryFilters?.documentIds) &&
+    chatContext.libraryFilters.documentIds.length > 0;
 
   function handleKeyDown(event) {
     if (event.key === "Enter" && !event.shiftKey) {
@@ -34,6 +38,8 @@ export default function ChatInput({
     ? "Chọn một môn học để bắt đầu trò chuyện"
     : creditBlocked
       ? "Bạn không còn đủ AI Credits để tiếp tục"
+    : isDeepDive
+      ? "Đặt câu hỏi đào sâu về các tài liệu đã chọn..."
     : isLibraryContext(chatContext)
       ? "Hỏi về tài liệu trong thư viện của bạn..."
       : "Nhập câu hỏi học tập của bạn...";

@@ -12,6 +12,8 @@ export default function ChatConversation({
   onSend,
   onRetry,
   onStop,
+  onApplyDeepDive,
+  onAskDeepDive,
   onSourceSelect,
   isSending = false,
   error = null,
@@ -75,6 +77,8 @@ export default function ChatConversation({
           isSending={messageActionsDisabled}
           onRetry={creditBlocked ? undefined : onRetry}
           onSend={creditBlocked ? undefined : onSend}
+          onApplyDeepDive={onApplyDeepDive}
+          onAskDeepDive={onAskDeepDive}
           onStop={onStop}
           onSourceSelect={onSourceSelect}
           onPreviewDocument={onPreviewDocument}
