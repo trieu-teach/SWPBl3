@@ -32,7 +32,6 @@ import {
 import {
   CHAT_MODE_DOCUMENT,
   CHAT_MODE_LIBRARY,
-  hasSelectedSource,
 } from "../chatContext.js";
 
 const HISTORY_PAGE_LIMIT = 50;
@@ -54,6 +53,7 @@ export function useChatConversation({
   enabled = true,
   onSessionCreated,
   onConversationCompleted,
+  onConversationFailed,
   onSessionUnavailable,
 } = {}) {
   const scope = useMemo(
@@ -87,11 +87,13 @@ export function useChatConversation({
   const historyRequestRef = useRef(null);
   const onSessionCreatedRef = useRef(onSessionCreated);
   const onConversationCompletedRef = useRef(onConversationCompleted);
+  const onConversationFailedRef = useRef(onConversationFailed);
   const onSessionUnavailableRef = useRef(onSessionUnavailable);
 
   latestScopeRef.current = scope;
   onSessionCreatedRef.current = onSessionCreated;
   onConversationCompletedRef.current = onConversationCompleted;
+  onConversationFailedRef.current = onConversationFailed;
   onSessionUnavailableRef.current = onSessionUnavailable;
 
   const invalidateHistory = useCallback(() => {
@@ -334,7 +336,7 @@ export function useChatConversation({
               sessionId: knownSessionId,
               requestId,
               limit: 5,
-              // The backend accepts subjectIds/documentIds in filters.
+              // Match the BE handoff contract: subjectIds or explicit documentIds.
               // chat.stream sanitizes display-only metadata before sending.
               filters: contextSnapshot.libraryFilters,
               signal: requestController.signal,
@@ -437,6 +439,11 @@ export function useChatConversation({
       );
       setError(errorMessage);
       setStatus("error");
+      notify(onConversationFailedRef.current, {
+        error: requestError,
+        presentation: errorPresentation,
+        sessionId: requestSnapshot.sessionId,
+      });
       if (errorPresentation.resetSession) {
         notify(onSessionUnavailableRef.current, requestSnapshot.sessionId);
       }
@@ -469,15 +476,6 @@ export function useChatConversation({
         : inputValue
       ).trim();
       if (!activeScope || !content || sendingRef.current) return false;
-
-      // Guard: block sending when in LIBRARY mode without any selected source.
-      // This is a hard check at the logic layer — do not rely on UI disabled state alone.
-      if (
-        activeScope.context.mode === CHAT_MODE_LIBRARY &&
-        !hasSelectedSource(activeScope.context.libraryFilters)
-      ) {
-        return false;
-      }
 
       const knownSessionId =
         suppliedSessionId ||

@@ -12,15 +12,17 @@ import ExpandMoreRounded from "@mui/icons-material/ExpandMoreRounded";
 import ExpandLessRounded from "@mui/icons-material/ExpandLessRounded";
 import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
 import { useState } from "react";
+import {
+  getChatSourceDocumentId,
+  getChatSourceNumber,
+} from "../chatSource.model.js";
 
 const MAX_VISIBLE_SOURCES = 2;
 
 function SourceItem({ source, index, onSourceSelect, onPreviewDocument, loadingId }) {
   const isSelectable = typeof onSourceSelect === "function";
-  // citationId is the only document identifier available in the source object.
-  // It is used as the documentId for preview — if the API returns 404, the
-  // ToastProvider will surface the error without crashing the UI.
-  const previewableId = source.citationId || null;
+  const previewableId = getChatSourceDocumentId(source);
+  const displayNumber = getChatSourceNumber(source, index);
   const isPreviewLoading = loadingId === previewableId;
 
   function handleKeyDown(event) {
@@ -73,7 +75,7 @@ function SourceItem({ source, index, onSourceSelect, onPreviewDocument, loadingI
         color="primary.main"
         sx={{ mt: 0.05, minWidth: 22, fontWeight: 800, flexShrink: 0 }}
       >
-        [{index + 1}]
+        [{displayNumber}]
       </Typography>
       <Box sx={{ minWidth: 0, flex: 1 }}>
         <Typography
@@ -186,7 +188,7 @@ export default function ChatSources({
       <Stack spacing={0.75}>
         {visibleSources.map((source, index) => (
           <SourceItem
-            key={source.citationId || `source-${index}`}
+            key={`${getChatSourceDocumentId(source) || "source"}-${getChatSourceNumber(source, index)}`}
             source={source}
             index={index}
             onSourceSelect={onSourceSelect}

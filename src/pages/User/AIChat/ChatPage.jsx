@@ -1,7 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { Box, Paper } from "@mui/material";
+import { Alert, Box, Button, Paper, Snackbar } from "@mui/material";
 import UserLayout from "../Layout/UserLayout.jsx";
+import { useToast } from "../../../components/Toast/ToastProvider.jsx";
+import { getDocument } from "../../../api/documents.api.js";
+import {
+  addChatSessionDocuments,
+  removeChatSessionDocument,
+} from "../../../api/chat.api.js";
+import {
+  LIBRARY_DOCUMENT_LIMIT_MESSAGE,
+  MAX_LIBRARY_DOCUMENTS,
+} from "../../../api/chat.constants.js";
 import ChatHeader from "./components/ChatHeader.jsx";
 import ChatContextBar from "./components/ChatContextBar.jsx";
 import ChatConversation from "./components/ChatConversation.jsx";
@@ -11,13 +21,14 @@ import { useChatConversation } from "./hooks/useChatConversation.js";
 import useLibraryDocuments from "./hooks/useLibraryDocuments.js";
 import { useRouteChatSession } from "./hooks/useRouteChatSession.js";
 import { useSessions } from "./hooks/useSessions.js";
+import useChatCredits from "./hooks/useChatCredits.js";
+import { getChatCreditPresentation } from "./chatCredits.js";
 import {
   CHAT_MODE_DOCUMENT,
   CHAT_MODE_LIBRARY,
   createLibraryContext,
   getLibraryScopePresentation,
   hasSameLibrarySource,
-  hasSelectedSource,
   setLibrarySubjectScopes,
   shouldStartNewLibraryChatOnSourceChange,
   toggleLibraryDocumentScope,
@@ -26,6 +37,8 @@ import {
 const LIBRARY_BASE_PATH = "/hoi-ai";
 const LIBRARY_PRESELECTION_KEY = "libraryDocumentPreselection";
 const SUBJECT_SCOPE_STORAGE_KEY = "aiChatSubjectScopes";
+const LAST_SESSION_DOCUMENT_MESSAGE =
+  "Không thể xoá tài liệu cuối cùng. Hãy xoá phiên chat nếu muốn bắt đầu lại.";
 // AppShell header plus its responsive page-content padding.
 const CHAT_WORKSPACE_HEIGHT = {
   xs: "calc(100dvh - 104px)",
@@ -58,9 +71,16 @@ function getLibraryPreselection(locationState) {
   const id = normalizeId(candidate?.id);
   const title =
     typeof candidate?.title === "string" ? candidate.title.trim() : "";
+  const subjectId = normalizeId(candidate?.subjectId ?? candidate?.subject?.id);
+  const subjectName =
+    typeof candidate?.subjectName === "string"
+      ? candidate.subjectName.trim()
+      : typeof candidate?.subject?.name === "string"
+        ? candidate.subject.name.trim()
+        : "";
 
   if (!id || !title) return null;
-  return { id, title };
+  return { id, title, subjectId, subjectName };
 }
 
 function createInitialLibraryContext(preselectedDocument) {
@@ -70,6 +90,44 @@ function createInitialLibraryContext(preselectedDocument) {
         _documentMeta: [preselectedDocument],
       })
     : createLibraryContext(null);
+}
+
+function getSessionDocuments(session) {
+  return (
+    session?.documents
+      ?.filter((document) => document?.id)
+      .map((document) => ({
+        id: document.id,
+        title: document.title || "Tài liệu",
+        subjectId: normalizeId(document.subjectId ?? document.subject?.id),
+        accessType: document.accessType,
+        visibility: document.visibility,
+        aiUsable: document.available !== false,
+        available: document.available !== false,
+        unavailableReason: document.unavailableReason ?? null,
+      })) ?? []
+  );
+}
+
+function getDocumentSubject(document) {
+  const id = normalizeId(document?.subjectId ?? document?.subject?.id);
+  if (!id) return null;
+  const name =
+    typeof document?.subject === "string"
+      ? document.subject.trim()
+      : typeof document?.subject?.name === "string"
+        ? document.subject.name.trim()
+        : typeof document?.subjectName === "string"
+          ? document.subjectName.trim()
+          : "";
+  return { id, name: name || "Môn học đã chọn" };
+}
+
+function isSessionModeConflict(error) {
+  if (error?.status !== 409 || error?.code === "DOCUMENT_NOT_READY") {
+    return false;
+  }
+  return !/chưa sẵn sàng|unreadable/i.test(error?.message ?? "");
 }
 
 function readStoredSubjectScopes() {
@@ -107,7 +165,7 @@ function ChatPageLayout({
   selectedSubjectIds,
   onRemoveDocument,
   onToggleDocument,
-  onChangeSubjects,
+  onChangeSubject,
   libraryDocuments,
   sessions,
   sessionsLoading,
@@ -125,6 +183,9 @@ function ChatPageLayout({
   sessionActionError,
   onClearSessionActionError,
   selectionLocked,
+  minimumSelectedDocuments,
+  updatingDocumentId,
+  creditPresentation,
   children,
 }) {
   const [documentsOpen, setDocumentsOpen] = useState(false);
@@ -152,8 +213,10 @@ function ChatPageLayout({
           selectedDocuments={selectedDocuments}
           selectedSubjectIds={selectedSubjectIds}
           onToggleDocument={onToggleDocument}
-          onChangeSubjects={onChangeSubjects}
+          onChangeSubject={onChangeSubject}
           selectionLocked={selectionLocked}
+          minimumSelectedDocuments={minimumSelectedDocuments}
+          updatingDocumentId={updatingDocumentId}
           mobileOpen={documentsOpen}
           onMobileClose={() => setDocumentsOpen(false)}
           onPreviewDocument={openPreview}
@@ -175,6 +238,8 @@ function ChatPageLayout({
             onOpenDocuments={() => setDocumentsOpen(true)}
             onNewChat={onNewChat}
             onOpenHistory={() => setHistoryOpen(true)}
+            selectedDocumentCount={selectedDocuments.length}
+            creditPresentation={creditPresentation}
           />
 
           <ChatContextBar
@@ -182,6 +247,8 @@ function ChatPageLayout({
             selectedDocuments={selectedDocuments}
             onRemove={onRemoveDocument}
             selectionLocked={selectionLocked}
+            minimumSelectedDocuments={minimumSelectedDocuments}
+            updatingDocumentId={updatingDocumentId}
           />
 
           {typeof children === "function" 
@@ -217,15 +284,35 @@ function ChatPageLayout({
 }
 
 function LibraryChatRuntime({ preselectedDocument }) {
+  const toast = useToast();
+  const initialPreselectionRef = useRef(preselectedDocument);
+  const preselectionResolvedRef = useRef(Boolean(preselectedDocument?.subjectId));
   const [libraryContext, setLibraryContext] = useState(() =>
     createInitialLibraryContext(preselectedDocument),
   );
-  const [selectedSubjectIds, setSelectedSubjectIds] = useState([]);
+  const [documentMutation, setDocumentMutation] = useState(null);
+  const [sessionConflict, setSessionConflict] = useState("");
+  const documentMutationRef = useRef(null);
   const sessionSubjectScopesRef = useRef(null);
   if (sessionSubjectScopesRef.current === null) {
     sessionSubjectScopesRef.current = readStoredSubjectScopes();
   }
   const libraryDocuments = useLibraryDocuments();
+  const {
+    credits,
+    loading: creditsLoading,
+    error: creditsError,
+    refresh: refreshChatCredits,
+    applyUsage: applyChatUsage,
+  } = useChatCredits();
+  const creditPresentation = useMemo(
+    () =>
+      getChatCreditPresentation(credits, CHAT_MODE_LIBRARY, {
+        loading: creditsLoading,
+        error: creditsError,
+      }),
+    [credits, creditsError, creditsLoading],
+  );
 
   const {
     requestedSessionId,
@@ -236,6 +323,7 @@ function LibraryChatRuntime({ preselectedDocument }) {
     selectSession,
     startNewChat,
     acceptCreatedSession,
+    replaceValidatedSession,
   } = useRouteChatSession({
     mode: CHAT_MODE_LIBRARY,
     basePath: LIBRARY_BASE_PATH,
@@ -262,25 +350,42 @@ function LibraryChatRuntime({ preselectedDocument }) {
   });
 
   const handleSessionCreated = useCallback(
-    (sessionId) => {
-      const subjectIds = libraryContext.libraryFilters?.subjectIds ?? [];
+    (sessionId, { createdSession } = {}) => {
+      const subjectIds = Array.isArray(
+        libraryContext.libraryFilters?.subjectIds,
+      )
+        ? libraryContext.libraryFilters.subjectIds
+        : [];
       if (subjectIds.length > 0) {
+        const subjects = Array.isArray(
+          libraryContext.libraryFilters?._subjectsMeta,
+        )
+          ? libraryContext.libraryFilters._subjectsMeta
+          : subjectIds.map((id) => ({ id, name: "Môn học đã chọn" }));
         sessionSubjectScopesRef.current.set(sessionId, {
-          subjectIds: [...subjectIds],
-          subjects: libraryContext.libraryFilters?._subjectsMeta ?? [],
+          subjectIds,
+          subjects,
         });
         persistSubjectScopes(sessionSubjectScopesRef.current);
       }
-      acceptCreatedSession(sessionId);
+      acceptCreatedSession(sessionId, createdSession);
       void refreshSessions();
     },
     [acceptCreatedSession, libraryContext, refreshSessions],
   );
 
-  const handleConversationCompleted = useCallback(() => {
-    void refreshSessions();
-    window.dispatchEvent(new Event("subscription:refresh"));
-  }, [refreshSessions]);
+  const handleConversationCompleted = useCallback(
+    ({ usage } = {}) => {
+      applyChatUsage(usage);
+      void refreshSessions();
+      window.dispatchEvent(new Event("subscription:refresh"));
+    },
+    [applyChatUsage, refreshSessions],
+  );
+
+  const handleConversationFailed = useCallback(() => {
+    void refreshChatCredits();
+  }, [refreshChatCredits]);
 
   const conversationEnabled =
     !isValidating &&
@@ -292,6 +397,7 @@ function LibraryChatRuntime({ preselectedDocument }) {
     enabled: conversationEnabled,
     onSessionCreated: handleSessionCreated,
     onConversationCompleted: handleConversationCompleted,
+    onConversationFailed: handleConversationFailed,
     onSessionUnavailable: startNewChat,
   });
   const resetConversation = conversation.reset;
@@ -302,10 +408,11 @@ function LibraryChatRuntime({ preselectedDocument }) {
   }, [resetConversation, startNewChat]);
 
   const activeSessionId = validatedSessionId ?? requestedSessionId;
-  const selectionLocked = isValidating || conversation.isSending;
+  const selectionLocked =
+    isValidating || conversation.isSending || Boolean(documentMutation);
 
   const applyLibrarySourceChange = useCallback(
-    (nextContext, nextSubjectIds) => {
+    (nextContext) => {
       if (selectionLocked) return false;
 
       const sourceChanged = !hasSameLibrarySource(libraryContext, nextContext);
@@ -320,9 +427,6 @@ function LibraryChatRuntime({ preselectedDocument }) {
         startNewChat();
       }
 
-      if (Array.isArray(nextSubjectIds)) {
-        setSelectedSubjectIds(nextSubjectIds);
-      }
       setLibraryContext(nextContext);
       return sourceChanged;
     },
@@ -337,52 +441,135 @@ function LibraryChatRuntime({ preselectedDocument }) {
   );
 
   useEffect(() => {
-    if (!validatedSessionId || !validatedSession) return;
-    const sessionSubjectId = normalizeId(
-      validatedSession.subjectId ?? validatedSession.subject?.id,
-    );
-    if (sessionSubjectId) {
-      setSelectedSubjectIds([sessionSubjectId]);
-      setLibraryContext(
-        setLibrarySubjectScopes([{
-          id: sessionSubjectId,
-          name: validatedSession.subject?.name || validatedSession.subjectName,
-        }]),
-      );
-      return;
-    }
+    const preselection = initialPreselectionRef.current;
+    if (!preselection?.id || preselectionResolvedRef.current) return undefined;
 
+    let active = true;
+    preselectionResolvedRef.current = true;
+    getDocument(preselection.id)
+      .then((document) => {
+        if (!active) return;
+        const subject = getDocumentSubject(document);
+        if (!subject) return;
+        const selectedDocument = {
+          ...preselection,
+          subjectId: subject.id,
+          accessType: document?.accessType,
+          visibility: document?.visibility,
+          aiUsable: document?.aiUsable !== false,
+        };
+        setLibraryContext(
+          createLibraryContext({
+            documentIds: [selectedDocument.id],
+            _documentMeta: [selectedDocument],
+          }),
+        );
+      })
+      .catch(() => {
+        // Keep the preselected file even if its optional subject lookup fails.
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!validatedSessionId || !validatedSession) return;
+    const sessionDocuments = getSessionDocuments(validatedSession);
     const rememberedSubjectScope = sessionSubjectScopesRef.current.get(
       validatedSessionId,
     );
-    if (rememberedSubjectScope?.subjectIds?.length > 0) {
-      setSelectedSubjectIds(rememberedSubjectScope.subjectIds);
+    const directSubjectIds = [
+      normalizeId(validatedSession.subjectId ?? validatedSession.subject?.id),
+      ...(Array.isArray(validatedSession.subjectIds)
+        ? validatedSession.subjectIds.map(normalizeId)
+        : []),
+    ].filter(Boolean);
+    const rememberedSubjectIds = [
+      normalizeId(rememberedSubjectScope?.subjectId),
+      ...(Array.isArray(rememberedSubjectScope?.subjectIds)
+        ? rememberedSubjectScope.subjectIds.map(normalizeId)
+        : []),
+    ].filter(Boolean);
+    const documentsById = new Map(
+      libraryDocuments.current.documents.map((document) => [document.id, document]),
+    );
+    const hydratedDocuments = sessionDocuments.map((document) => ({
+      ...documentsById.get(document.id),
+      ...document,
+      subjectId:
+        document.subjectId ?? documentsById.get(document.id)?.subjectId ?? null,
+    }));
+    const sessionSubjectIds = [
+      ...new Set(
+        directSubjectIds.length > 0
+          ? directSubjectIds
+          : rememberedSubjectIds,
+      ),
+    ];
+
+    if (sessionSubjectIds.length === 0) {
       setLibraryContext(
-        setLibrarySubjectScopes(rememberedSubjectScope.subjects),
+        createLibraryContext(
+          hydratedDocuments.length > 0
+            ? {
+                documentIds: hydratedDocuments.map((document) => document.id),
+                _documentMeta: hydratedDocuments,
+              }
+            : null,
+        ),
       );
       return;
     }
 
-    const availableDocuments = validatedSession.documents
-      ?.filter((document) => document?.id)
-      .map((document) => ({
-        id: document.id,
-        title: document.title || "Tài liệu",
-        available: document.available !== false,
-        unavailableReason: document.unavailableReason ?? null,
-      })) ?? [];
-    setSelectedSubjectIds([]);
-    setLibraryContext(
-      createLibraryContext(
-        availableDocuments.length > 0
-          ? {
-              documentIds: availableDocuments.map((document) => document.id),
-              _documentMeta: availableDocuments,
-            }
-          : null,
-      ),
+    const rememberedSubjects = [
+      ...(Array.isArray(rememberedSubjectScope?.subjects)
+        ? rememberedSubjectScope.subjects
+        : []),
+      ...(rememberedSubjectScope?.subject
+        ? [rememberedSubjectScope.subject]
+        : []),
+    ];
+    const rememberedSubjectsById = new Map(
+      rememberedSubjects
+        .filter((subject) => normalizeId(subject?.id))
+        .map((subject) => [normalizeId(subject.id), subject]),
     );
-  }, [validatedSession, validatedSessionId]);
+    const subjects = sessionSubjectIds.map((subjectId) =>
+      libraryDocuments.subjects.find((item) => item.id === subjectId) ?? {
+        id: subjectId,
+        name:
+          rememberedSubjectsById.get(subjectId)?.name ||
+          (sessionSubjectIds.length === 1
+            ? validatedSession.subject?.name || validatedSession.subjectName
+            : null) ||
+          "Môn học đã chọn",
+      },
+    );
+    setLibraryContext(
+      createLibraryContext({
+        subjectIds: sessionSubjectIds,
+        _subjectsMeta: subjects,
+        ...(hydratedDocuments.length > 0
+          ? {
+              documentIds: hydratedDocuments.map((document) => document.id),
+              _documentMeta: hydratedDocuments,
+            }
+          : {}),
+      }),
+    );
+    sessionSubjectScopesRef.current.set(validatedSessionId, {
+      subjectIds: sessionSubjectIds,
+      subjects,
+    });
+    persistSubjectScopes(sessionSubjectScopesRef.current);
+  }, [
+    libraryDocuments.current.documents,
+    libraryDocuments.subjects,
+    validatedSession,
+    validatedSessionId,
+  ]);
 
   const selectedDocuments = useMemo(() => {
     const ids = libraryContext.libraryFilters?.documentIds ?? [];
@@ -395,28 +582,104 @@ function LibraryChatRuntime({ preselectedDocument }) {
     () => getLibraryScopePresentation(libraryContext),
     [libraryContext],
   );
+  const selectedSubjectIds = useMemo(
+    () => libraryContext.libraryFilters?.subjectIds ?? [],
+    [libraryContext],
+  );
   const selectedSubjects = useMemo(
-    () => selectedSubjectIds.map((subjectId) =>
-      libraryDocuments.subjects.find((subject) => subject.id === subjectId) ?? {
-        id: subjectId,
-        name: "Môn học đã chọn",
-      }),
-    [libraryDocuments.subjects, selectedSubjectIds],
+    () => {
+      const contextSubjects = new Map(
+        (libraryContext.libraryFilters?._subjectsMeta ?? []).map((subject) => [
+          subject.id,
+          subject,
+        ]),
+      );
+      return selectedSubjectIds.map(
+        (subjectId) =>
+          libraryDocuments.subjects.find(
+            (subject) => subject.id === subjectId,
+          ) ??
+          contextSubjects.get(subjectId) ?? {
+            id: subjectId,
+            name: "Môn học đã chọn",
+          },
+      );
+    },
+    [libraryContext, libraryDocuments.subjects, selectedSubjectIds],
   );
 
-  const toggleDocument = useCallback(
-    (document) => {
-      const next = toggleLibraryDocumentScope(libraryContext, document);
-      const nextContext = next.libraryFilters?.documentIds?.length
-        ? next
-        : setLibrarySubjectScopes(selectedSubjects);
-      applyLibrarySourceChange(nextContext);
+  const applySessionDocumentMutation = useCallback(
+    async ({ action, documentId, request }) => {
+      if (documentMutationRef.current) return false;
+
+      const mutation = { action, documentId };
+      documentMutationRef.current = mutation;
+      setDocumentMutation(mutation);
+      setSessionConflict("");
+
+      try {
+        const updatedSession = await request();
+        replaceValidatedSession(updatedSession);
+        void refreshSessions();
+        toast.success(
+          action === "add"
+            ? "Đã thêm tài liệu vào phiên chat."
+            : "Đã xoá tài liệu khỏi phiên chat.",
+        );
+        return true;
+      } catch (error) {
+        const fallback =
+          action === "add"
+            ? "Không thể thêm tài liệu vào phiên chat."
+            : "Không thể xoá tài liệu khỏi phiên chat.";
+        const message = error?.message?.trim() || fallback;
+
+        if (isSessionModeConflict(error)) {
+          setSessionConflict(message);
+        } else {
+          toast.error(message);
+        }
+
+        if (error?.status === 404) {
+          resetConversation();
+          startNewChat();
+        }
+        return false;
+      } finally {
+        if (documentMutationRef.current === mutation) {
+          documentMutationRef.current = null;
+          setDocumentMutation(null);
+        }
+      }
     },
-    [applyLibrarySourceChange, libraryContext, selectedSubjects],
+    [
+      refreshSessions,
+      replaceValidatedSession,
+      resetConversation,
+      startNewChat,
+      toast,
+    ],
   );
 
   const removeDocument = useCallback(
     (documentId) => {
+      if (selectionLocked) return false;
+      const selectedIds = libraryContext.libraryFilters?.documentIds ?? [];
+      if (!selectedIds.includes(documentId)) return false;
+
+      if (validatedSessionId) {
+        if (selectedIds.length <= 1) {
+          toast.warning(LAST_SESSION_DOCUMENT_MESSAGE);
+          return false;
+        }
+        return applySessionDocumentMutation({
+          action: "remove",
+          documentId,
+          request: () =>
+            removeChatSessionDocument(validatedSessionId, documentId),
+        });
+      }
+
       const next = toggleLibraryDocumentScope(
         libraryContext,
         { id: documentId },
@@ -426,29 +689,87 @@ function LibraryChatRuntime({ preselectedDocument }) {
         ? next
         : setLibrarySubjectScopes(selectedSubjects);
       applyLibrarySourceChange(nextContext);
+      return true;
     },
-    [applyLibrarySourceChange, libraryContext, selectedSubjects],
+    [
+      applyLibrarySourceChange,
+      applySessionDocumentMutation,
+      libraryContext,
+      selectedSubjects,
+      selectionLocked,
+      toast,
+      validatedSessionId,
+    ],
+  );
+
+  const toggleDocument = useCallback(
+    (document) => {
+      if (selectionLocked || !document?.id) return false;
+      if (
+        selectedSubjectIds.length > 0 &&
+        !selectedSubjectIds.includes(document.subjectId)
+      ) {
+        toast.warning("Chỉ có thể chọn tài liệu thuộc các môn học hiện tại.");
+        return false;
+      }
+      const selectedIds = libraryContext.libraryFilters?.documentIds ?? [];
+      if (selectedIds.includes(document.id)) {
+        return removeDocument(document.id);
+      }
+
+      if (document.aiUsable !== true) {
+        toast.warning("Tài liệu chưa sẵn sàng để sử dụng với AI.");
+        return false;
+      }
+      if (selectedIds.length >= MAX_LIBRARY_DOCUMENTS) {
+        toast.warning(LIBRARY_DOCUMENT_LIMIT_MESSAGE);
+        return false;
+      }
+
+      if (validatedSessionId) {
+        return applySessionDocumentMutation({
+          action: "add",
+          documentId: document.id,
+          request: () =>
+            addChatSessionDocuments(validatedSessionId, [document.id]),
+        });
+      }
+
+      const next = toggleLibraryDocumentScope(libraryContext, document);
+      const nextContext = next.libraryFilters?.documentIds?.length
+        ? next
+        : setLibrarySubjectScopes(selectedSubjects);
+      applyLibrarySourceChange(nextContext);
+      return true;
+    },
+    [
+      applyLibrarySourceChange,
+      applySessionDocumentMutation,
+      libraryContext,
+      removeDocument,
+      selectedSubjectIds,
+      selectedSubjects,
+      selectionLocked,
+      toast,
+      validatedSessionId,
+    ],
   );
 
   const changeSubjects = useCallback(
     (subjectIds) => {
-      const normalizedIds = [...new Set(
-        (Array.isArray(subjectIds) ? subjectIds : [])
-          .map(normalizeId)
-          .filter(Boolean),
-      )];
-      const nextSubjects = normalizedIds.map((subjectId) =>
-        libraryDocuments.subjects.find(
-          (subject) => subject.id === subjectId,
-        ) ?? {
-          id: subjectId,
-          name: "Môn học đã chọn",
-        });
-
-      applyLibrarySourceChange(
-        setLibrarySubjectScopes(nextSubjects),
-        normalizedIds,
+      const normalizedIds = Array.isArray(subjectIds)
+        ? [...new Set(subjectIds.map(normalizeId).filter(Boolean))]
+        : [];
+      const nextSubjects = normalizedIds.map(
+        (subjectId) =>
+          libraryDocuments.subjects.find(
+            (subject) => subject.id === subjectId,
+          ) ?? { id: subjectId, name: "Môn học đã chọn" },
       );
+
+      // Changing the subject filter clears explicit file selection so hidden
+      // documents cannot remain in the next request scope.
+      applyLibrarySourceChange(setLibrarySubjectScopes(nextSubjects));
     },
     [applyLibrarySourceChange, libraryDocuments.subjects],
   );
@@ -476,57 +797,93 @@ function LibraryChatRuntime({ preselectedDocument }) {
   const conversationError =
     routeError || conversation.historyError || conversation.error;
 
-  // True when no primary source (subject or document) is selected.
-  // Used to block sending and show the "select a source" prompt.
-  const sourceRequired = !hasSelectedSource(libraryContext.libraryFilters);
+  // Null filters mean the whole eligible personal/saved library.
+  const sourceRequired = false;
+
+  const minimumSelectedDocuments =
+    validatedSessionId && selectedDocuments.length > 0 ? 1 : 0;
 
   return (
-    <ChatPageLayout
-      chatContext={libraryContext}
-      libraryScope={libraryScope}
-      selectedDocuments={selectedDocuments}
-      selectedSubjectIds={selectedSubjectIds}
-      onRemoveDocument={removeDocument}
-      onToggleDocument={toggleDocument}
-      onChangeSubjects={changeSubjects}
-      libraryDocuments={libraryDocuments}
-      sessions={sessions}
-      sessionsLoading={sessionsLoading}
-      sessionsLoadingMore={sessionsLoadingMore}
-      sessionsError={sessionsError}
-      sessionsHasMore={sessionsHasMore}
-      currentSessionId={activeSessionId}
-      onSelectSession={handleSelectSession}
-      onLoadMoreSessions={loadMoreSessions}
-      onNewChat={handleNewChat}
-      onRenameSession={renameSession}
-      onDeleteSession={handleDeleteSession}
-      renamingSessionId={renamingSessionId}
-      deletingSessionId={deletingSessionId}
-      sessionActionError={sessionActionError}
-      onClearSessionActionError={clearSessionActionError}
-      selectionLocked={selectionLocked}
-    >
-      <ChatConversation
+    <>
+      <ChatPageLayout
         chatContext={libraryContext}
-        messages={conversation.messages}
-        inputValue={conversation.inputValue}
-        onInputChange={conversation.setInputValue}
-        onSend={conversation.sendMessage}
-        onRetry={conversation.retryMessage}
-        onStop={conversation.abort}
-        isSending={conversation.isSending}
-        error={conversationError}
-        isLoadingHistory={
-          isValidating || conversation.isLoadingHistory
-        }
-        isLoadingOlderMessages={conversation.isLoadingOlderMessages}
-        hasMoreHistory={conversation.hasMoreHistory}
-        onLoadOlder={conversation.loadOlderMessages}
-        disabled={!conversationEnabled}
-        sourceRequired={sourceRequired}
-      />
-    </ChatPageLayout>
+        libraryScope={libraryScope}
+        selectedDocuments={selectedDocuments}
+        selectedSubjectIds={selectedSubjectIds}
+        onRemoveDocument={removeDocument}
+        onToggleDocument={toggleDocument}
+        onChangeSubject={changeSubjects}
+        libraryDocuments={libraryDocuments}
+        sessions={sessions}
+        sessionsLoading={sessionsLoading}
+        sessionsLoadingMore={sessionsLoadingMore}
+        sessionsError={sessionsError}
+        sessionsHasMore={sessionsHasMore}
+        currentSessionId={activeSessionId}
+        onSelectSession={handleSelectSession}
+        onLoadMoreSessions={loadMoreSessions}
+        onNewChat={handleNewChat}
+        onRenameSession={renameSession}
+        onDeleteSession={handleDeleteSession}
+        renamingSessionId={renamingSessionId}
+        deletingSessionId={deletingSessionId}
+        sessionActionError={sessionActionError}
+        onClearSessionActionError={clearSessionActionError}
+        selectionLocked={selectionLocked}
+        minimumSelectedDocuments={minimumSelectedDocuments}
+        updatingDocumentId={documentMutation?.documentId ?? null}
+        creditPresentation={creditPresentation}
+      >
+        <ChatConversation
+          chatContext={libraryContext}
+          messages={conversation.messages}
+          inputValue={conversation.inputValue}
+          onInputChange={conversation.setInputValue}
+          onSend={conversation.sendMessage}
+          onRetry={conversation.retryMessage}
+          onStop={conversation.abort}
+          isSending={conversation.isSending}
+          error={conversationError}
+          isLoadingHistory={
+            isValidating || conversation.isLoadingHistory
+          }
+          isLoadingOlderMessages={conversation.isLoadingOlderMessages}
+          hasMoreHistory={conversation.hasMoreHistory}
+          onLoadOlder={conversation.loadOlderMessages}
+          disabled={!conversationEnabled}
+          sourceRequired={sourceRequired}
+          creditPresentation={creditPresentation}
+        />
+      </ChatPageLayout>
+
+      <Snackbar
+        open={Boolean(sessionConflict)}
+        autoHideDuration={8000}
+        onClose={() => setSessionConflict("")}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        sx={{ mt: 7 }}
+      >
+        <Alert
+          severity="error"
+          variant="filled"
+          onClose={() => setSessionConflict("")}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              onClick={() => {
+                setSessionConflict("");
+                handleNewChat();
+              }}
+            >
+              Tạo phiên chat thư viện mới
+            </Button>
+          }
+        >
+          {sessionConflict}
+        </Alert>
+      </Snackbar>
+    </>
   );
 }
 

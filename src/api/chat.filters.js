@@ -1,6 +1,5 @@
 import {
   LIBRARY_DOCUMENT_LIMIT_MESSAGE,
-  LIBRARY_SOURCE_REQUIRED_MESSAGE,
   MAX_LIBRARY_DOCUMENTS,
 } from "./chat.constants.js";
 
@@ -14,22 +13,17 @@ function normalizeStringArray(value) {
     : [];
 }
 
+function normalizeSubjectIds(filters) {
+  return normalizeStringArray([
+    filters?.subjectId,
+    ...(Array.isArray(filters?.subjectIds) ? filters.subjectIds : []),
+  ]);
+}
+
 function assertDocumentLimit(documentIds) {
   if (documentIds.length > MAX_LIBRARY_DOCUMENTS) {
     throw new RangeError(LIBRARY_DOCUMENT_LIMIT_MESSAGE);
   }
-}
-
-export function hasSelectedLibrarySource(filters) {
-  if (!filters || typeof filters !== "object" || Array.isArray(filters)) {
-    return false;
-  }
-
-  return Boolean(
-    normalizeString(filters.subjectId) ||
-      normalizeStringArray(filters.subjectIds).length > 0 ||
-      normalizeStringArray(filters.documentIds).length > 0,
-  );
 }
 
 export function sanitizeLibraryFilters(filters) {
@@ -38,8 +32,7 @@ export function sanitizeLibraryFilters(filters) {
   }
 
   const cleaned = {};
-  const subjectId = normalizeString(filters.subjectId);
-  const subjectIds = normalizeStringArray(filters.subjectIds);
+  const subjectIds = normalizeSubjectIds(filters);
   const documentIds = normalizeStringArray(filters.documentIds);
   assertDocumentLimit(documentIds);
 
@@ -48,8 +41,6 @@ export function sanitizeLibraryFilters(filters) {
     cleaned.documentIds = documentIds;
   } else if (subjectIds.length > 0) {
     cleaned.subjectIds = subjectIds;
-  } else if (subjectId) {
-    cleaned.subjectId = subjectId;
   }
 
   const categoryId = normalizeString(filters.categoryId);
@@ -61,10 +52,6 @@ export function sanitizeLibraryFilters(filters) {
 }
 
 export function requireLibrarySourceFilters(filters) {
-  if (!hasSelectedLibrarySource(filters)) {
-    throw new Error(LIBRARY_SOURCE_REQUIRED_MESSAGE);
-  }
-
   return sanitizeLibraryFilters(filters);
 }
 

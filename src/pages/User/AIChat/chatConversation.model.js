@@ -25,11 +25,15 @@ export function snapshotLibraryFilters(filters) {
   if (typeof filters !== "object" || Array.isArray(filters)) return null;
 
   const snapshot = {};
-  if (typeof filters.subjectId === "string" && filters.subjectId.trim()) {
-    snapshot.subjectId = filters.subjectId;
+  const subjectIds = Array.isArray(filters.subjectIds)
+    ? [...new Set(filters.subjectIds.map(normalizeId).filter(Boolean))]
+    : [];
+  const legacySubjectId = normalizeId(filters.subjectId);
+  if (legacySubjectId && !subjectIds.includes(legacySubjectId)) {
+    subjectIds.unshift(legacySubjectId);
   }
-  if (Array.isArray(filters.subjectIds) && filters.subjectIds.length > 0) {
-    snapshot.subjectIds = [...filters.subjectIds];
+  if (subjectIds.length > 0) {
+    snapshot.subjectIds = subjectIds;
   }
   if (typeof filters.categoryId === "string" && filters.categoryId.trim()) {
     snapshot.categoryId = filters.categoryId;

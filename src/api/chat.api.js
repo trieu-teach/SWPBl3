@@ -3,6 +3,10 @@ import {
   buildChatSessionPayload,
   requireLibrarySourceFilters,
 } from "./chat.filters.js";
+import {
+  LIBRARY_DOCUMENT_LIMIT_MESSAGE,
+  MAX_LIBRARY_DOCUMENTS,
+} from "./chat.constants.js";
 import { resolveChatRequestId } from "./chat.request-id.js";
 export {
   getChatErrorMessage,
@@ -36,7 +40,7 @@ function mapChatRequest({
   const cleanedFilters = requireLibrarySourceFilters(
     filters ?? { subjectId, subjectIds, documentIds },
   );
-  body.filters = cleanedFilters;
+  if (cleanedFilters) body.filters = cleanedFilters;
 
   return body;
 }
@@ -150,6 +154,42 @@ export function renameChatSession(sessionId, title) {
 export function deleteChatSession(sessionId) {
   if (!sessionId) throw new Error("sessionId is required");
   return apiRequest(`/chat/sessions/${sessionId}`, { method: "DELETE" });
+}
+
+export function addChatSessionDocuments(sessionId, documentIds) {
+  if (!sessionId) throw new Error("sessionId is required");
+  const normalizedDocumentIds = Array.isArray(documentIds)
+    ? [
+        ...new Set(
+          documentIds
+            .map((id) => (typeof id === "string" ? id.trim() : ""))
+            .filter(Boolean),
+        ),
+      ]
+    : [];
+  if (normalizedDocumentIds.length === 0) {
+    throw new Error("documentIds is required");
+  }
+  if (normalizedDocumentIds.length > MAX_LIBRARY_DOCUMENTS) {
+    throw new RangeError(LIBRARY_DOCUMENT_LIMIT_MESSAGE);
+  }
+
+  return apiRequest(`/chat/sessions/${sessionId}/documents`, {
+    method: "POST",
+    body: { documentIds: normalizedDocumentIds },
+  });
+}
+
+export function removeChatSessionDocument(sessionId, documentId) {
+  if (!sessionId) throw new Error("sessionId is required");
+  const normalizedDocumentId =
+    typeof documentId === "string" ? documentId.trim() : "";
+  if (!normalizedDocumentId) throw new Error("documentId is required");
+
+  return apiRequest(
+    `/chat/sessions/${sessionId}/documents/${encodeURIComponent(normalizedDocumentId)}`,
+    { method: "DELETE" },
+  );
 }
 
 export function getAiChatDocuments({

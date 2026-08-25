@@ -3,6 +3,7 @@ import {
   Alert,
   Box,
   Button,
+  Chip,
   Divider,
   Paper,
   Stack,
@@ -10,6 +11,7 @@ import {
 } from "@mui/material";
 import {
   AddCommentOutlined,
+  CreditScoreOutlined,
   HistoryOutlined,
   SmartToyOutlined,
 } from "@mui/icons-material";
@@ -22,6 +24,8 @@ import { useChatConversation } from "../../AIChat/hooks/useChatConversation.js";
 import { useRouteChatSession } from "../../AIChat/hooks/useRouteChatSession.js";
 import { useSessions } from "../../AIChat/hooks/useSessions.js";
 import ChatSessionDrawer from "../../AIChat/components/ChatSessionDrawer.jsx";
+import useChatCredits from "../../AIChat/hooks/useChatCredits.js";
+import { getChatCreditPresentation } from "../../AIChat/chatCredits.js";
 
 function normalizeString(value) {
   if (typeof value !== "string") return null;
@@ -39,6 +43,13 @@ export default function DocumentAIAssistant({
   onSourceSelect,
 }) {
   const [sessionsOpen, setSessionsOpen] = useState(false);
+  const {
+    credits,
+    loading: creditsLoading,
+    error: creditsError,
+    refresh: refreshChatCredits,
+    applyUsage: applyChatUsage,
+  } = useChatCredits();
 
   const normalizedDocumentId = normalizeString(documentId);
   const normalizedBasePath = normalizeString(basePath);
@@ -48,6 +59,14 @@ export default function DocumentAIAssistant({
     enabled && normalizedDocumentId && normalizedBasePath,
   );
   const sendAllowed = Boolean(canSend);
+  const creditPresentation = useMemo(
+    () =>
+      getChatCreditPresentation(credits, CHAT_MODE_DOCUMENT, {
+        loading: creditsLoading,
+        error: creditsError,
+      }),
+    [credits, creditsError, creditsLoading],
+  );
 
   const documentChatContext = useMemo(
     () =>
@@ -110,10 +129,18 @@ export default function DocumentAIAssistant({
     [acceptCreatedSession, refreshSessions],
   );
 
-  const handleConversationCompleted = useCallback(() => {
-    void refreshSessions();
-    window.dispatchEvent(new Event("subscription:refresh"));
-  }, [refreshSessions]);
+  const handleConversationCompleted = useCallback(
+    ({ usage } = {}) => {
+      applyChatUsage(usage);
+      void refreshSessions();
+      window.dispatchEvent(new Event("subscription:refresh"));
+    },
+    [applyChatUsage, refreshSessions],
+  );
+
+  const handleConversationFailed = useCallback(() => {
+    void refreshChatCredits();
+  }, [refreshChatCredits]);
 
   const {
     messages,
@@ -136,23 +163,36 @@ export default function DocumentAIAssistant({
     enabled: conversationEnabled,
     onSessionCreated: handleSessionCreated,
     onConversationCompleted: handleConversationCompleted,
+    onConversationFailed: handleConversationFailed,
     onSessionUnavailable: startNewChat,
   });
 
   const handleSend = useCallback(
     (message) => {
-      if (!conversationEnabled || !sendAllowed) return false;
+      if (
+        !conversationEnabled ||
+        !sendAllowed ||
+        creditPresentation.blocked
+      ) {
+        return false;
+      }
       return sendMessage(message);
     },
-    [conversationEnabled, sendAllowed, sendMessage],
+    [conversationEnabled, creditPresentation.blocked, sendAllowed, sendMessage],
   );
 
   const handleRetryMessage = useCallback(
     (messageId) => {
-      if (!conversationEnabled || !sendAllowed) return false;
+      if (
+        !conversationEnabled ||
+        !sendAllowed ||
+        creditPresentation.blocked
+      ) {
+        return false;
+      }
       return retryMessage(messageId);
     },
-    [conversationEnabled, sendAllowed, retryMessage],
+    [conversationEnabled, creditPresentation.blocked, retryMessage, sendAllowed],
   );
 
   const handleSelectSession = useCallback(
@@ -240,6 +280,18 @@ export default function DocumentAIAssistant({
             )}
           </Box>
           <Stack direction="row" spacing={0.75}>
+            <Chip
+              size="small"
+              icon={<CreditScoreOutlined />}
+              color={creditPresentation.color}
+              variant={creditPresentation.blocked ? "filled" : "outlined"}
+              label={creditPresentation.label}
+              title={
+                creditPresentation.error ||
+                `Mỗi câu hỏi với tài liệu này dùng ${creditPresentation.required} AI Credit`
+              }
+              sx={{ height: 30, fontWeight: 750, fontSize: "0.72rem" }}
+            />
             <Button
               size="small"
               startIcon={<AddCommentOutlined />}
@@ -305,6 +357,7 @@ export default function DocumentAIAssistant({
           hasMoreHistory={hasMoreHistory}
           onLoadOlder={loadOlderMessages}
           disabled={composerDisabled}
+          creditPresentation={creditPresentation}
         />
       </Paper>
 
