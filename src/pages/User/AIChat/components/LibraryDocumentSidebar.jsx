@@ -57,20 +57,15 @@ function DocumentRow({
   onToggle,
   selectionLocked,
   selectionLimitReached,
-  removalDisabled,
-  updating,
   onPreviewDocument,
 }) {
   const selectable = isSelectable(document);
   const selectionDisabled =
     selectionLocked ||
-    removalDisabled ||
     (!selectable && !selected) ||
     (selectionLimitReached && !selected);
-  const selectionTooltip = updating
-    ? "Đang cập nhật danh sách tài liệu..."
-    : removalDisabled
-      ? "Không thể xoá tài liệu cuối cùng. Hãy xoá phiên chat nếu muốn bắt đầu lại."
+  const selectionTooltip = selectionLocked
+    ? "Hãy tạo Chat mới để thay đổi tài liệu."
       : !selectable && !selected
         ? statusLabel(document)
         : "";
@@ -180,8 +175,6 @@ function DocumentSection({
   onToggle,
   selectionLocked,
   selectionLimitReached,
-  minimumSelectedDocuments,
-  updatingDocumentId,
   onPreviewDocument,
 }) {
   return (
@@ -229,12 +222,6 @@ function DocumentSection({
               onToggle={onToggle}
               selectionLocked={selectionLocked}
               selectionLimitReached={selectionLimitReached}
-              removalDisabled={
-                selectedIds.has(document.id) &&
-                minimumSelectedDocuments > 0 &&
-                selectedIds.size <= minimumSelectedDocuments
-              }
-              updating={updatingDocumentId === document.id}
               onPreviewDocument={onPreviewDocument}
             />
           ))}
@@ -271,8 +258,8 @@ function SidebarContent({
   onClose,
   showCloseButton,
   selectionLocked,
-  minimumSelectedDocuments,
-  updatingDocumentId,
+  sourceLockedByConversation,
+  onNewChat,
   onPreviewDocument,
 }) {
   const selectedIds = new Set(
@@ -435,9 +422,19 @@ function SidebarContent({
       {(selectionLocked || previewError) && (
         <Box sx={{ px: 2, pb: 1.1 }}>
           {selectionLocked && (
-            <Alert severity="info" sx={{ py: 0, fontSize: "0.72rem" }}>
-              {updatingDocumentId
-                ? "Đang cập nhật danh sách tài liệu..."
+            <Alert
+              severity="info"
+              sx={{ py: 0, fontSize: "0.72rem" }}
+              action={
+                sourceLockedByConversation ? (
+                  <Button color="inherit" size="small" onClick={onNewChat}>
+                    Chat mới
+                  </Button>
+                ) : undefined
+              }
+            >
+              {sourceLockedByConversation
+                ? "Tài liệu của cuộc chat đã được cố định. Hãy tạo Chat mới để thay đổi."
                 : "Tạm thời không thể thay đổi tài liệu khi hệ thống đang xử lý."}
             </Alert>
           )}
@@ -490,8 +487,6 @@ function SidebarContent({
           onToggle={onToggleDocument}
           selectionLocked={selectionLocked}
           selectionLimitReached={selectionLimitReached}
-          minimumSelectedDocuments={minimumSelectedDocuments}
-          updatingDocumentId={updatingDocumentId}
           onPreviewDocument={onPreviewDocument}
         />
       </Box>
@@ -524,8 +519,8 @@ export default function LibraryDocumentSidebar({
   mobileOpen = false,
   onMobileClose,
   selectionLocked = false,
-  minimumSelectedDocuments = 0,
-  updatingDocumentId = null,
+  sourceLockedByConversation = false,
+  onNewChat,
   onPreviewDocument,
 }) {
   const commonProps = {
@@ -537,8 +532,8 @@ export default function LibraryDocumentSidebar({
     onChangeSubject,
     previewError,
     selectionLocked,
-    minimumSelectedDocuments,
-    updatingDocumentId,
+    sourceLockedByConversation,
+    onNewChat,
     onPreviewDocument,
   };
 

@@ -1,13 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { Alert, Box, Button, Paper, Snackbar } from "@mui/material";
+import { Box, Paper } from "@mui/material";
 import UserLayout from "../Layout/UserLayout.jsx";
 import { useToast } from "../../../components/Toast/ToastProvider.jsx";
 import { getDocument } from "../../../api/documents.api.js";
-import {
-  addChatSessionDocuments,
-  removeChatSessionDocument,
-} from "../../../api/chat.api.js";
 import {
   LIBRARY_DOCUMENT_LIMIT_MESSAGE,
   MAX_LIBRARY_DOCUMENTS,
@@ -28,17 +24,15 @@ import {
   CHAT_MODE_LIBRARY,
   createLibraryContext,
   getLibraryScopePresentation,
+  hasStartedLibraryConversation,
   hasSameLibrarySource,
   setLibrarySubjectScopes,
-  shouldStartNewLibraryChatOnSourceChange,
   toggleLibraryDocumentScope,
 } from "./chatContext.js";
 
 const LIBRARY_BASE_PATH = "/hoi-ai";
 const LIBRARY_PRESELECTION_KEY = "libraryDocumentPreselection";
 const SUBJECT_SCOPE_STORAGE_KEY = "aiChatSubjectScopes";
-const LAST_SESSION_DOCUMENT_MESSAGE =
-  "Không thể xoá tài liệu cuối cùng. Hãy xoá phiên chat nếu muốn bắt đầu lại.";
 // AppShell header plus its responsive page-content padding.
 const CHAT_WORKSPACE_HEIGHT = {
   xs: "calc(100dvh - 104px)",
@@ -123,13 +117,6 @@ function getDocumentSubject(document) {
   return { id, name: name || "Môn học đã chọn" };
 }
 
-function isSessionModeConflict(error) {
-  if (error?.status !== 409 || error?.code === "DOCUMENT_NOT_READY") {
-    return false;
-  }
-  return !/chưa sẵn sàng|unreadable/i.test(error?.message ?? "");
-}
-
 function readStoredSubjectScopes() {
   if (typeof sessionStorage === "undefined") return new Map();
   try {
@@ -183,8 +170,7 @@ function ChatPageLayout({
   sessionActionError,
   onClearSessionActionError,
   selectionLocked,
-  minimumSelectedDocuments,
-  updatingDocumentId,
+  sourceLockedByConversation,
   creditPresentation,
   children,
 }) {
@@ -215,8 +201,8 @@ function ChatPageLayout({
           onToggleDocument={onToggleDocument}
           onChangeSubject={onChangeSubject}
           selectionLocked={selectionLocked}
-          minimumSelectedDocuments={minimumSelectedDocuments}
-          updatingDocumentId={updatingDocumentId}
+          sourceLockedByConversation={sourceLockedByConversation}
+          onNewChat={onNewChat}
           mobileOpen={documentsOpen}
           onMobileClose={() => setDocumentsOpen(false)}
           onPreviewDocument={openPreview}
@@ -247,8 +233,6 @@ function ChatPageLayout({
             selectedDocuments={selectedDocuments}
             onRemove={onRemoveDocument}
             selectionLocked={selectionLocked}
-            minimumSelectedDocuments={minimumSelectedDocuments}
-            updatingDocumentId={updatingDocumentId}
           />
 
           {typeof children === "function" 
@@ -290,9 +274,6 @@ function LibraryChatRuntime({ preselectedDocument }) {
   const [libraryContext, setLibraryContext] = useState(() =>
     createInitialLibraryContext(preselectedDocument),
   );
-  const [documentMutation, setDocumentMutation] = useState(null);
-  const [sessionConflict, setSessionConflict] = useState("");
-  const documentMutationRef = useRef(null);
   const sessionSubjectScopesRef = useRef(null);
   if (sessionSubjectScopesRef.current === null) {
     sessionSubjectScopesRef.current = readStoredSubjectScopes();
@@ -323,7 +304,6 @@ function LibraryChatRuntime({ preselectedDocument }) {
     selectSession,
     startNewChat,
     acceptCreatedSession,
-    replaceValidatedSession,
   } = useRouteChatSession({
     mode: CHAT_MODE_LIBRARY,
     basePath: LIBRARY_BASE_PATH,
@@ -408,36 +388,22 @@ function LibraryChatRuntime({ preselectedDocument }) {
   }, [resetConversation, startNewChat]);
 
   const activeSessionId = validatedSessionId ?? requestedSessionId;
+  const sourceLockedByConversation = hasStartedLibraryConversation({
+    sessionId: activeSessionId,
+    messages: conversation.messages,
+  });
   const selectionLocked =
-    isValidating || conversation.isSending || Boolean(documentMutation);
+    isValidating || conversation.isSending || sourceLockedByConversation;
 
   const applyLibrarySourceChange = useCallback(
     (nextContext) => {
       if (selectionLocked) return false;
 
       const sourceChanged = !hasSameLibrarySource(libraryContext, nextContext);
-      if (
-        sourceChanged &&
-        shouldStartNewLibraryChatOnSourceChange({
-          sessionId: activeSessionId,
-          messages: conversation.messages,
-        })
-      ) {
-        resetConversation();
-        startNewChat();
-      }
-
       setLibraryContext(nextContext);
       return sourceChanged;
     },
-    [
-      activeSessionId,
-      conversation.messages,
-      libraryContext,
-      resetConversation,
-      selectionLocked,
-      startNewChat,
-    ],
+    [libraryContext, selectionLocked],
   );
 
   useEffect(() => {
@@ -608,77 +574,11 @@ function LibraryChatRuntime({ preselectedDocument }) {
     [libraryContext, libraryDocuments.subjects, selectedSubjectIds],
   );
 
-  const applySessionDocumentMutation = useCallback(
-    async ({ action, documentId, request }) => {
-      if (documentMutationRef.current) return false;
-
-      const mutation = { action, documentId };
-      documentMutationRef.current = mutation;
-      setDocumentMutation(mutation);
-      setSessionConflict("");
-
-      try {
-        const updatedSession = await request();
-        replaceValidatedSession(updatedSession);
-        void refreshSessions();
-        toast.success(
-          action === "add"
-            ? "Đã thêm tài liệu vào phiên chat."
-            : "Đã xoá tài liệu khỏi phiên chat.",
-        );
-        return true;
-      } catch (error) {
-        const fallback =
-          action === "add"
-            ? "Không thể thêm tài liệu vào phiên chat."
-            : "Không thể xoá tài liệu khỏi phiên chat.";
-        const message = error?.message?.trim() || fallback;
-
-        if (isSessionModeConflict(error)) {
-          setSessionConflict(message);
-        } else {
-          toast.error(message);
-        }
-
-        if (error?.status === 404) {
-          resetConversation();
-          startNewChat();
-        }
-        return false;
-      } finally {
-        if (documentMutationRef.current === mutation) {
-          documentMutationRef.current = null;
-          setDocumentMutation(null);
-        }
-      }
-    },
-    [
-      refreshSessions,
-      replaceValidatedSession,
-      resetConversation,
-      startNewChat,
-      toast,
-    ],
-  );
-
   const removeDocument = useCallback(
     (documentId) => {
       if (selectionLocked) return false;
       const selectedIds = libraryContext.libraryFilters?.documentIds ?? [];
       if (!selectedIds.includes(documentId)) return false;
-
-      if (validatedSessionId) {
-        if (selectedIds.length <= 1) {
-          toast.warning(LAST_SESSION_DOCUMENT_MESSAGE);
-          return false;
-        }
-        return applySessionDocumentMutation({
-          action: "remove",
-          documentId,
-          request: () =>
-            removeChatSessionDocument(validatedSessionId, documentId),
-        });
-      }
 
       const next = toggleLibraryDocumentScope(
         libraryContext,
@@ -693,12 +593,9 @@ function LibraryChatRuntime({ preselectedDocument }) {
     },
     [
       applyLibrarySourceChange,
-      applySessionDocumentMutation,
       libraryContext,
       selectedSubjects,
       selectionLocked,
-      toast,
-      validatedSessionId,
     ],
   );
 
@@ -726,15 +623,6 @@ function LibraryChatRuntime({ preselectedDocument }) {
         return false;
       }
 
-      if (validatedSessionId) {
-        return applySessionDocumentMutation({
-          action: "add",
-          documentId: document.id,
-          request: () =>
-            addChatSessionDocuments(validatedSessionId, [document.id]),
-        });
-      }
-
       const next = toggleLibraryDocumentScope(libraryContext, document);
       const nextContext = next.libraryFilters?.documentIds?.length
         ? next
@@ -744,14 +632,12 @@ function LibraryChatRuntime({ preselectedDocument }) {
     },
     [
       applyLibrarySourceChange,
-      applySessionDocumentMutation,
       libraryContext,
       removeDocument,
       selectedSubjectIds,
       selectedSubjects,
       selectionLocked,
       toast,
-      validatedSessionId,
     ],
   );
 
@@ -800,9 +686,6 @@ function LibraryChatRuntime({ preselectedDocument }) {
   // Null filters mean the whole eligible personal/saved library.
   const sourceRequired = false;
 
-  const minimumSelectedDocuments =
-    validatedSessionId && selectedDocuments.length > 0 ? 1 : 0;
-
   return (
     <>
       <ChatPageLayout
@@ -830,8 +713,7 @@ function LibraryChatRuntime({ preselectedDocument }) {
         sessionActionError={sessionActionError}
         onClearSessionActionError={clearSessionActionError}
         selectionLocked={selectionLocked}
-        minimumSelectedDocuments={minimumSelectedDocuments}
-        updatingDocumentId={documentMutation?.documentId ?? null}
+        sourceLockedByConversation={sourceLockedByConversation}
         creditPresentation={creditPresentation}
       >
         <ChatConversation
@@ -855,34 +737,6 @@ function LibraryChatRuntime({ preselectedDocument }) {
           creditPresentation={creditPresentation}
         />
       </ChatPageLayout>
-
-      <Snackbar
-        open={Boolean(sessionConflict)}
-        autoHideDuration={8000}
-        onClose={() => setSessionConflict("")}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-        sx={{ mt: 7 }}
-      >
-        <Alert
-          severity="error"
-          variant="filled"
-          onClose={() => setSessionConflict("")}
-          action={
-            <Button
-              color="inherit"
-              size="small"
-              onClick={() => {
-                setSessionConflict("");
-                handleNewChat();
-              }}
-            >
-              Tạo phiên chat thư viện mới
-            </Button>
-          }
-        >
-          {sessionConflict}
-        </Alert>
-      </Snackbar>
     </>
   );
 }

@@ -1,7 +1,6 @@
 import {
   Box,
   Chip,
-  CircularProgress,
   Stack,
   Tooltip,
   Typography,
@@ -20,8 +19,6 @@ export default function ChatContextBar({
   selectedDocuments = [],
   onRemove,
   selectionLocked = false,
-  minimumSelectedDocuments = 0,
-  updatingDocumentId = null,
 }) {
   // In ASK_THIS_DOCUMENT mode, the header already shows the document.
   if (isDocumentContext(chatContext)) return null;
@@ -76,34 +73,22 @@ export default function ChatContextBar({
             sx={{ display: { xs: "flex", lg: "none" }, gap: 0.75, flexWrap: "wrap" }}
           >
             {selectedDocuments.map((doc) => {
-              const updating = updatingDocumentId === doc.id;
-              const cannotRemoveLast =
-                minimumSelectedDocuments > 0 &&
-                selectedDocuments.length <= minimumSelectedDocuments;
-              const tooltip = updating
-                ? "Đang cập nhật danh sách tài liệu..."
-                : cannotRemoveLast
-                  ? "Không thể xoá tài liệu cuối cùng. Hãy xoá phiên chat nếu muốn bắt đầu lại."
-                  : doc.available === false
-                    ? doc.unavailableReason || "Tài liệu không còn khả dụng"
-                    : doc.title;
+              const tooltip = selectionLocked
+                ? "Hãy tạo Chat mới để thay đổi tài liệu."
+                : doc.available === false
+                  ? doc.unavailableReason || "Tài liệu không còn khả dụng"
+                  : doc.title;
 
               return (
                 <Tooltip key={doc.id} title={tooltip}>
                   <Chip
                     icon={
-                      updating
-                        ? <CircularProgress size={14} />
-                        : doc.available === false
-                          ? <WarningAmberRounded sx={{ fontSize: "0.95rem !important" }} />
-                          : <DescriptionOutlined sx={{ fontSize: "0.95rem !important" }} />
+                      doc.available === false
+                        ? <WarningAmberRounded sx={{ fontSize: "0.95rem !important" }} />
+                        : <DescriptionOutlined sx={{ fontSize: "0.95rem !important" }} />
                     }
                     label={doc.title}
-                    onDelete={
-                      selectionLocked || cannotRemoveLast
-                        ? undefined
-                        : () => onRemove(doc.id)
-                    }
+                    onDelete={selectionLocked ? undefined : () => onRemove(doc.id)}
                     size="small"
                     variant="outlined"
                     color={doc.available === false ? "error" : "default"}

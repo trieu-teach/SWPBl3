@@ -276,7 +276,7 @@ export function hasSameLibrarySource(currentContext, nextContext) {
   );
 }
 
-export function shouldStartNewLibraryChatOnSourceChange({
+export function hasStartedLibraryConversation({
   sessionId,
   messages,
 } = {}) {

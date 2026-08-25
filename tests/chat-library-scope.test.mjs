@@ -7,7 +7,7 @@ import {
   hasSameLibrarySource,
   setLibrarySubjectScope,
   setLibrarySubjectScopes,
-  shouldStartNewLibraryChatOnSourceChange,
+  hasStartedLibraryConversation,
   toggleLibraryDocumentScope,
 } from "../src/pages/User/AIChat/chatContext.js";
 import { MAX_LIBRARY_DOCUMENTS } from "../src/api/chat.constants.js";
@@ -158,16 +158,20 @@ test("compares library sources without depending on document order or metadata",
   assert.equal(hasSameLibrarySource(current, differentSource), false);
 });
 
-test("starts a new library chat when a source-bound conversation changes source", () => {
+test("locks the library source after a conversation has started", () => {
   assert.equal(
-    shouldStartNewLibraryChatOnSourceChange({ sessionId: "session-1" }),
+    hasStartedLibraryConversation({ sessionId: "session-1" }),
     true,
   );
   assert.equal(
-    shouldStartNewLibraryChatOnSourceChange({
+    hasStartedLibraryConversation({
       messages: [{ id: "pending-message" }],
     }),
     true,
   );
-  assert.equal(shouldStartNewLibraryChatOnSourceChange(), false);
+  assert.equal(
+    hasStartedLibraryConversation({ sessionId: " ", messages: [] }),
+    false,
+  );
+  assert.equal(hasStartedLibraryConversation(), false);
 });
