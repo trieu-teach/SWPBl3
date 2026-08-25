@@ -469,8 +469,10 @@ export function useChatConversation({
   );
 
   const sendMessage = useCallback(
-    async (rawMessage = inputValue) => {
-      const activeScope = latestScopeRef.current;
+    async (rawMessage = inputValue, { context: contextOverride } = {}) => {
+      const activeScope = contextOverride
+        ? createConversationScope(contextOverride, true)
+        : latestScopeRef.current;
       const content = (typeof rawMessage === "string"
         ? rawMessage
         : inputValue

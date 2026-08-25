@@ -1,5 +1,6 @@
 import {
   Box,
+  Button,
   Chip,
   Stack,
   Tooltip,
@@ -18,7 +19,9 @@ export default function ChatContextBar({
   chatContext,
   selectedDocuments = [],
   onRemove,
+  onClearDeepDiveScope,
   selectionLocked = false,
+  scopeTransitionLocked = false,
 }) {
   // In ASK_THIS_DOCUMENT mode, the header already shows the document.
   if (isDocumentContext(chatContext)) return null;
@@ -55,7 +58,7 @@ export default function ChatContextBar({
             color="text.secondary"
             sx={{ fontWeight: 750, flexShrink: 0 }}
           >
-            {scope.label}
+            {scope.type === "documents" ? `Hỏi sâu · ${scope.label}` : scope.label}
           </Typography>
         </Stack>
 
@@ -66,6 +69,19 @@ export default function ChatContextBar({
         >
           {scopeDescription}
         </Typography>
+
+        {scope.type === "documents" &&
+          typeof onClearDeepDiveScope === "function" && (
+            <Button
+              type="button"
+              size="small"
+              onClick={onClearDeepDiveScope}
+              disabled={scopeTransitionLocked}
+              sx={{ ml: { sm: "auto" }, px: 0.5, minWidth: 0, flexShrink: 0 }}
+            >
+              Quay lại toàn thư viện
+            </Button>
+          )}
 
         {selectedDocuments.length > 0 && (
           <Stack

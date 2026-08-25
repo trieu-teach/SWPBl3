@@ -30,6 +30,7 @@ import { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import ChatSources from "./ChatSources.jsx";
+import SuggestedSourcesAction from "./SuggestedSourcesAction.jsx";
 import { splitMarkdownBlocks } from "../markdownTables.js";
 import { useChatRating } from "../hooks/useChatRating.js";
 
@@ -204,6 +205,8 @@ export default function ChatMessage({
   isSending,
   onRetry,
   onSend,
+  onApplyDeepDive,
+  onAskDeepDive,
   onSourceSelect,
   onPreviewDocument,
   loadingId,
@@ -412,6 +415,20 @@ export default function ChatMessage({
             </Stack>
           )}
         </Paper>
+
+        {!isUser &&
+          isComplete &&
+          hasSources &&
+          typeof onApplyDeepDive === "function" &&
+          typeof onAskDeepDive === "function" && (
+            <SuggestedSourcesAction
+              sources={message.sources}
+              disabled={isSending}
+              onApplyDeepDive={onApplyDeepDive}
+              onAskDeepDive={onAskDeepDive}
+            />
+          )}
+
         <Stack direction="row" spacing={0.5} sx={{ px: 0.5, alignItems: "center" }}>
           <Typography sx={{ fontSize: "0.66rem", color: "text.secondary", opacity: 0.78 }}>
             {isUser ? "Bạn" : "AI Study Hub"} · {message.createdAt}
