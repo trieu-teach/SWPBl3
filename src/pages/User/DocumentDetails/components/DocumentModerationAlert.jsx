@@ -12,6 +12,18 @@ function formatAppealDeadline(value) {
 function getModerationAlert(document) {
   const deadline = formatAppealDeadline(document.appealDeadline);
 
+  if (
+    document.status === "HIDDEN" &&
+    ["APPROVED", "SYSTEM_CLEARED"].includes(document.moderationStatus)
+  ) {
+    return {
+      severity: "error",
+      title: "Tài liệu đã bị ẩn",
+      message:
+        "Tài liệu vẫn được đặt ở chế độ công khai nhưng hiện không xuất hiện trong Cộng đồng.",
+    };
+  }
+
   switch (document.moderationStatus) {
     case "PENDING":
       return {

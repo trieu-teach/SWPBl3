@@ -22,6 +22,7 @@ import {
   formatBytes,
   formatDate,
   getModerationStatus,
+  getSharingStatus,
   normalizeTags,
 } from "../DocumentLibrary/utils/document-formatters.js";
 
@@ -53,6 +54,7 @@ export default function DocumentDetails() {
   const document = details.document;
   const status = AI_STATUS[document.aiStatus] || AI_STATUS.PENDING;
   const moderation = getModerationStatus(document);
+  const sharing = getSharingStatus(document);
   const tags = normalizeTags(document.tags);
 
   return (
@@ -123,12 +125,13 @@ export default function DocumentDetails() {
                   variant="outlined"
                 />
               )}
-              <Chip
-                label={
-                  document.visibility === "PUBLIC" ? "Công khai" : "Riêng tư"
-                }
-                variant="outlined"
-              />
+              {sharing.label !== "Đã chọn công khai" && (
+                <Chip
+                  label={sharing.label}
+                  color={sharing.color}
+                  variant="outlined"
+                />
+              )}
               {tags.map((tag) => (
                 <Chip
                   key={tag.id || tag.name}

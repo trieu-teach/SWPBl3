@@ -238,15 +238,20 @@ export default function ReportReviewDrawer({ moderation }) {
           >
             {isPending && (
               <>
-                <Button color="warning" onClick={() => requestAction("dismiss")}>
-                  Bỏ qua báo cáo
-                </Button>
-                <Button variant="outlined" onClick={() => requestAction("resolve")}>
-                  Đánh dấu đã xử lý
+                <Button
+                  color="success"
+                  variant="outlined"
+                  onClick={() => requestAction("dismiss")}
+                >
+                  Không vi phạm
                 </Button>
                 {canApplyDocumentAction && (
-                  <Button color="warning" onClick={() => requestAction("hide")}>
-                    Ẩn tài liệu
+                  <Button
+                    color="warning"
+                    variant="outlined"
+                    onClick={() => requestAction("hide")}
+                  >
+                    Ẩn tạm thời
                   </Button>
                 )}
                 {canApplyDocumentAction && (
@@ -255,7 +260,7 @@ export default function ReportReviewDrawer({ moderation }) {
                     variant="contained"
                     onClick={() => requestAction("delete")}
                   >
-                    Xóa mềm
+                    Xóa tài liệu
                   </Button>
                 )}
               </>
