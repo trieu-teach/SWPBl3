@@ -460,9 +460,15 @@ export function getDateRangePresets() {
 // ─── CHART HELPERS ──────────────────────────────────────────────────────────
 
 function truncateLabel(text, maxLength) {
+  console.log("[DEBUG truncateLabel] input:", text, "maxLength:", maxLength);
   if (!text) return "Không tên";
-  if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength - 3) + "...";
+  if (text.length <= maxLength) {
+    console.log("[DEBUG truncateLabel] output (no truncate):", text);
+    return text;
+  }
+  const result = text.slice(0, maxLength - 3) + "...";
+  console.log("[DEBUG truncateLabel] output (truncated):", result);
+  return result;
 }
 
 export function formatChartLabel(rawLabel, fallbackLabel = "Không tên", maxLength = 35) {
@@ -479,6 +485,8 @@ export function ensureUniqueChartLabels(data, options = {}) {
 
   if (!data || data.length === 0) return data;
 
+  console.log("[DEBUG ensureUniqueChartLabels] INPUT:", data.length, "items, labelKey:", labelKey, "maxLength:", maxLength);
+
   // STEP 1: Build raw labels (no truncation yet)
   const withRawLabels = data.map((item) => ({
     ...item,
@@ -492,26 +500,31 @@ export function ensureUniqueChartLabels(data, options = {}) {
     labelCounts[label] = (labelCounts[label] || 0) + 1;
   });
 
+  console.log("[DEBUG ensureUniqueChartLabels] labelCounts:", labelCounts);
+
   const duplicates = new Set(
     Object.entries(labelCounts)
       .filter(([, count]) => count > 1)
       .map(([label]) => label)
   );
 
+  console.log("[DEBUG ensureUniqueChartLabels] duplicates:", [...duplicates]);
+
   // STEP 3: Build final labels with #N suffix where needed
   const seenCounts = {};
   const withSuffix = withRawLabels.map((item) => {
     const rawLabel = item._rawLabel;
+    let finalLabel;
     if (duplicates.has(rawLabel)) {
       seenCounts[rawLabel] = (seenCounts[rawLabel] || 0) + 1;
-      return {
-        ...item,
-        [labelKey]: `${rawLabel} #${seenCounts[rawLabel]}`,
-      };
+      finalLabel = `${rawLabel} #${seenCounts[rawLabel]}`;
+    } else {
+      finalLabel = rawLabel;
     }
+    console.log("[DEBUG ensureUniqueChartLabels] item:", rawLabel, "-> finalLabel:", finalLabel);
     return {
       ...item,
-      [labelKey]: rawLabel,
+      [labelKey]: finalLabel,
     };
   });
 
@@ -520,6 +533,8 @@ export function ensureUniqueChartLabels(data, options = {}) {
     ...item,
     [labelKey]: truncateLabel(item[labelKey], maxLength),
   }));
+
+  console.log("[DEBUG ensureUniqueChartLabels] OUTPUT:", result.map(r => ({ [labelKey]: r[labelKey] })));
 
   return result;
 }

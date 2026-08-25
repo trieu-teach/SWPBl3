@@ -147,7 +147,10 @@ export default function HeaviestDocumentsChart({
     );
   }
 
-  const chartData = data.map((item, index) => ({
+  // Sort by fileSize descending for proper chart display
+  const sortedData = [...data].sort((a, b) => Number(b.fileSize ?? 0) - Number(a.fileSize ?? 0));
+
+  const chartData = sortedData.map((item, index) => ({
     ...item,
     fullTitle: item.title || "Tài liệu không tên",
     metricValue: Number(item.fileSize ?? 0),
@@ -159,6 +162,13 @@ export default function HeaviestDocumentsChart({
     rawKey: "title",
     fallbackLabel: "Tài liệu không tên",
     maxLength: 40,
+  }).map((item) => {
+    const label = item.shortTitle || item.title || "Tài liệu";
+    const truncated = label.length > 15 ? label.slice(0, 15) + "..." : label;
+    return {
+      ...item,
+      displayTitle: truncated,
+    };
   });
 
   const totalSize = data.reduce((sum, item) => sum + Number(item.fileSize ?? 0), 0);
@@ -225,35 +235,39 @@ export default function HeaviestDocumentsChart({
         </Box>
       </Box>
 
-      {/* Chart - stretches to fill available space */}
-      <Box sx={{ flex: 1, minHeight: 200 }}>
-        <ResponsiveContainer width="100%" height="100%">
+      {/* Chart - scrollable container with dynamic height */}
+      <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', minHeight: 200 }}>
+        <ResponsiveContainer width="100%" height={Math.max(300, chartDataWithLabels.length * 35 + 60)}>
           <BarChart
             data={chartDataWithLabels}
             layout="vertical"
-            margin={{ top: 2, right: 80, left: 2, bottom: 2 }}
-            key={`bar-chart-${data?.length || 0}`}
+            margin={{ top: 5, right: 80, left: 10, bottom: 5 }}
+            key={`bar-chart-${chartDataWithLabels.length}`}
+            animationDuration={0}
           >
             <CartesianGrid
               strokeDasharray="3 3"
               stroke={theme.palette.divider}
               horizontal={false}
+              vertical={true}
             />
             <XAxis
               type="number"
-              tick={{ fontSize: 10, fill: theme.palette.text.secondary }}
+              tick={{ fontSize: 11, fill: theme.palette.text.secondary }}
               tickLine={false}
               axisLine={{ stroke: theme.palette.divider }}
-              tickFormatter={formatXAxisTick}
-              domain={[0, Math.ceil(maxValue * 1.2)]}
+              tickFormatter={(val) => formatFileSize(val)}
+              domain={[0, Math.ceil(maxValue * 1.1)]}
+              allowDecimals={false}
             />
             <YAxis
               type="category"
-              dataKey="shortTitle"
-              tick={{ fontSize: 10, fill: theme.palette.text.primary }}
+              dataKey="displayTitle"
+              tick={{ fontSize: 11, fill: theme.palette.text.primary }}
               tickLine={false}
               axisLine={false}
-              width={180}
+              width={150}
+              allowDuplicatedCategory={true}
             />
             <RechartsTooltip
               content={<CustomTooltipContent barColor={barColor} />}
@@ -262,8 +276,7 @@ export default function HeaviestDocumentsChart({
               cursor={{
                 fill: "rgba(239, 68, 68, 0.08)",
                 stroke: barColor,
-                strokeWidth: 0.5,
-                strokeOpacity: 0.3,
+                strokeWidth: 1,
               }}
             />
             <Bar
@@ -275,7 +288,7 @@ export default function HeaviestDocumentsChart({
                 <Cell
                   key={`cell-${index}`}
                   fill={barColor}
-                  fillOpacity={1 - index * 0.05}
+                  fillOpacity={1 - index * 0.04}
                 />
               ))}
             </Bar>
