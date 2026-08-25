@@ -71,12 +71,14 @@ export default function useSubscription() {
 
     try {
       const payment = await createCheckout(planCode, PAYMENT_METHOD);
+
       if (!payment?.invoiceNumber || !payment?.qrUrl || !payment?.expiresAt) {
         throw new Error("Backend không trả về thông tin VietQR hợp lệ.");
       }
 
       setRemainingSeconds(secondsUntil(payment.expiresAt));
       setCheckout({ ...payment, status: "PENDING" });
+
     } catch (err) {
       setNotification({
         type: "error",
@@ -92,14 +94,12 @@ export default function useSubscription() {
     let stopped = false;
     let pollTimer;
 
-      const finishPayment = async (payment) => {
+    const finishPayment = async (payment) => {
       if (["PAID", "SUCCESS"].includes(payment.status)) {
-        // Keep checkout open to show success UI in dialog
         setCheckout((current) =>
           current ? { ...current, status: payment.status } : current,
         );
         setProcessingPlanCode("");
-        // Reload subscription data
         await loadMySubscription();
         return true;
       }
@@ -111,29 +111,40 @@ export default function useSubscription() {
         setProcessingPlanCode("");
         return true;
       }
+
       return false;
     };
 
     const poll = async () => {
       if (stopped) return;
+
       try {
         const payment = await getPaymentStatus(checkout.invoiceNumber);
-        if (stopped || (await finishPayment(payment))) return;
-      } catch {
-        // Lỗi mạng tạm thời không làm mất giao dịch; lần polling sau sẽ thử lại.
+
+        if (stopped) return;
+
+        const done = await finishPayment(payment);
+        if (done) return;
+
+      } catch (err) {
       }
-      if (!stopped) pollTimer = window.setTimeout(poll, POLL_DELAY_MS);
+
+      if (!stopped) {
+        pollTimer = window.setTimeout(poll, POLL_DELAY_MS);
+      }
     };
 
     const countdownTimer = window.setInterval(() => {
       const seconds = secondsUntil(checkout.expiresAt);
       setRemainingSeconds(seconds);
+
       if (seconds === 0) {
         window.clearInterval(countdownTimer);
       }
     }, 1_000);
 
     poll();
+
     return () => {
       stopped = true;
       window.clearTimeout(pollTimer);
@@ -150,8 +161,10 @@ export default function useSubscription() {
         checkout.invoiceNumber,
         "CANCELLED",
       );
+
       setCheckout(null);
       setProcessingPlanCode("");
+
       setNotification({
         type: payment?.status === "EXPIRED" ? "warning" : "info",
         message:
@@ -175,7 +188,6 @@ export default function useSubscription() {
     setProcessingPlanCode("");
   }, [checkout?.status]);
 
-  // For creating a new payment after terminal states (EXPIRED, CANCELLED, etc.)
   const resetPayment = useCallback(() => {
     setCheckout(null);
     setProcessingPlanCode("");
@@ -184,6 +196,7 @@ export default function useSubscription() {
 
   const clearNotification = useCallback(() => setNotification(null), []);
   const totalPages = Math.ceil(plans.length / PAGE_SIZE);
+
   const paginatedPlans = useMemo(
     () => plans.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
     [page, plans],
@@ -206,6 +219,7 @@ export default function useSubscription() {
       if (isCurrentPlan && isActive) {
         return { disabled: true, label: "Đang dùng" };
       }
+
       if (
         mySubscription.plan !== "FREE" &&
         isActive &&
@@ -213,6 +227,7 @@ export default function useSubscription() {
       ) {
         return { disabled: true, label: "Không khả dụng" };
       }
+
       if (
         mySubscription.plan !== "FREE" &&
         isActive &&
@@ -220,6 +235,7 @@ export default function useSubscription() {
       ) {
         return { disabled: false, label: "Nâng cấp" };
       }
+
       return { disabled: false, label: "Mua gói" };
     },
     [currentPlanRank, mySubscription],

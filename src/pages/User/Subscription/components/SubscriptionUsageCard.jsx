@@ -114,6 +114,14 @@ function UsageItem({ icon, label, detail, percent, unlimited = false }) {
   );
 }
 
+/**
+ * SubscriptionUsageCard - Card hiển thị thông tin sử dụng của user
+ * 
+ * Hiển thị:
+ * - Gói dịch vụ hiện tại và ngày hết hạn
+ * - Dung lượng lưu trữ đã sử dụng
+ * - Hạn mức AI Credits đã sử dụng
+ */
 export default function SubscriptionUsageCard({ subscription }) {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";

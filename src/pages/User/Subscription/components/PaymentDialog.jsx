@@ -148,6 +148,85 @@ function TerminalStatusView({ status, payment, onDismiss, onCreateNew }) {
   );
 }
 
+/**
+ * PaymentDialog - Dialog thanh toán hiển thị mã QR VietQR
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * LUỒNG UI CỦA DIALOG
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * 
+ * Dialog có 3 TRẠNG THÁI CHÍNH:
+ * 
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │ TRẠNG THÁI 1: PENDING (QR Code + Countdown)                          │
+ * │                                                                         │
+ * │  ┌─────────────────┐                                                   │
+ * │  │    [QR CODE]    │  ← Ảnh QR từ backend (SePay)                    │
+ * │  │                 │                                                   │
+ * │  └─────────────────┘                                                   │
+ * │                                                                         │
+ * │  ⏱️ 14:59  ← Countdown 15 phút                                        │
+ * │                                                                         │
+ * │  Ngân hàng: VietinBank                                                 │
+ * │  Số tài khoản: 1234567890 [📋]                                        │
+ * │  Chủ tài khoản: Cong ty ABC                                            │
+ * │  Số tiền: 99,000 đ                                                    │
+ * │  Nội dung CK: INV-xxx-xxx [📋]                                        │
+ * │                                                                         │
+ * │  ⚠️ Vui lòng chuyển đúng số tiền...                                   │
+ * │  🔄 Đang chờ ngân hàng xác nhận...                                    │
+ * │                                                                         │
+ * │  [Hủy thanh toán]                                                     │
+ * └─────────────────────────────────────────────────────────────────────────┘
+ * 
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │ TRẠNG THÁI 2: PAID/SUCCESS (Thành công)                              │
+ * │                                                                         │
+ * │  ✅                                                                    │
+ * │  Thanh toán thành công!                                                │
+ * │  Cảm ơn bạn đã tin tưởng sử dụng dịch vụ.                           │
+ * │                                                                         │
+ * │  [Thanh toán: 99,000 đ]                                               │
+ * │                                                                         │
+ * │  [Đóng]                                                               │
+ * └─────────────────────────────────────────────────────────────────────────┘
+ * 
+ * ┌─────────────────────────────────────────────────────────────────────────┐
+ * │ TRẠNG THÁI 3: TERMINAL STATES                                          │
+ * │                                                                         │
+ * │  ⏱️ (EXPIRED)  │  ❌ (FAILED)  │  ℹ️ (CANCELLED)  │  💰 (REFUNDED)   │
+ * │                                                                         │
+ * │  Mã thanh toán     │  Thanh toán     │  Đã hủy        │  Đã hoàn tiền   │
+ * │  đã hết hạn        │  thất bại       │  thanh toán     │                 │
+ * │                                                                         │
+ * │  [Tạo giao dịch mới]                                                 │
+ * │                                                                         │
+ * │  [Đóng]                                                               │
+ * └─────────────────────────────────────────────────────────────────────────┘
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * CÁC TRẠNG THÁI THANH TOÁN (STATUS)
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * 
+ *   PENDING   → Đang chờ (hiện QR, countdown đếm ngược)
+ *   PAID      → Thành công (hiện checkmark xanh)
+ *   SUCCESS   → Thành công (alias của PAID)
+ *   EXPIRED   → Hết hạn (15 phút không thanh toán)
+ *   CANCELLED → User hủy
+ *   FAILED    → Thất bại
+ *   REFUNDED  → Đã hoàn tiền
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * PROPS
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * 
+ *   payment          : Object từ backend (invoiceNumber, qrUrl, amount, ...)
+ *   remainingSeconds : Số giây còn lại cho countdown
+ *   cancelling       : Boolean - đang hủy thanh toán
+ *   onCancel         : Function - user click "Hủy thanh toán"
+ *   onDismiss        : Function - user click "Đóng"
+ *   onCreateNew      : Function - user click "Tạo giao dịch mới"
+ */
 export default function PaymentDialog({
   payment,
   remainingSeconds,

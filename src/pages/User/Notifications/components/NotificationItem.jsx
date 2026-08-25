@@ -9,6 +9,10 @@ import CancelOutlined from "@mui/icons-material/CancelOutlined";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../../features/auth/AuthProvider.jsx";
 
+/**
+ * Map notification type -> MUI icon
+ * Mỗi loại notification có icon riêng để dễ phân biệt
+ */
 const NOTIFICATION_ICONS = {
   PAYMENT_SUCCESS: PaymentOutlined,
   PAYMENT_REFUNDED: PaymentOutlined,
@@ -105,6 +109,19 @@ function formatTimeAgo(dateString) {
   });
 }
 
+/**
+ * NotificationItem - Component hiển thị 1 notification
+ * 
+ * Props:
+ * - notification: object chứa thông tin notification
+ * - onMarkAsRead: callback khi click vào notification
+ * - fullWidth: hiển thị full width hay compact (trong dropdown bell)
+ * 
+ * Tính năng:
+ * - Hiển thị icon, title, body, thời gian
+ * - Click để navigate đến trang liên quan
+ * - Đánh dấu đã đọc khi click
+ */
 export default function NotificationItem({ notification, onMarkAsRead, fullWidth }) {
   const navigate = useNavigate();
   const { user } = useAuth();

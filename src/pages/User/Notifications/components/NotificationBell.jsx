@@ -16,6 +16,16 @@ import DoneAllOutlined from "@mui/icons-material/DoneAllOutlined";
 import NotificationItem from "./NotificationItem.jsx";
 import { useNotifications } from "../hooks/useNotifications";
 
+/**
+ * NotificationBell - Icon chuông thông báo trong header
+ * 
+ * Tính năng:
+ * - Badge hiển thị số thông báo chưa đọc
+ * - Dropdown menu với danh sách notifications
+ * - Filter: Tất cả / Chưa đọc / Đã đọc
+ * - Đánh dấu tất cả đã đọc
+ * - Infinite scroll để load thêm notifications
+ */
 export default function NotificationBell() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [filter, setFilter] = useState("all");

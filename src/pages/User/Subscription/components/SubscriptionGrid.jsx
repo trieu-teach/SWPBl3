@@ -1,6 +1,10 @@
 import Box from "@mui/material/Box";
 import SubscriptionCard from "./SubscriptionCard.jsx";
 
+/**
+ * SubscriptionGrid - Grid hiển thị danh sách các gói dịch vụ
+ * Nhận data từ useSubscription hook
+ */
 export default function SubscriptionGrid({ subscription }) {
   return (
     <Box

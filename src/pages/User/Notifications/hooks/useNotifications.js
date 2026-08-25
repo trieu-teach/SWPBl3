@@ -8,30 +8,42 @@ import {
 } from "../../../../api/notifications.api";
 import { auth } from "../../../../lib/firebase.js";
 
+/**
+ * useNotifications - Hook quản lý notifications với real-time SSE
+ * 
+ * Tính năng:
+ * - Tải danh sách notifications (phân trang, lọc read/unread)
+ * - Real-time update qua Server-Sent Events (SSE)
+ * - Đếm số thông báo chưa đọc
+ * - Đánh dấu đã đọc (từng cái hoặc tất cả)
+ * - Load more (infinite scroll)
+ */
 export function useNotifications({ isRead } = {}) {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  // Còn thông báo để load nữa không
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(1);
   const [error, setError] = useState(null);
 
-  // Ref to hold the refresh function so SSE effect can call it
+  // Ref lưu hàm refresh để SSE effect có thể gọi
   const refreshRef = useRef(null);
 
-  // Keep filter in sync when prop changes
+  // Reset state khi filter thay đổi
   useEffect(() => {
     setNotifications([]);
     setPage(1);
     setHasMore(false);
   }, [isRead]);
 
-  // Refresh notifications
+  // Refresh notifications - gọi API lấy page 1
   const refresh = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
+      // Gọi song song: lấy danh sách notifications và số chưa đọc
       const [notificationsRes, countRes] = await Promise.all([
         getNotifications({ isRead, page: 1, limit: 20 }),
         getUnreadCount(),
@@ -47,10 +59,10 @@ export function useNotifications({ isRead } = {}) {
     }
   }, [isRead]);
 
-  // Keep ref in sync
+  // Giữ ref đồng bộ với hàm refresh
   refreshRef.current = refresh;
 
-  // Initial load
+  // Initial load - chạy 1 lần khi mount hoặc isRead thay đổi
   useEffect(() => {
     let cancelled = false;
 
@@ -84,35 +96,42 @@ export function useNotifications({ isRead } = {}) {
     };
   }, [isRead]);
 
-  // SSE real-time connection
+  // SSE real-time connection - lắng nghe notifications mới từ server
   useEffect(() => {
     let cancelled = false;
     let stopStream = () => {};
 
     async function startStream() {
       try {
+        // Đợi Firebase auth sẵn sàng
         await auth.authStateReady();
         if (cancelled || !auth.currentUser) return;
 
+        // Tạo SSE stream với Firebase token
         stopStream = createNotificationStream(
           async () => auth.currentUser?.getIdToken(false),
+          // Callback khi nhận được notification mới
           (notification) => {
             if (!notification?.id) return;
             setNotifications((current) => {
+              // Tránh duplicate
               if (current.some((item) => item.id === notification.id)) {
                 return current;
               }
+              // Tăng unread count nếu notification chưa đọc
               if (!notification.isRead) {
                 setUnreadCount((count) => count + 1);
               }
+              // Thêm vào đầu danh sách
               return [notification, ...current];
             });
           },
           undefined,
+          // Callback khi có lỗi -> refresh toàn bộ
           () => refreshRef.current?.(),
         );
       } catch {
-        // The REST list remains available if the live stream cannot start.
+        // REST list vẫn hoạt động nếu SSE không khởi tạo được
       }
     }
 
@@ -124,7 +143,7 @@ export function useNotifications({ isRead } = {}) {
     };
   }, []);
 
-  // Load more notifications
+  // Load more - gọi khi scroll tới cuối danh sách
   const loadMore = useCallback(async () => {
     if (isLoadingMore || !hasMore) return;
     setIsLoadingMore(true);
@@ -133,6 +152,7 @@ export function useNotifications({ isRead } = {}) {
       const res = await getNotifications({ isRead, page: nextPage, limit: 20 });
       setNotifications((current) => {
         const existingIds = new Set(current.map((item) => item.id));
+        // Lọc bỏ duplicates nếu có
         const newItems = (res.items || res).filter(
           (item) => !existingIds.has(item.id),
         );
@@ -147,7 +167,7 @@ export function useNotifications({ isRead } = {}) {
     }
   }, [isLoadingMore, hasMore, page, isRead]);
 
-  // Mark single notification as read
+  // Đánh dấu 1 notification là đã đọc
   const markNotificationAsRead = useCallback(async (id) => {
     try {
       await markAsRead(id);
@@ -160,7 +180,7 @@ export function useNotifications({ isRead } = {}) {
     }
   }, []);
 
-  // Mark all as read
+  // Đánh dấu tất cả notifications là đã đọc
   const markAllNotificationsAsRead = useCallback(async () => {
     try {
       await markAllAsRead();

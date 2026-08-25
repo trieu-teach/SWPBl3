@@ -92,6 +92,16 @@ function clearPendingPayment() {
   sessionStorage.removeItem("pendingPaymentExpiresAt");
 }
 
+/**
+ * Trang PaymentCallback - xử lý kết quả thanh toán từ SePay
+ * URL: /payment-callback?payment=success&invoice=xxx
+ * 
+ * Luồng:
+ * 1. Lấy invoiceNumber từ URL hoặc sessionStorage
+ * 2. Polling API kiểm tra trạng thái thanh toán
+ * 3. Khi có kết quả cuối cùng -> hiển thị UI tương ứng
+ * 4. Refresh user data để cập nhật subscription
+ */
 export default function PaymentCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
