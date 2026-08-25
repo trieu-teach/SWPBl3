@@ -7,7 +7,8 @@ import {
   ApiError,
 } from "../lib/http.js";
 import { extractEvents, isValidDoneEvent } from "./chat.sse-parser.js";
-import { sanitizeLibraryFilters } from "./chat.filters.js";
+import { requireLibrarySourceFilters } from "./chat.filters.js";
+import { resolveChatRequestId } from "./chat.request-id.js";
 
 const STREAM_FAILED_MESSAGE = "Luồng phản hồi AI gặp lỗi. Vui lòng thử lại.";
 const STREAM_INCOMPLETE_MESSAGE =
@@ -213,7 +214,11 @@ export async function* askDocumentStream({
   requestId,
   signal,
 }) {
-  const body = { documentId, question, requestId };
+  const body = {
+    documentId,
+    question,
+    requestId: resolveChatRequestId(requestId),
+  };
   if (sessionId) body.sessionId = sessionId;
   yield* requestChatStream("/chat/ask-document/stream", body, signal);
 }
@@ -226,10 +231,14 @@ export async function* askLibraryStream({
   filters,
   signal,
 }) {
-  const body = { question, limit, requestId };
+  const body = {
+    question,
+    limit,
+    requestId: resolveChatRequestId(requestId),
+  };
   if (sessionId) body.sessionId = sessionId;
 
-  const cleanedFilters = sanitizeLibraryFilters(filters);
+  const cleanedFilters = requireLibrarySourceFilters(filters);
   if (cleanedFilters) body.filters = cleanedFilters;
 
   yield* requestChatStream("/chat/ask-library/stream", body, signal);

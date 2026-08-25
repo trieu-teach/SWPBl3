@@ -7,15 +7,15 @@ export const AI_STATUS = {
 };
 
 export const MODERATION_STATUS = {
-  PENDING: { label: "Chờ duyệt", color: "warning" },
+  PENDING: { label: "Chờ kiểm duyệt", color: "warning" },
   APPROVED: { label: "Đã duyệt", color: "success" },
   REJECTED: { label: "Bị từ chối", color: "error" },
-  AUTO_BLOCKED: { label: "Bị chặn tự động", color: "error" },
-  FLAGGED: { label: "Cần kiểm tra", color: "warning" },
+  FLAGGED: { label: "Cần xem xét", color: "warning" },
+  AUTO_BLOCKED: { label: "Đã tạm ẩn", color: "error" },
   UNDER_REVIEW: { label: "Đang kiểm duyệt", color: "info" },
-  APPEALED: { label: "Đang khiếu nại", color: "info" },
+  APPEALED: { label: "Đang xử lý khiếu nại", color: "info" },
+  SYSTEM_CLEARED: { label: "Đã gỡ cảnh báo", color: "success" },
   EXPIRED: { label: "Hết hạn khiếu nại", color: "default" },
-  SYSTEM_CLEARED: { label: "Hệ thống đã duyệt", color: "success" },
 };
 
 export function getModerationStatus(document) {

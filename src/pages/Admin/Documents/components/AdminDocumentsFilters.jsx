@@ -1,5 +1,6 @@
 import { Box, Button, Card, MenuItem, TextField } from "@mui/material";
 import { RefreshOutlined, SearchOutlined } from "@mui/icons-material";
+import { ADMIN_MODERATION_STATUS } from "../utils/admin-document-status.js";
 
 export default function AdminDocumentsFilters({ admin }) {
   return (
@@ -27,6 +28,7 @@ export default function AdminDocumentsFilters({ admin }) {
           size="small"
           label="Quyền riêng tư"
           value={admin.filters.visibility}
+          disabled={admin.reviewQueueOnly}
           onChange={(event) =>
             admin.updateFilter("visibility", event.target.value)
           }
@@ -40,25 +42,30 @@ export default function AdminDocumentsFilters({ admin }) {
           size="small"
           label="Kiểm duyệt"
           value={admin.filters.moderationStatus}
+          disabled={admin.reviewQueueOnly}
           onChange={(event) =>
             admin.updateFilter("moderationStatus", event.target.value)
           }
         >
           <MenuItem value="">Tất cả</MenuItem>
-          <MenuItem value="PENDING">Chờ duyệt</MenuItem>
-          <MenuItem value="APPROVED">Đã duyệt</MenuItem>
-          <MenuItem value="REJECTED">Từ chối</MenuItem>
+          {Object.entries(ADMIN_MODERATION_STATUS).map(([value, option]) => (
+            <MenuItem key={value} value={value}>
+              {option.label}
+            </MenuItem>
+          ))}
         </TextField>
         <TextField
           select
           size="small"
           label="Tài liệu"
           value={admin.filters.status}
+          disabled={admin.reviewQueueOnly}
           onChange={(event) => admin.updateFilter("status", event.target.value)}
         >
           <MenuItem value="">Tất cả</MenuItem>
           <MenuItem value="ACTIVE">Hoạt động</MenuItem>
           <MenuItem value="HIDDEN">Đã ẩn</MenuItem>
+          <MenuItem value="DELETED">Đã xóa</MenuItem>
         </TextField>
         <TextField
           select

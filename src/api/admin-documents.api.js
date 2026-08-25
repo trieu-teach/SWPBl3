@@ -12,9 +12,31 @@ function withQuery(path, params = {}) {
 
 export const getAdminDocuments = (params) =>
   apiRequest(withQuery("/admin/documents", params));
+
+export const getPendingAdminDocuments = (params) =>
+  apiRequest(withQuery("/admin/documents/pending", params));
+
 export const getAdminDocument = (id) => apiRequest(`/admin/documents/${id}`);
+
 export const getAdminDocumentPreview = (id) =>
   apiRequest(`/admin/documents/${id}/preview`);
+
+export const claimAdminDocument = (id) =>
+  apiRequest(`/admin/documents/${id}/claim`, { method: "PATCH" });
+
+export const addKeywordException = (id, keywordId, reason) =>
+  apiRequest(`/admin/documents/${id}/keyword-exceptions`, {
+    method: "POST",
+    body: {
+      keywordId,
+      ...(reason?.trim() ? { reason: reason.trim() } : {}),
+    },
+  });
+
+export const removeKeywordException = (id, keywordId) =>
+  apiRequest(`/admin/documents/${id}/keyword-exceptions/${keywordId}`, {
+    method: "DELETE",
+  });
 
 const moderateAdminDocument = (id, status, reason) =>
   apiRequest(`/admin/documents/${id}/moderate`, {

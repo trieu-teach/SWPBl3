@@ -10,6 +10,8 @@
  * No React dependency — importable from hooks, services, and components.
  */
 
+import { MAX_LIBRARY_DOCUMENTS } from "../../../api/chat.constants.js";
+
 // ── Mode constants ─────────────────────────────────────────────────────────────
 
 /** @type {"ASK_THIS_DOCUMENT"} */
@@ -45,58 +47,42 @@ function normalizeLibraryFilters(filters) {
     }
   }
 
-  const subjectId = normalizeDocumentId(filters.subjectId);
-  const subjectIds = Array.isArray(filters.subjectIds)
-    ? [...new Set(filters.subjectIds.map(normalizeDocumentId).filter(Boolean))]
-    : [];
+  const subjectIds = [
+    normalizeDocumentId(filters.subjectId),
+    ...(Array.isArray(filters.subjectIds)
+      ? filters.subjectIds.map(normalizeDocumentId)
+      : []),
+  ].filter(Boolean);
+  const uniqueSubjectIds = [...new Set(subjectIds)];
   const documentIds = Array.isArray(filters.documentIds)
     ? [...new Set(filters.documentIds.map(normalizeDocumentId).filter(Boolean))]
     : [];
 
-  // A subject scope and an explicit document scope are mutually exclusive.
-  // Explicit documents are the narrowest scope and therefore win.
+  if (uniqueSubjectIds.length > 0) normalized.subjectIds = uniqueSubjectIds;
   if (documentIds.length > 0) {
     normalized.documentIds = documentIds;
-  } else if (subjectIds.length > 0) {
-    normalized.subjectIds = subjectIds;
-  } else if (subjectId) {
-    normalized.subjectId = subjectId;
   }
 
+  const subjectMetadata = [
+    ...(Array.isArray(filters._subjectsMeta) ? filters._subjectsMeta : []),
+    ...(filters._subjectMeta ? [filters._subjectMeta] : []),
+  ];
+  const subjectMetadataById = new Map(
+    subjectMetadata
+      .filter((subject) => normalizeDocumentId(subject?.id))
+      .map((subject) => [normalizeDocumentId(subject.id), subject]),
+  );
   if (normalized.subjectIds) {
-    const subjectIdsSet = new Set(normalized.subjectIds);
-    const subjectsMeta = Array.isArray(filters._subjectsMeta)
-      ? filters._subjectsMeta
-      : [];
-    normalized._subjectsMeta = subjectsMeta
-      .map((subject) => {
-        const id = normalizeDocumentId(subject?.id);
-        if (!id || !subjectIdsSet.has(id)) return null;
-        return {
-          id,
-          name:
-            typeof subject?.name === "string" && subject.name.trim()
-              ? subject.name.trim()
-              : "Môn học đã chọn",
-        };
-      })
-      .filter(Boolean);
-  } else if (
-    normalized.subjectId &&
-    filters._subjectMeta &&
-    typeof filters._subjectMeta === "object" &&
-    !Array.isArray(filters._subjectMeta)
-  ) {
-    const metaId = normalizeDocumentId(filters._subjectMeta.id);
-    if (metaId === normalized.subjectId) {
-      normalized._subjectMeta = {
-        id: metaId,
+    normalized._subjectsMeta = normalized.subjectIds.map((id) => {
+      const subject = subjectMetadataById.get(id);
+      return {
+        id,
         name:
-          typeof filters._subjectMeta.name === "string" && filters._subjectMeta.name.trim()
-            ? filters._subjectMeta.name.trim()
+          typeof subject?.name === "string" && subject.name.trim()
+            ? subject.name.trim()
             : "Môn học đã chọn",
       };
-    }
+    });
   }
 
   // Temporary display metadata for the current document-picker UI.
@@ -108,6 +94,10 @@ function normalizeLibraryFilters(filters) {
     normalized._documentMeta = filters._documentMeta.map((document) => ({
       id: document.id,
       title: document.title,
+      subjectId: normalizeDocumentId(document.subjectId),
+      accessType: document.accessType,
+      visibility: document.visibility,
+      aiUsable: document.aiUsable === true,
       available: document.available !== false,
       unavailableReason: document.unavailableReason ?? null,
     }));
@@ -121,11 +111,12 @@ export function setLibrarySubjectScope(subject) {
 }
 
 export function setLibrarySubjectScopes(subjects) {
-  const uniqueSubjects = new Map();
-  (Array.isArray(subjects) ? subjects : []).forEach((subject) => {
+  const source = Array.isArray(subjects) ? subjects : [];
+  const subjectsById = new Map();
+  source.forEach((subject) => {
     const id = normalizeDocumentId(subject?.id);
-    if (!id) return;
-    uniqueSubjects.set(id, {
+    if (!id || subjectsById.has(id)) return;
+    subjectsById.set(id, {
       id,
       name:
         typeof subject?.name === "string" && subject.name.trim()
@@ -133,8 +124,7 @@ export function setLibrarySubjectScopes(subjects) {
           : "Môn học đã chọn",
     });
   });
-
-  const normalizedSubjects = [...uniqueSubjects.values()];
+  const normalizedSubjects = [...subjectsById.values()];
   if (normalizedSubjects.length === 0) return createLibraryContext(null);
 
   return createLibraryContext({
@@ -148,18 +138,28 @@ export function filterLibraryDocumentsBySubjects(
   selectedSubjectIds,
 ) {
   const source = Array.isArray(documents) ? documents : [];
-  const selectedIds = new Set(
-    (Array.isArray(selectedSubjectIds) ? selectedSubjectIds : [])
-      .map(normalizeDocumentId)
-      .filter(Boolean),
-  );
-  if (selectedIds.size === 0) return source;
-  return source.filter((document) => selectedIds.has(document?.subjectId));
+  const subjectIds = Array.isArray(selectedSubjectIds)
+    ? [...new Set(selectedSubjectIds.map(normalizeDocumentId).filter(Boolean))]
+    : [];
+  if (subjectIds.length === 0) return source;
+  const selected = new Set(subjectIds);
+  return source.filter((document) => selected.has(document?.subjectId));
 }
 
 export function toggleLibraryDocumentScope(context, document, shouldSelect) {
   const documentId = normalizeDocumentId(document?.id);
-  if (!documentId) return context;
+  const subjectIds = Array.isArray(context?.libraryFilters?.subjectIds)
+    ? context.libraryFilters.subjectIds
+        .map(normalizeDocumentId)
+        .filter(Boolean)
+    : [];
+  const documentSubjectId = normalizeDocumentId(document?.subjectId);
+  if (
+    !documentId ||
+    (subjectIds.length > 0 && !subjectIds.includes(documentSubjectId))
+  ) {
+    return context;
+  }
 
   const filters = context?.libraryFilters ?? {};
   const currentIds = Array.isArray(filters.documentIds)
@@ -170,6 +170,13 @@ export function toggleLibraryDocumentScope(context, document, shouldSelect) {
     : [];
   const selected = currentIds.includes(documentId);
   const nextSelected = shouldSelect ?? !selected;
+  if (
+    nextSelected &&
+    !selected &&
+    currentIds.length >= MAX_LIBRARY_DOCUMENTS
+  ) {
+    return context;
+  }
   const nextIds = nextSelected
     ? [...new Set([...currentIds, documentId])]
     : currentIds.filter((id) => id !== documentId);
@@ -186,6 +193,10 @@ export function toggleLibraryDocumentScope(context, document, shouldSelect) {
         typeof document?.title === "string" && document.title.trim()
           ? document.title.trim()
           : metaById.get(documentId)?.title || "Tài liệu",
+      subjectId: documentSubjectId,
+      accessType: document?.accessType,
+      visibility: document?.visibility,
+      aiUsable: document?.aiUsable === true,
       available: document?.available !== false,
       unavailableReason: document?.unavailableReason ?? null,
     });
@@ -193,14 +204,17 @@ export function toggleLibraryDocumentScope(context, document, shouldSelect) {
     metaById.delete(documentId);
   }
 
-  return createLibraryContext(
-    nextIds.length > 0
+  return createLibraryContext({
+    ...(subjectIds.length > 0
+      ? { subjectIds, _subjectsMeta: filters._subjectsMeta }
+      : {}),
+    ...(nextIds.length > 0
       ? {
           documentIds: nextIds,
           _documentMeta: nextIds.map((id) => metaById.get(id)).filter(Boolean),
         }
-      : null,
-  );
+      : {}),
+  });
 }
 
 export function getLibraryScopePresentation(context) {
@@ -217,37 +231,59 @@ export function getLibraryScopePresentation(context) {
   }
 
   const subjectIds = Array.isArray(filters?.subjectIds)
-    ? filters.subjectIds
+    ? filters.subjectIds.map(normalizeDocumentId).filter(Boolean)
     : [];
   if (subjectIds.length > 0) {
     const subjects = Array.isArray(filters?._subjectsMeta)
-      ? filters._subjectsMeta
+      ? filters._subjectsMeta.filter((subject) => subjectIds.includes(subject?.id))
       : [];
-    const subjectName = subjects.find(
-      (subject) => subject.id === subjectIds[0],
-    )?.name;
+    const subjectName =
+      subjects.find((subject) => subject.id === subjectIds[0])?.name ||
+      "Môn học đã chọn";
     return {
       type: "subjects",
       subjectIds,
       subjects,
       label:
         subjectIds.length === 1
-          ? `Môn học: ${subjectName || "Môn học đã chọn"}`
-          : `${subjectIds.length} môn học đã chọn`,
-    };
-  }
-
-  const subjectId = normalizeDocumentId(filters?.subjectId);
-  if (subjectId) {
-    return {
-      type: "subject",
-      subjectId,
-      subjectName: filters?._subjectMeta?.name || "Môn học đã chọn",
-      label: `Môn học: ${filters?._subjectMeta?.name || "Môn học đã chọn"}`,
+          ? `${subjectName} · Toàn bộ tài liệu`
+          : `${subjectIds.length} môn học · Toàn bộ tài liệu`,
     };
   }
 
   return { type: "all", label: "Toàn bộ thư viện" };
+}
+
+function getPrimaryLibrarySourceKey(context) {
+  const filters = context?.libraryFilters;
+  const documentIds = Array.isArray(filters?.documentIds)
+    ? filters.documentIds.map(normalizeDocumentId).filter(Boolean).sort()
+    : [];
+  if (documentIds.length > 0) {
+    return JSON.stringify(["documents", ...documentIds]);
+  }
+
+  const subjectIds = Array.isArray(filters?.subjectIds)
+    ? filters.subjectIds.map(normalizeDocumentId).filter(Boolean).sort()
+    : [];
+  return JSON.stringify(["subjects", ...subjectIds]);
+}
+
+export function hasSameLibrarySource(currentContext, nextContext) {
+  return (
+    getPrimaryLibrarySourceKey(currentContext) ===
+    getPrimaryLibrarySourceKey(nextContext)
+  );
+}
+
+export function hasStartedLibraryConversation({
+  sessionId,
+  messages,
+} = {}) {
+  return Boolean(
+    normalizeDocumentId(sessionId) ||
+      (Array.isArray(messages) && messages.length > 0),
+  );
 }
 
 // ── Factory functions ──────────────────────────────────────────────────────────
@@ -293,11 +329,10 @@ export function createDocumentContext(document) {
  *
  * Use when the user asks across their library (ASK_MY_LIBRARY).
  *
- * Empty filters (null) means: search the entire library.
+ * Empty filters (null) means the whole eligible library.
  * Non-null filters narrow the retrieval scope without changing the mode.
  *
- * Important: libraryFilters === null does NOT mean "no context".
- * It means the entire library is the context.
+ * Subject and explicit document selection are both optional.
  *
  * @param {LibraryFilters | null} [filters]
  * @returns {ChatContext}
@@ -356,12 +391,10 @@ export function isLibraryContext(context) {
 
 /**
  * @typedef {Object} LibraryFilters
- * @property {string | undefined} [subjectId]
  * @property {string[] | undefined} [subjectIds]
  * @property {string | undefined} [categoryId]
  * @property {string | undefined} [fileType]
  * @property {string[] | undefined} [documentIds]
- * @property {{ id: string, name: string } | undefined} [_subjectMeta] - Temporary UI compatibility
- * @property {{ id: string, name: string }[] | undefined} [_subjectsMeta] - Multi-subject display metadata
- * @property {{ id: string, title: string }[] | undefined} [_documentMeta] - Temporary UI compatibility
+ * @property {{ id: string, name: string }[] | undefined} [_subjectsMeta] - Temporary UI compatibility
+ * @property {{ id: string, title: string, subjectId?: string }[] | undefined} [_documentMeta] - Temporary UI compatibility
  */

@@ -367,9 +367,17 @@ export function useRouteChatSession({
   }, [scope, navigate, invalidateValidation]);
 
   const acceptCreatedSession = useCallback(
-    (createdSessionId) => {
+    (createdSessionId, createdSession = null) => {
       const sessionId = normalizeId(createdSessionId);
       if (!scope || !sessionId) return false;
+
+      const acceptedSession = sessionMatchesScope(
+        createdSession,
+        sessionId,
+        scope,
+      )
+        ? createdSession
+        : null;
 
       invalidateValidation();
       activeScopeRef.current = scope;
@@ -377,17 +385,44 @@ export function useRouteChatSession({
       acceptedNavigationRef.current = {
         scopeKey: scope.key,
         sessionId,
-        session: null,
+        session: acceptedSession,
       };
       setRouteState(
         createRouteState(createRouteKey(scope, sessionId), {
           validatedSessionId: sessionId,
+          validatedSession: acceptedSession,
         }),
       );
       navigate(createSessionUrl(scope.basePath, sessionId), { replace: true });
       return true;
     },
     [scope, navigate, invalidateValidation],
+  );
+
+  const replaceValidatedSession = useCallback(
+    (nextSession) => {
+      const sessionId = normalizeId(nextSession?.id);
+      if (
+        !scope ||
+        !sessionId ||
+        !sessionMatchesScope(nextSession, sessionId, scope) ||
+        createRouteKey(scope, sessionId) !== routeKey
+      ) {
+        return false;
+      }
+
+      setRouteState((current) => {
+        if (
+          current.routeKey !== routeKey ||
+          current.validatedSessionId !== sessionId
+        ) {
+          return current;
+        }
+        return { ...current, validatedSession: nextSession, error: "" };
+      });
+      return true;
+    },
+    [routeKey, scope],
   );
 
   const retryValidation = useCallback(() => {
@@ -414,6 +449,7 @@ export function useRouteChatSession({
     selectSession,
     startNewChat,
     acceptCreatedSession,
+    replaceValidatedSession,
     retryValidation,
   };
 }

@@ -11,6 +11,10 @@ export function getAdminUsers(params = {}) {
   return apiRequest(`/admin/users${search ? `?${search}` : ""}`);
 }
 
+export function getAdminUserDetail(id) {
+  return apiRequest(`/admin/users/${id}/detail`);
+}
+
 export function updateAdminUserStatus(id, status, reason) {
   return apiRequest(`/admin/users/${id}/status`, {
     method: "PATCH",

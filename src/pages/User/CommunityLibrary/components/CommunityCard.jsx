@@ -2,6 +2,7 @@ import {
   Avatar,
   Box,
   Button,
+  ButtonBase,
   Card,
   CardActions,
   CardContent,
@@ -36,6 +37,7 @@ export default function CommunityCard({
   onDownload,
   onSave,
   onReport,
+  onContributorClick,
 }) {
   const tags = normalizeTags(document.tags);
   const fileColors = getFileTypeColors(document);
@@ -45,6 +47,9 @@ export default function CommunityCard({
     "Người chia sẻ";
   const ownerAvatarUrl =
     document.ownerAvatarUrl || document.owner?.avatarUrl;
+  const canOpenContributor = Boolean(
+    document.ownerId && onContributorClick,
+  );
   return (
     <Card
       variant="outlined"
@@ -94,11 +99,34 @@ export default function CommunityCard({
         <Typography variant="body2" color="text.secondary" noWrap>
           {document.subject?.name} · {document.category?.name}
         </Typography>
-        <Stack
-          direction="row"
-          alignItems="center"
-          gap={1.5}
-          sx={{ mt: 2, minWidth: 0 }}
+        <ButtonBase
+          disabled={!canOpenContributor}
+          aria-label={
+            canOpenContributor
+              ? `Xem hồ sơ cộng đồng của ${ownerName}`
+              : undefined
+          }
+          onClick={() => onContributorClick?.(document.ownerId)}
+          sx={{
+            mt: 2,
+            p: 0.5,
+            mx: -0.5,
+            width: "calc(100% + 8px)",
+            minWidth: 0,
+            display: "flex",
+            justifyContent: "flex-start",
+            gap: 1.5,
+            borderRadius: 2,
+            textAlign: "left",
+            "&:hover": canOpenContributor
+              ? { bgcolor: "action.hover", color: "primary.main" }
+              : {},
+            "&.Mui-focusVisible": {
+              outline: "2px solid",
+              outlineColor: "primary.main",
+              outlineOffset: 2,
+            },
+          }}
         >
           <Avatar
             src={ownerAvatarUrl || undefined}
@@ -109,11 +137,11 @@ export default function CommunityCard({
           <Typography
             variant="body2"
             noWrap
-            sx={{ minWidth: 0, flex: 1, ml: 1 }}
+            sx={{ minWidth: 0, flex: 1 }}
           >
             {ownerName}
           </Typography>
-        </Stack>
+        </ButtonBase>
         <Typography
           variant="caption"
           color="text.secondary"

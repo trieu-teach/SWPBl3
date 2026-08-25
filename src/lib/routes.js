@@ -11,9 +11,11 @@
   aiChat: "/hoi-ai",
   community: "/community",
   savedDocuments: "/saved-documents",
+  appeals: "/appeals",
   adminDashboard: "/admin/dashboard",
   adminUsers: "/admin/users",
   adminDocuments: "/admin/documents",
+  adminModerationKeywords: "/admin/moderation-keywords",
   moderatorDashboard: "/moderator/dashboard",
 };
 

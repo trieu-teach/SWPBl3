@@ -1,8 +1,6 @@
 import {
   Box,
   Button,
-  Chip,
-  Divider,
   FormControl,
   InputAdornment,
   MenuItem,
@@ -10,11 +8,8 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import FilterListOutlined from "@mui/icons-material/FilterListOutlined";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
-import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
 import ClearOutlined from "@mui/icons-material/ClearOutlined";
-import SwapVertOutlined from "@mui/icons-material/SwapVertOutlined";
 
 const ROLE_OPTIONS = [
   { value: "USER", label: "Người dùng" },
@@ -59,18 +54,11 @@ const RESULT_OPTIONS = [
   { value: "PENDING", label: "Đang chờ" },
 ];
 
-const SORT_OPTIONS = [
-  { label: "Mới nhất", sortOrder: "desc" },
-  { label: "Cũ nhất", sortOrder: "asc" },
-];
-
 export default function AuditLogFilters({ audit }) {
   const { filters, searchInput, updateFilter } = audit;
 
   const hasActiveFilters =
     filters.userRole || filters.action || filters.result || filters.from || filters.to;
-
-  const currentSort = filters.sortOrder || "desc";
 
   const handleClearFilters = () => {
     updateFilter("userRole", "");
@@ -282,46 +270,6 @@ export default function AuditLogFilters({ audit }) {
         </Box>
       </Box>
 
-      <Divider />
-
-      {/* Sort Row */}
-      <Box sx={{ px: 2, py: 1 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <SwapVertOutlined sx={{ fontSize: 14, color: "text.disabled" }} />
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: "0.75rem" }}>
-              Sắp xếp:
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", gap: 0.75 }}>
-            {SORT_OPTIONS.map((opt) => {
-              const isActive = currentSort === opt.sortOrder;
-              return (
-                <Chip
-                  key={opt.label}
-                  label={opt.label}
-                  size="small"
-                  onClick={() => updateFilter("sortOrder", opt.sortOrder)}
-                  sx={{
-                    height: 24,
-                    borderRadius: "6px",
-                    fontSize: "0.72rem",
-                    fontWeight: isActive ? 600 : 400,
-                    bgcolor: isActive ? "primary.main" : "transparent",
-                    color: isActive ? "primary.contrastText" : "text.secondary",
-                    border: isActive ? "none" : "1px solid",
-                    borderColor: "divider",
-                    transition: "all 0.15s",
-                    "&:hover": {
-                      bgcolor: isActive ? "primary.dark" : "action.hover",
-                    },
-                  }}
-                />
-              );
-            })}
-          </Box>
-        </Box>
-      </Box>
     </Box>
   );
 }

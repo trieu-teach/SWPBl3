@@ -1,5 +1,9 @@
 import { apiRequest } from "../lib/http.js";
 
+export function getCommunityContributorProfile(ownerId) {
+  return apiRequest(`/community/users/${ownerId}`);
+}
+
 export function getCommunityDocuments(params = {}) {
   const query = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {

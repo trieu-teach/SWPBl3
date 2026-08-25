@@ -18,8 +18,10 @@ export default function ChatInput({
   onStop,
   isSending,
   error,
+  sourceRequired = false,
+  creditBlocked = false,
 }) {
-  const isDisabled = !value.trim();
+  const isDisabled = !value.trim() || sourceRequired || creditBlocked;
 
   function handleKeyDown(event) {
     if (event.key === "Enter" && !event.shiftKey) {
@@ -28,9 +30,13 @@ export default function ChatInput({
     }
   }
 
-  const placeholder = isLibraryContext(chatContext)
-    ? "Hỏi về tài liệu trong thư viện của bạn..."
-    : "Nhập câu hỏi học tập của bạn...";
+  const placeholder = sourceRequired
+    ? "Chọn một môn học để bắt đầu trò chuyện"
+    : creditBlocked
+      ? "Bạn không còn đủ AI Credits để tiếp tục"
+    : isLibraryContext(chatContext)
+      ? "Hỏi về tài liệu trong thư viện của bạn..."
+      : "Nhập câu hỏi học tập của bạn...";
 
   return (
     <Paper
@@ -83,7 +89,7 @@ export default function ChatInput({
           fullWidth
           size="small"
           variant="standard"
-          disabled={isSending}
+          disabled={isSending || sourceRequired || creditBlocked}
           slotProps={{ htmlInput: { "aria-label": "Nhập câu hỏi cho AI" } }}
           sx={{
             "& .MuiInputBase-root": {

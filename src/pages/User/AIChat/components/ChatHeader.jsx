@@ -1,8 +1,10 @@
-import { Button, Stack, Typography } from "@mui/material";
+import { Button, Chip, Stack, Typography } from "@mui/material";
 import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
 import AddCommentOutlined from "@mui/icons-material/AddCommentOutlined";
 import FolderOpenOutlined from "@mui/icons-material/FolderOpenOutlined";
 import HistoryOutlined from "@mui/icons-material/HistoryOutlined";
+import CreditScoreOutlined from "@mui/icons-material/CreditScoreOutlined";
+import { MAX_LIBRARY_DOCUMENTS } from "../../../../api/chat.constants.js";
 import { isDocumentContext, isLibraryContext } from "../chatContext.js";
 
 export default function ChatHeader({
@@ -10,6 +12,8 @@ export default function ChatHeader({
   onOpenDocuments,
   onNewChat,
   onOpenHistory,
+  selectedDocumentCount = 0,
+  creditPresentation,
 }) {
   const inDocumentMode = isDocumentContext(chatContext);
   const inLibraryMode = isLibraryContext(chatContext);
@@ -30,9 +34,34 @@ export default function ChatHeader({
       }}
     >
       <Stack spacing={0.2} sx={{ minWidth: 0 }}>
-        <Typography sx={{ fontWeight: 800, fontSize: "1rem", lineHeight: 1.3 }}>
-          {inLibraryMode ? "Thư viện của bạn" : "Trợ lý tài liệu"}
-        </Typography>
+        <Stack direction="row" sx={{ alignItems: "center", gap: 0.75 }}>
+          <Typography sx={{ fontWeight: 800, fontSize: "1rem", lineHeight: 1.3 }}>
+            {inLibraryMode ? "Thư viện của bạn" : "Trợ lý tài liệu"}
+          </Typography>
+          {inLibraryMode && (
+            <Chip
+              size="small"
+              color={selectedDocumentCount > 0 ? "primary" : "default"}
+              variant={selectedDocumentCount > 0 ? "filled" : "outlined"}
+              label={`${selectedDocumentCount}/${MAX_LIBRARY_DOCUMENTS} tài liệu`}
+              sx={{ height: 24, fontWeight: 750, fontSize: "0.7rem" }}
+            />
+          )}
+          {creditPresentation && (
+            <Chip
+              size="small"
+              icon={<CreditScoreOutlined />}
+              color={creditPresentation.color}
+              variant={creditPresentation.blocked ? "filled" : "outlined"}
+              label={creditPresentation.label}
+              title={
+                creditPresentation.error ||
+                `Mỗi câu hỏi trong phạm vi này dùng ${creditPresentation.required} AI Credits`
+              }
+              sx={{ height: 24, fontWeight: 750, fontSize: "0.7rem" }}
+            />
+          )}
+        </Stack>
         {inDocumentMode && chatContext.document?.title && (
           <Stack direction="row" spacing={0.5} sx={{ mt: 0.25, alignItems: "center" }}>
             <DescriptionOutlined
@@ -57,7 +86,7 @@ export default function ChatHeader({
             color="text.secondary"
             sx={{ fontSize: "0.76rem", display: { xs: "none", sm: "block" } }}
           >
-            Chọn tài liệu bên trái để thu hẹp phạm vi câu hỏi tiếp theo.
+            Có thể hỏi toàn bộ thư viện hoặc lọc theo môn học và tài liệu cụ thể.
           </Typography>
         )}
         {!inDocumentMode && !inLibraryMode && (

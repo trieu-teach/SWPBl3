@@ -1,6 +1,8 @@
 import { Box, CircularProgress, Typography } from "@mui/material";
 import ChatInput from "./ChatInput.jsx";
 import ChatMessageList from "./ChatMessageList.jsx";
+import LibrarySourceEmptyState from "./LibrarySourceEmptyState.jsx";
+import ChatCreditBanner from "./ChatCreditBanner.jsx";
 
 export default function ChatConversation({
   chatContext,
@@ -18,8 +20,17 @@ export default function ChatConversation({
   hasMoreHistory = false,
   onLoadOlder,
   disabled = false,
+  sourceRequired = false,
+  creditPresentation,
+  onPreviewDocument,
+  loadingPreviewId,
 }) {
-  const messageActionsDisabled = isSending || disabled;
+  const creditBlocked = creditPresentation?.blocked === true;
+  const messageActionsDisabled = isSending || disabled || creditBlocked;
+
+  // When sourceRequired and there are no messages yet, show a dedicated
+  // full-screen prompt instead of the regular empty state / message list.
+  const showFullscreenSourcePrompt = sourceRequired && messages.length === 0;
 
   return (
     <Box
@@ -55,15 +66,19 @@ export default function ChatConversation({
             Đang tải cuộc hội thoại...
           </Typography>
         </Box>
+      ) : showFullscreenSourcePrompt ? (
+        <LibrarySourceEmptyState variant="fullscreen" />
       ) : (
         <ChatMessageList
           chatContext={chatContext}
           messages={messages}
           isSending={messageActionsDisabled}
-          onRetry={onRetry}
-          onSend={onSend}
+          onRetry={creditBlocked ? undefined : onRetry}
+          onSend={creditBlocked ? undefined : onSend}
           onStop={onStop}
           onSourceSelect={onSourceSelect}
+          onPreviewDocument={onPreviewDocument}
+          loadingPreviewId={loadingPreviewId}
           hasMoreHistory={hasMoreHistory}
           isLoadingOlderMessages={isLoadingOlderMessages}
           onLoadOlderMessages={onLoadOlder}
@@ -82,13 +97,21 @@ export default function ChatConversation({
           border: 0,
         }}
       >
+        <ChatCreditBanner presentation={creditPresentation} />
+        {/* Banner: shown above input when source was deselected mid-chat */}
+        {sourceRequired && messages.length > 0 && (
+          <LibrarySourceEmptyState variant="banner" />
+        )}
         <ChatInput
           chatContext={chatContext}
           value={inputValue}
           onChange={onInputChange}
           onSend={onSend}
+          onStop={onStop}
           isSending={isSending}
-          error={error}
+          error={sourceRequired ? null : error}
+          sourceRequired={sourceRequired}
+          creditBlocked={creditBlocked}
         />
       </Box>
     </Box>

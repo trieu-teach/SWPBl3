@@ -2,6 +2,7 @@ import {
   Avatar,
   Box,
   Button,
+  ButtonBase,
   Card,
   CardActions,
   CardContent,
@@ -40,6 +41,7 @@ export default function TopRatedDocumentCard({
   onPreview,
   onSave,
   actionId,
+  onContributorClick,
 }) {
   const [isSaved, setIsSaved] = useState(Boolean(document.saved));
   const fileColors = getFileTypeColors(document);
@@ -48,6 +50,9 @@ export default function TopRatedDocumentCard({
     document.owner?.fullName ||
     "Tác giả ẩn danh";
   const avatarUrl = document.ownerAvatarUrl || document.owner?.avatarUrl;
+  const canOpenContributor = Boolean(
+    document.ownerId && onContributorClick,
+  );
 
   const helpfulPercent =
     document.helpfulRating !== undefined && document.helpfulRating !== null
@@ -124,7 +129,7 @@ export default function TopRatedDocumentCard({
               <Chip
                 size="small"
                 icon={<ThumbUpAltOutlined sx={{ fontSize: "14px !important" }} />}
-                label={`${helpfulPercent}% hữu ích`}
+                label={`${helpfulPercent}% đánh giá cao`}
                 color={helpfulPercent >= 80 ? "success" : "primary"}
                 variant="filled"
                 sx={{ fontWeight: 700, fontSize: "0.75rem" }}
@@ -164,7 +169,35 @@ export default function TopRatedDocumentCard({
         </Typography>
 
         {/* Author info with Fallback Avatar */}
-        <Stack direction="row" alignItems="center" spacing={1.25} sx={{ mt: 2 }}>
+        <ButtonBase
+          disabled={!canOpenContributor}
+          aria-label={
+            canOpenContributor
+              ? `Xem hồ sơ cộng đồng của ${ownerName}`
+              : undefined
+          }
+          onClick={() => onContributorClick?.(document.ownerId)}
+          sx={{
+            mt: 2,
+            p: 0.5,
+            mx: -0.5,
+            width: "calc(100% + 8px)",
+            minWidth: 0,
+            display: "flex",
+            justifyContent: "flex-start",
+            gap: 1.25,
+            borderRadius: 2,
+            textAlign: "left",
+            "&:hover": canOpenContributor
+              ? { bgcolor: "action.hover", color: "primary.main" }
+              : {},
+            "&.Mui-focusVisible": {
+              outline: "2px solid",
+              outlineColor: "primary.main",
+              outlineOffset: 2,
+            },
+          }}
+        >
           <Avatar
             src={avatarUrl || undefined}
             alt={ownerName}
@@ -188,7 +221,7 @@ export default function TopRatedDocumentCard({
           >
             {ownerName}
           </Typography>
-        </Stack>
+        </ButtonBase>
 
         {/* Metrics Grid */}
         <Box
@@ -199,30 +232,58 @@ export default function TopRatedDocumentCard({
             borderColor: "divider",
           }}
         >
-          <Stack direction="row" alignItems="center" flexWrap="wrap" gap={1.5}>
-            <Stack direction="row" alignItems="center" spacing={0.5}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              flexWrap: "wrap",
+              rowGap: 1.25,
+            }}
+          >
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={0.75}
+              sx={{ whiteSpace: "nowrap" }}
+            >
               <ThumbUpAltOutlined sx={{ fontSize: 16, color: "success.main" }} />
               <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                {helpfulPercent ?? 0}% hữu ích · {totalVotes} đánh giá
+                {helpfulPercent ?? 0}% đánh giá cao · {totalVotes} đánh giá
               </Typography>
             </Stack>
 
-            <Tooltip title="Lượt tải về">
-              <Stack direction="row" alignItems="center" spacing={0.5}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0.75,
+                ml: 2.5,
+                pl: 2.5,
+                borderLeft: "1px solid",
+                borderColor: "divider",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <Tooltip title="Lượt tải về">
                 <CloudDownloadOutlined sx={{ fontSize: 16, color: "text.secondary" }} />
-                <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                  {document.downloadCount || 0} lượt tải
-                </Typography>
-              </Stack>
-            </Tooltip>
-          </Stack>
+              </Tooltip>
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                {document.downloadCount || 0} lượt tải
+              </Typography>
+            </Box>
+          </Box>
 
           {/* Quick Rate & Date Footer */}
           <Stack
             direction="row"
-            justifyContent="space-between"
             alignItems="center"
-            sx={{ mt: 1.5, pt: 1, borderTop: "1px dashed", borderColor: "divider" }}
+            sx={{
+              mt: 1.5,
+              pt: 1.25,
+              gap: 3,
+              borderTop: "1px dashed",
+              borderColor: "divider",
+            }}
           >
             <Typography variant="caption" color="text.secondary">
               {formatDate(document.createdAt)}
