@@ -14,7 +14,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { formatFileSize } from "../../utils/admin-formatters.js";
+import { formatFileSize, ensureUniqueChartLabels, formatChartLabel } from "../../utils/admin-formatters.js";
 
 const CustomTooltipContent = ({ active, payload, showStorage }) => {
   if (!active || !payload?.length) return null;
@@ -66,12 +66,6 @@ function formatXAxisTick(value) {
   return Math.round(num);
 }
 
-function truncateText(text, maxLength) {
-  if (!text) return "Không có tên";
-  if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength - 3) + "...";
-}
-
 export default function TopUsersChart({
   data,
   loading,
@@ -117,17 +111,27 @@ export default function TopUsersChart({
 
   const chartData = data.map((item, index) => ({
     ...item,
-    shortName: truncateText(item.fullName, 30),
     fullName: item.fullName || "Người dùng không tên",
     metricValue: Math.round(Number(item[metricKey] ?? 0)),
     rank: index + 1,
   }));
+  console.log("[DEBUG TopUsersChart RAW data]:", JSON.stringify(chartData.map(d => ({ fullName: d.fullName, metricValue: d.metricValue, rank: d.rank }))));
+
+  const chartDataWithLabels = ensureUniqueChartLabels(chartData, {
+    labelKey: "shortName",
+    rawKey: "fullName",
+    fallbackLabel: "Người dùng không tên",
+    maxLength: 30,
+  });
+  console.log("[DEBUG TopUsersChart AFTER labels]:", JSON.stringify(chartDataWithLabels.map(d => ({ shortName: d.shortName, fullName: d.fullName, metricValue: d.metricValue }))));
+  console.log("[DEBUG TopUsersChart] total items passed to BarChart:", chartDataWithLabels.length);
 
   const totalValue = data.reduce((sum, item) => sum + Math.round(Number(item[metricKey] ?? 0)), 0);
   const totalStorage = showStorage
     ? data.reduce((sum, item) => sum + Number(item.storageUsedBytes ?? 0), 0)
     : 0;
-  const maxValue = Math.max(...chartData.map((d) => d.metricValue));
+  console.log("[DEBUG TopUsersChart] BEFORE return - data.length:", data.length, "chartDataWithLabels.length:", chartDataWithLabels.length);
+  const maxValue = Math.max(...chartDataWithLabels.map((d) => d.metricValue));
 
   return (
     <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
@@ -194,10 +198,10 @@ export default function TopUsersChart({
       </Box>
 
       {/* Chart - stretches to fill available space */}
-      <Box sx={{ flex: 1, minHeight: 160 }}>
+      <Box sx={{ flex: 1, minHeight: Math.max(160, chartDataWithLabels.length * 36 + 40) }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={chartData}
+            data={chartDataWithLabels}
             layout="vertical"
             margin={{ top: 2, right: 60, left: 2, bottom: 2 }}
             key={`bar-chart-${data?.length || 0}`}
@@ -240,7 +244,7 @@ export default function TopUsersChart({
               radius={[0, 4, 4, 0]}
               maxBarSize={28}
             >
-              {chartData.map((entry, index) => (
+              {chartDataWithLabels.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={barColor}
@@ -259,7 +263,7 @@ export default function TopUsersChart({
             Chi tiết dung lượng
           </Typography>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-            {chartData.slice(0, 5).map((item, index) => (
+            {chartDataWithLabels.slice(0, 5).map((item, index) => (
               <Box
                 key={item.userId || index}
                 sx={{

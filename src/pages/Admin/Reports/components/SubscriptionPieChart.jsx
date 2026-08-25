@@ -39,7 +39,7 @@ const CustomTooltipContent = ({ active, payload }) => {
         {name}
       </Typography>
       <Typography variant="body2" sx={{ color: "text.primary" }}>
-        <strong style={{ color: "#8b5cf6" }}>{value}</strong> lượt mua
+        <strong style={{ color: "#8b5cf6" }}>{value}</strong> người dùng
       </Typography>
       <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
         <strong>{(percent * 100).toFixed(1)}%</strong> tổng
@@ -103,7 +103,19 @@ export default function SubscriptionPieChart({ data, loading }) {
   const plans = data?.plans || [];
   const totals = data?.totals || {};
 
-  if (!plans.length || totals.purchaseCount === 0) {
+  // Filter out plans with 0 purchases and FREE plan
+  const chartData = plans
+    .filter(plan => plan.purchaseCount > 0 && plan.code !== "FREE")
+    .map((plan) => ({
+      name: plan.name || plan.code,
+      code: plan.code,
+      value: plan.purchaseCount || 0,
+      revenue: plan.revenue || 0,
+      purchaseCount: plan.purchaseCount || 0,
+    }));
+
+  // Show "no data" only if chartData is empty
+  if (chartData.length === 0) {
     return (
       <Box sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", py: 4 }}>
         <Box
@@ -129,13 +141,6 @@ export default function SubscriptionPieChart({ data, loading }) {
       </Box>
     );
   }
-
-  const chartData = plans.map((plan) => ({
-    name: plan.name || plan.code,
-    code: plan.code,
-    value: plan.purchaseCount || 0,
-    revenue: plan.revenue || 0,
-  }));
 
   const totalRevenue = plans.reduce((sum, p) => sum + (p.revenue || 0), 0);
 
