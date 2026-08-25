@@ -20,12 +20,37 @@ export const MODERATION_STATUS = {
 
 export function getModerationStatus(document) {
   if (document?.visibility !== "PUBLIC") return null;
+
+  if (
+    document.status === "HIDDEN" &&
+    ["APPROVED", "SYSTEM_CLEARED"].includes(document.moderationStatus)
+  ) {
+    return { label: "Đã bị ẩn", color: "error" };
+  }
+
   return (
     MODERATION_STATUS[document.moderationStatus] || {
-      label: "Chưa có trạng thái duyệt",
-      color: "default",
+      label:
+        document.status === "HIDDEN"
+          ? "Đã bị ẩn"
+          : "Chưa có trạng thái duyệt",
+      color: document.status === "HIDDEN" ? "error" : "default",
     }
   );
+}
+
+export function getSharingStatus(document) {
+  if (document?.visibility !== "PUBLIC") {
+    return { label: "Riêng tư", color: "default" };
+  }
+
+  const isVisibleInCommunity =
+    document.status === "ACTIVE" &&
+    ["APPROVED", "SYSTEM_CLEARED"].includes(document.moderationStatus);
+
+  return isVisibleInCommunity
+    ? { label: "Công khai", color: "success" }
+    : { label: "Đã chọn công khai", color: "default" };
 }
 
 export function formatBytes(bytes) {

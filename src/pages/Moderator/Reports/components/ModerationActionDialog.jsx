@@ -10,26 +10,22 @@ import {
 
 const ACTION_COPY = {
   hide: {
-    title: "Ẩn tài liệu",
+    title: "Ẩn tạm thời tài liệu",
     consequence:
       "Báo cáo sẽ được đóng, tài liệu bị ẩn khỏi cộng đồng và chủ tài liệu có 7 ngày để khiếu nại.",
     color: "warning",
   },
   delete: {
-    title: "Xóa mềm tài liệu",
+    title: "Xóa tài liệu",
     consequence:
       "Báo cáo sẽ được đóng và tài liệu bị xóa mềm. Chủ tài liệu không thể khiếu nại để khôi phục.",
     color: "error",
   },
-  resolve: {
-    title: "Đánh dấu đã xử lý",
-    consequence: "Báo cáo sẽ được đóng. Trạng thái tài liệu không tự động thay đổi.",
-    color: "success",
-  },
   dismiss: {
-    title: "Bỏ qua báo cáo",
-    consequence: "Báo cáo sẽ được đóng mà không thay đổi trạng thái tài liệu.",
-    color: "warning",
+    title: "Xác nhận không vi phạm",
+    consequence:
+      "Báo cáo sẽ được kết luận là không hợp lệ và tài liệu được giữ nguyên.",
+    color: "success",
   },
 };
 

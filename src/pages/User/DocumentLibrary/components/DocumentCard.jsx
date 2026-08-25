@@ -16,6 +16,7 @@ import {
   DescriptionOutlined,
   LockOutlined,
   PublicOutlined,
+  WarningAmberOutlined,
   VisibilityOutlined,
 } from "@mui/icons-material";
 import { Link } from "react-router-dom";
@@ -26,6 +27,7 @@ import {
   formatDate,
   getFileTypeColors,
   getModerationStatus,
+  getSharingStatus,
   normalizeTags,
 } from "../utils/document-formatters.js";
 
@@ -34,6 +36,8 @@ export default function DocumentCard({ document, actionId, onOpen }) {
   const tags = normalizeTags(document.tags);
   const fileColors = getFileTypeColors(document);
   const moderation = getModerationStatus(document);
+  const sharing = getSharingStatus(document);
+  const isPublicButUnavailable = sharing.label === "Đã chọn công khai";
 
   return (
     <Card
@@ -61,18 +65,18 @@ export default function DocumentCard({ document, actionId, onOpen }) {
         </Box>
         <Tooltip
           title={
-            document.visibility === "PUBLIC"
-              ? moderation
-                ? `Công khai · ${moderation.label}`
-                : "Công khai"
-              : "Riêng tư"
+            moderation
+              ? `${sharing.label} · ${moderation.label}`
+              : sharing.label
           }
         >
           <Box
             color="text.secondary"
             sx={{ position: "absolute", top: 20, right: 20, display: "grid" }}
           >
-            {document.visibility === "PUBLIC" ? (
+            {isPublicButUnavailable ? (
+              <WarningAmberOutlined color="warning" />
+            ) : document.visibility === "PUBLIC" ? (
               <PublicOutlined />
             ) : (
               <LockOutlined />
@@ -109,6 +113,14 @@ export default function DocumentCard({ document, actionId, onOpen }) {
             color={status.color}
             variant="outlined"
           />
+          {!isPublicButUnavailable && (
+            <Chip
+              size="small"
+              label={sharing.label}
+              color={sharing.color}
+              variant="outlined"
+            />
+          )}
           {moderation && (
             <Chip
               size="small"
