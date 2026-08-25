@@ -15,6 +15,7 @@ import {
   Cell,
 } from "recharts";
 import { getFileTypeColors, displayFileType, ensureUniqueChartLabels, formatChartLabel } from "../../utils/admin-formatters.js";
+import { WrappedTick } from "./ChartLabelComponents.jsx";
 
 const CustomTooltipContent = ({ active, payload, barColor, metricLabel = "lượt" }) => {
   if (!active || !payload?.length) return null;
@@ -223,7 +224,7 @@ export default function TopDocumentsChart({
           <BarChart
             data={chartDataWithLabels}
             layout="vertical"
-            margin={{ top: 2, right: 60, left: 2, bottom: 2 }}
+            margin={{ top: 8, right: 70, left: 12, bottom: 8 }}
             key={`bar-chart-${data?.length || 0}`}
           >
             <CartesianGrid
@@ -243,10 +244,11 @@ export default function TopDocumentsChart({
             <YAxis
               type="category"
               dataKey="shortTitle"
-              tick={{ fontSize: 10, fill: theme.palette.text.primary }}
               tickLine={false}
               axisLine={false}
-              width={180}
+              width={200}
+              tickMargin={12}
+              tick={<WrappedTick width={200} fontSize={11} color={theme.palette.text.primary} />}
             />
             <RechartsTooltip
               content={<CustomTooltipContent barColor={barColor} metricLabel={metricLabel} />}
