@@ -13,6 +13,17 @@ import SubscriptionHeader from "./components/SubscriptionHeader.jsx";
 import SubscriptionUsageCard from "./components/SubscriptionUsageCard.jsx";
 import useSubscription from "./hooks/useSubscription.js";
 
+/**
+ * Trang Subscription - Trang đăng ký gói dịch vụ
+ * 
+ * Các thành phần:
+ * - SubscriptionHeader: Tiêu đề trang
+ * - SubscriptionUsageCard: Thông tin gói hiện tại của user
+ * - SubscriptionGrid: Grid các gói dịch vụ
+ * - PaymentDialog: Dialog thanh toán với mã QR
+ * 
+ * Sử dụng useSubscription hook để quản lý state
+ */
 export default function Subscription() {
   const subscription = useSubscription();
 

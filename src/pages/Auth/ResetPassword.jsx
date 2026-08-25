@@ -23,6 +23,16 @@ import { useColorMode } from "../../App.jsx";
 import { resetPassword, verifyResetCode } from "../../api/auth.api";
 import "./Login.css";
 
+/**
+ * ResetPassword - Trang đặt lại mật khẩu
+ * 
+ * Tính năng:
+ * - Xác thực token từ email đặt lại mật khẩu
+ * - Nếu token hợp lệ: cho phép nhập mật khẩu mới
+ * - Nếu token không hợp lệ/hết hạn: hiển thị thông báo lỗi
+ * 
+ * Token được truyền qua URL query param: ?token=xxx
+ */
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
   const { mode, toggle } = useColorMode();

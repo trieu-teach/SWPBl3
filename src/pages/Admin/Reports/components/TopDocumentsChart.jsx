@@ -14,7 +14,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { getFileTypeColors, displayFileType } from "../../utils/admin-formatters.js";
+import { getFileTypeColors, displayFileType, ensureUniqueChartLabels, formatChartLabel } from "../../utils/admin-formatters.js";
 
 const CustomTooltipContent = ({ active, payload, barColor, metricLabel = "lượt" }) => {
   if (!active || !payload?.length) return null;
@@ -110,12 +110,6 @@ function formatXAxisTick(value) {
   return Math.round(num);
 }
 
-function truncateText(text, maxLength) {
-  if (!text) return "Tài liệu không tên";
-  if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength - 3) + "...";
-}
-
 export default function TopDocumentsChart({ 
   data, 
   loading, 
@@ -159,19 +153,21 @@ export default function TopDocumentsChart({
     );
   }
 
-  const chartData = data.map((item, index) => {
-    const displayTitle = truncateText(item.title, 40);
-    return {
-      ...item,
-      shortTitle: displayTitle,
-      fullTitle: item.title || "Tài liệu không tên",
-      metricValue: Math.round(Number(item[metricKey] ?? 0)),
-      rank: index + 1,
-    };
+  const chartData = data.map((item, index) => ({
+    ...item,
+    fullTitle: item.title || "Tài liệu không tên",
+    metricValue: Math.round(Number(item[metricKey] ?? 0)),
+    rank: index + 1,
+  }));
+  const chartDataWithLabels = ensureUniqueChartLabels(chartData, {
+    labelKey: "shortTitle",
+    rawKey: "title",
+    fallbackLabel: "Tài liệu không tên",
+    maxLength: 40,
   });
 
   const totalValue = data.reduce((sum, item) => sum + Math.round(Number(item[metricKey] ?? 0)), 0);
-  const maxValue = Math.max(...chartData.map((d) => d.metricValue));
+  const maxValue = Math.max(...chartDataWithLabels.map((d) => d.metricValue));
 
   return (
     <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
@@ -222,10 +218,10 @@ export default function TopDocumentsChart({
       )}
 
       {/* Chart - stretches to fill available space */}
-      <Box sx={{ flex: 1, minHeight: 200 }}>
+      <Box sx={{ flex: 1, minHeight: 320 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={chartData}
+            data={chartDataWithLabels}
             layout="vertical"
             margin={{ top: 2, right: 60, left: 2, bottom: 2 }}
             key={`bar-chart-${data?.length || 0}`}
@@ -268,7 +264,7 @@ export default function TopDocumentsChart({
               radius={[0, 4, 4, 0]}
               maxBarSize={28}
             >
-              {chartData.map((entry, index) => (
+              {chartDataWithLabels.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={barColor}

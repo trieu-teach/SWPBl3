@@ -14,7 +14,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { getFileTypeColors, displayFileType, formatFileSize } from "../../utils/admin-formatters.js";
+import { getFileTypeColors, displayFileType, formatFileSize, ensureUniqueChartLabels, formatChartLabel } from "../../utils/admin-formatters.js";
 
 const CustomTooltipContent = ({ active, payload, barColor }) => {
   if (!active || !payload?.length) return null;
@@ -107,12 +107,6 @@ function formatXAxisTick(value) {
   return num + " B";
 }
 
-function truncateText(text, maxLength) {
-  if (!text) return "Tài liệu không tên";
-  if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength - 3) + "...";
-}
-
 export default function HeaviestDocumentsChart({
   data,
   loading,
@@ -153,19 +147,22 @@ export default function HeaviestDocumentsChart({
     );
   }
 
-  const chartData = data.map((item, index) => {
-    const displayTitle = truncateText(item.title, 40);
-    return {
-      ...item,
-      shortTitle: displayTitle,
-      fullTitle: item.title || "Tài liệu không tên",
-      metricValue: Number(item.fileSize ?? 0),
-      rank: index + 1,
-    };
+  const chartData = data.map((item, index) => ({
+    ...item,
+    fullTitle: item.title || "Tài liệu không tên",
+    metricValue: Number(item.fileSize ?? 0),
+    rank: index + 1,
+  }));
+
+  const chartDataWithLabels = ensureUniqueChartLabels(chartData, {
+    labelKey: "shortTitle",
+    rawKey: "title",
+    fallbackLabel: "Tài liệu không tên",
+    maxLength: 40,
   });
 
   const totalSize = data.reduce((sum, item) => sum + Number(item.fileSize ?? 0), 0);
-  const maxValue = Math.max(...chartData.map((d) => d.metricValue));
+  const maxValue = Math.max(...chartDataWithLabels.map((d) => d.metricValue));
 
   return (
     <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
@@ -232,7 +229,7 @@ export default function HeaviestDocumentsChart({
       <Box sx={{ flex: 1, minHeight: 200 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={chartData}
+            data={chartDataWithLabels}
             layout="vertical"
             margin={{ top: 2, right: 80, left: 2, bottom: 2 }}
             key={`bar-chart-${data?.length || 0}`}
@@ -274,7 +271,7 @@ export default function HeaviestDocumentsChart({
               radius={[0, 4, 4, 0]}
               maxBarSize={28}
             >
-              {chartData.map((entry, index) => (
+              {chartDataWithLabels.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={barColor}

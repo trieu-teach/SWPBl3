@@ -30,6 +30,10 @@ import Logo from "../../components/Logo/Logo.jsx";
 import Header from "../../components/Header/Header.jsx";
 import "./Login.css";
 
+/**
+ * BRAND_FEATURES - Danh sách tính năng hiển thị trên panel trái
+ * Mỗi feature gồm: icon, color, background, text
+ */
 const BRAND_FEATURES = [
   {
     icon: <AutoAwesome sx={{ fontSize: 16 }} />,
@@ -51,6 +55,16 @@ const BRAND_FEATURES = [
   },
 ];
 
+/**
+ * Login - Trang đăng nhập
+ * 
+ * Tính năng:
+ * - Đăng nhập bằng email/password
+ * - Đăng nhập bằng Google OAuth
+ * - Quên mật khẩu
+ * 
+ * Layout: Split screen - trái là branding, phải là form đăng nhập
+ */
 export default function Login() {
   const navigate = useNavigate();
   const toast = useToast();
@@ -63,6 +77,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Xử lý submit form đăng nhập email/password
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");

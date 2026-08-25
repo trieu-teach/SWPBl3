@@ -315,7 +315,7 @@ export default function Reports() {
             <Box sx={styles.cardHeader}>
               <SectionHeader
                 icon={<AssessmentOutlined sx={{ fontSize: 20 }} />}
-                title="Phân bố gói dịch vụ"
+                title="Doanh thu"
                 subtitle="Thống kê lượt mua theo từng gói dịch vụ"
                 color="#8b5cf6"
               />

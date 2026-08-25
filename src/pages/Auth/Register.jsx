@@ -32,6 +32,10 @@ import Header from "../../components/Header/Header.jsx";
 import "./Login.css";
 import "./Register.css";
 
+/**
+ * BRAND_FEATURES - Danh sách tính năng hiển thị trên panel trái
+ * Mỗi feature gồm: icon, color, background, text
+ */
 const BRAND_FEATURES = [
   {
     icon: <RocketLaunch sx={{ fontSize: 16 }} />,

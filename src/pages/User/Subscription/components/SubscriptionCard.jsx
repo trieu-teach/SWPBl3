@@ -47,6 +47,16 @@ const PLAN_COLORS = {
   GOLD: { primary: "#6366f1", light: "#e0e7ff", lightDark: "#312e81" },
 };
 
+/**
+ * SubscriptionCard - Component hiển thị thông tin một gói dịch vụ
+ * 
+ * Props:
+ * - plan: thông tin gói dịch vụ từ backend
+ * - buttonState: trạng thái nút (disabled, label)
+ * - onPurchase: callback khi click mua gói
+ * - loading: đang loading tạo checkout
+ * - processing: có giao dịch đang xử lý
+ */
 export default function SubscriptionCard({
   plan,
   buttonState,

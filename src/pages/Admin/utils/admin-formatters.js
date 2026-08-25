@@ -456,3 +456,70 @@ export function getDateRangePresets() {
     { label: "Tất cả", from: undefined, to: undefined },
   ];
 }
+
+// ─── CHART HELPERS ──────────────────────────────────────────────────────────
+
+function truncateLabel(text, maxLength) {
+  if (!text) return "Không tên";
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength - 3) + "...";
+}
+
+export function formatChartLabel(rawLabel, fallbackLabel = "Không tên", maxLength = 35) {
+  return truncateLabel(rawLabel || fallbackLabel, maxLength);
+}
+
+export function ensureUniqueChartLabels(data, options = {}) {
+  const {
+    labelKey = "chartLabel",
+    rawKey = "title",
+    fallbackLabel = "Tài liệu không xác định",
+    maxLength = 35,
+  } = options;
+
+  if (!data || data.length === 0) return data;
+
+  // STEP 1: Build raw labels (no truncation yet)
+  const withRawLabels = data.map((item) => ({
+    ...item,
+    _rawLabel: item[rawKey] || fallbackLabel,
+  }));
+
+  // STEP 2: Count occurrences to find duplicates
+  const labelCounts = {};
+  withRawLabels.forEach((item) => {
+    const label = item._rawLabel;
+    labelCounts[label] = (labelCounts[label] || 0) + 1;
+  });
+
+  const duplicates = new Set(
+    Object.entries(labelCounts)
+      .filter(([, count]) => count > 1)
+      .map(([label]) => label)
+  );
+
+  // STEP 3: Build final labels with #N suffix where needed
+  const seenCounts = {};
+  const withSuffix = withRawLabels.map((item) => {
+    const rawLabel = item._rawLabel;
+    if (duplicates.has(rawLabel)) {
+      seenCounts[rawLabel] = (seenCounts[rawLabel] || 0) + 1;
+      return {
+        ...item,
+        [labelKey]: `${rawLabel} #${seenCounts[rawLabel]}`,
+      };
+    }
+    return {
+      ...item,
+      [labelKey]: rawLabel,
+    };
+  });
+
+  // STEP 4: Truncate ALL labels (including ones with #N suffix)
+  const result = withSuffix.map((item) => ({
+    ...item,
+    [labelKey]: truncateLabel(item[labelKey], maxLength),
+  }));
+
+  return result;
+}

@@ -1,6 +1,10 @@
 import { Box, Typography, useTheme } from "@mui/material";
 import VerifiedUserOutlined from "@mui/icons-material/VerifiedUserOutlined";
 
+/**
+ * SubscriptionHeader - Header của trang subscription
+ * Hiển thị tiêu đề và mô tả ngắn
+ */
 export default function SubscriptionHeader() {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";

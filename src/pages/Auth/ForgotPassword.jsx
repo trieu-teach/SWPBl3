@@ -17,6 +17,16 @@ import {
 import { forgotPassword } from "../../api/auth.api";
 import "./Login.css";
 
+/**
+ * ForgotPassword - Trang yêu cầu đặt lại mật khẩu
+ * 
+ * Tính năng:
+ * - Nhập email đã đăng ký
+ * - Gửi email chứa liên kết đặt lại mật khẩu
+ * - Hiển thị thông báo thành công
+ * 
+ * Layout: Split screen - trái là branding, phải là form
+ */
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");

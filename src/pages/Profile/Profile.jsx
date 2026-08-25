@@ -45,6 +45,16 @@ function formatDate(dateString) {
   });
 }
 
+/**
+ * Profile - Trang hồ sơ cá nhân
+ * 
+ * Tính năng:
+ * - Hiển thị thông tin user (avatar, name, email, role, stats)
+ * - Chỉnh sửa họ tên
+ * - Đổi mật khẩu (với dialog xác thực)
+ * 
+ * Sử dụng UserLayout với header navigation
+ */
 export default function Profile() {
   const { user, refreshUser } = useAuth();
 
