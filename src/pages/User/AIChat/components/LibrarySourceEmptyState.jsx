@@ -3,7 +3,7 @@ import LibraryBooksOutlined from "@mui/icons-material/LibraryBooksOutlined";
 import ArrowBackIosNewOutlined from "@mui/icons-material/ArrowBackIosNewOutlined";
 
 /**
- * Shown in ASK_MY_LIBRARY mode when no source (subject or document) is selected.
+ * Compatibility state shown if an invalid library source is ever detected.
  *
  * @param {{ variant?: "fullscreen" | "banner" }} props
  */
@@ -15,7 +15,7 @@ export default function LibrarySourceEmptyState({ variant = "fullscreen" }) {
         icon={<ArrowBackIosNewOutlined fontSize="inherit" />}
         sx={{ borderRadius: 0, fontSize: "0.82rem", py: 0.75 }}
       >
-        Hãy chọn ít nhất một tài liệu hoặc môn học ở bảng bên trái để tiếp tục trò chuyện.
+        Hãy chọn lại phạm vi tài liệu để tiếp tục trò chuyện.
       </Alert>
     );
   }
@@ -58,14 +58,14 @@ export default function LibrarySourceEmptyState({ variant = "fullscreen" }) {
           <LibraryBooksOutlined sx={{ fontSize: 24 }} />
         </Box>
         <Typography variant="h6" sx={{ fontWeight: 800, mb: 0.75 }}>
-          Chọn tài liệu để bắt đầu
+          Hỏi toàn bộ thư viện của bạn
         </Typography>
         <Typography
           color="text.secondary"
           sx={{ maxWidth: 400, mx: "auto", fontSize: "0.9rem", lineHeight: 1.6 }}
         >
-          AI chỉ trả lời dựa trên những tài liệu bạn lựa chọn. Hãy tích chọn ít nhất
-          một tài liệu ở bảng nguồn bên trái.
+          Bạn có thể hỏi ngay trên toàn bộ tài liệu hợp lệ, hoặc chọn môn học
+          và file cụ thể để thu hẹp phạm vi.
         </Typography>
       </Stack>
     </Box>

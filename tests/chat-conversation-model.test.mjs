@@ -26,6 +26,11 @@ import {
 
 test("creates immutable request snapshots without UI-only library metadata", () => {
   const context = createLibraryContext({
+    subjectIds: ["subject-1", "subject-2"],
+    _subjectsMeta: [
+      { id: "subject-1", name: "Công nghệ phần mềm" },
+      { id: "subject-2", name: "Toán cao cấp" },
+    ],
     documentIds: ["document-1", "document-2"],
     _documentMeta: [{ id: "document-1", title: "Document 1" }],
   });
@@ -40,7 +45,10 @@ test("creates immutable request snapshots without UI-only library metadata", () 
     question: "Question?",
     context: {
       mode: CHAT_MODE_LIBRARY,
-      libraryFilters: { documentIds: ["document-1", "document-2"] },
+      libraryFilters: {
+        subjectIds: ["subject-1", "subject-2"],
+        documentIds: ["document-1", "document-2"],
+      },
     },
     sessionId: "session-1",
     requestId: "request-1",

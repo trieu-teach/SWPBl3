@@ -3,8 +3,8 @@ const DEFAULT_CHAT_ERROR = "Đã xảy ra lỗi khi xử lý yêu cầu AI.";
 const ERROR_PRESENTATIONS = {
   AI_CREDIT_LIMIT_EXCEEDED: {
     message: "Bạn đã dùng hết AI Credits tháng này.",
-    actionLabel: "Xem bảng giá",
-    actionPath: "/bang-gia",
+    actionLabel: "Xem gói & thanh toán",
+    actionPath: "/subscription",
     retryable: false,
   },
   DOCUMENT_ACCESS_REVOKED: {

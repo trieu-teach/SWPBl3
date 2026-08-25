@@ -1,4 +1,10 @@
-import { Box, Chip, Stack, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  Chip,
+  Stack,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
 import LibraryBooksOutlined from "@mui/icons-material/LibraryBooksOutlined";
 import WarningAmberRounded from "@mui/icons-material/WarningAmberRounded";
@@ -17,9 +23,14 @@ export default function ChatContextBar({
   // In ASK_THIS_DOCUMENT mode, the header already shows the document.
   if (isDocumentContext(chatContext)) return null;
   
-  // Only render for ASK_MY_LIBRARY or when we don't have a specific context but want to default to library visually
   if (!isLibraryContext(chatContext)) return null;
   const scope = getLibraryScopePresentation(chatContext);
+  const scopeDescription =
+    scope.type === "documents"
+        ? "AI chỉ dùng các tài liệu đã chọn."
+        : scope.type === "subjects"
+          ? "AI đang tìm kiếm và tổng hợp tài liệu trong các môn học đã chọn."
+          : "AI dùng toàn bộ tài liệu cá nhân và đã lưu còn khả dụng trong thư viện.";
 
   return (
     <Box
@@ -53,9 +64,7 @@ export default function ChatContextBar({
           color="text.secondary"
           sx={{ opacity: 0.85 }}
         >
-          {selectionLocked
-            ? "Phạm vi được cố định trong cuộc trò chuyện này."
-            : "Phạm vi sẽ được cố định khi tạo cuộc trò chuyện."}
+          {scopeDescription}
         </Typography>
 
         {selectedDocuments.length > 0 && (
@@ -63,30 +72,31 @@ export default function ChatContextBar({
             direction="row"
             sx={{ display: { xs: "flex", lg: "none" }, gap: 0.75, flexWrap: "wrap" }}
           >
-            {selectedDocuments.map((doc) => (
-              <Tooltip
-                key={doc.id}
-                title={
-                  doc.available === false
-                    ? doc.unavailableReason || "Tài liệu không còn khả dụng"
-                    : doc.title
-                }
-              >
-                <Chip
-                  icon={
-                    doc.available === false
-                      ? <WarningAmberRounded sx={{ fontSize: "0.95rem !important" }} />
-                      : <DescriptionOutlined sx={{ fontSize: "0.95rem !important" }} />
-                  }
-                  label={doc.title}
-                  onDelete={selectionLocked ? undefined : () => onRemove(doc.id)}
-                  size="small"
-                  variant="outlined"
-                  color={doc.available === false ? "error" : "default"}
-                  sx={{ maxWidth: 220, fontWeight: 600, fontSize: "0.75rem" }}
-                />
-              </Tooltip>
-            ))}
+            {selectedDocuments.map((doc) => {
+              const tooltip = selectionLocked
+                ? "Hãy tạo Chat mới để thay đổi tài liệu."
+                : doc.available === false
+                  ? doc.unavailableReason || "Tài liệu không còn khả dụng"
+                  : doc.title;
+
+              return (
+                <Tooltip key={doc.id} title={tooltip}>
+                  <Chip
+                    icon={
+                      doc.available === false
+                        ? <WarningAmberRounded sx={{ fontSize: "0.95rem !important" }} />
+                        : <DescriptionOutlined sx={{ fontSize: "0.95rem !important" }} />
+                    }
+                    label={doc.title}
+                    onDelete={selectionLocked ? undefined : () => onRemove(doc.id)}
+                    size="small"
+                    variant="outlined"
+                    color={doc.available === false ? "error" : "default"}
+                    sx={{ maxWidth: 220, fontWeight: 600, fontSize: "0.75rem" }}
+                  />
+                </Tooltip>
+              );
+            })}
           </Stack>
         )}
       </Stack>

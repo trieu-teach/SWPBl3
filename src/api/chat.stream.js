@@ -238,7 +238,8 @@ export async function* askLibraryStream({
   };
   if (sessionId) body.sessionId = sessionId;
 
-  body.filters = requireLibrarySourceFilters(filters);
+  const cleanedFilters = requireLibrarySourceFilters(filters);
+  if (cleanedFilters) body.filters = cleanedFilters;
 
   yield* requestChatStream("/chat/ask-library/stream", body, signal);
 }

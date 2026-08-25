@@ -9,8 +9,8 @@ test("maps credit exhaustion to an explicit pricing action", () => {
       code: "AI_CREDIT_LIMIT_EXCEEDED",
       details: undefined,
       message: "Bạn đã dùng hết AI Credits tháng này.",
-      actionLabel: "Xem bảng giá",
-      actionPath: "/bang-gia",
+      actionLabel: "Xem gói & thanh toán",
+      actionPath: "/subscription",
       retryable: false,
     },
   );

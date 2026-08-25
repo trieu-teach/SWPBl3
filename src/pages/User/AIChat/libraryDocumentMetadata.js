@@ -35,6 +35,16 @@ export function normalizeAiDocument(document) {
   const category = normalizeLookup(document, "category");
   const normalized = { ...document };
 
+  if (document.accessType === "SAVED" || document.accessType === "OWNED") {
+    normalized.accessType = document.accessType;
+  }
+  if (typeof document.aiUsable === "boolean") {
+    normalized.aiUsable = document.aiUsable;
+  }
+  if (Object.prototype.hasOwnProperty.call(document, "unavailableReason")) {
+    normalized.unavailableReason = document.unavailableReason ?? null;
+  }
+
   delete normalized.subjectName;
   delete normalized.categoryName;
 
