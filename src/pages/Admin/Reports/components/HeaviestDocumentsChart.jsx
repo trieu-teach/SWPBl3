@@ -15,6 +15,7 @@ import {
   Cell,
 } from "recharts";
 import { getFileTypeColors, displayFileType, formatFileSize, ensureUniqueChartLabels, formatChartLabel } from "../../utils/admin-formatters.js";
+import { WrappedTick } from "./ChartLabelComponents.jsx";
 
 const CustomTooltipContent = ({ active, payload, barColor }) => {
   if (!active || !payload?.length) return null;
@@ -164,10 +165,10 @@ export default function HeaviestDocumentsChart({
     maxLength: 40,
   }).map((item) => {
     const label = item.shortTitle || item.title || "Tài liệu";
-    const truncated = label.length > 15 ? label.slice(0, 15) + "..." : label;
+    // Use full label - WrappedTick handles wrapping automatically
     return {
       ...item,
-      displayTitle: truncated,
+      displayTitle: label,
     };
   });
 
@@ -241,7 +242,7 @@ export default function HeaviestDocumentsChart({
           <BarChart
             data={chartDataWithLabels}
             layout="vertical"
-            margin={{ top: 5, right: 80, left: 10, bottom: 5 }}
+            margin={{ top: 8, right: 80, left: 12, bottom: 8 }}
             key={`bar-chart-${chartDataWithLabels.length}`}
             animationDuration={0}
           >
@@ -263,11 +264,12 @@ export default function HeaviestDocumentsChart({
             <YAxis
               type="category"
               dataKey="displayTitle"
-              tick={{ fontSize: 11, fill: theme.palette.text.primary }}
               tickLine={false}
               axisLine={false}
-              width={150}
+              width={200}
+              tickMargin={12}
               allowDuplicatedCategory={true}
+              tick={<WrappedTick width={200} fontSize={11} color={theme.palette.text.primary} />}
             />
             <RechartsTooltip
               content={<CustomTooltipContent barColor={barColor} />}

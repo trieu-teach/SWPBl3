@@ -528,13 +528,10 @@ export function ensureUniqueChartLabels(data, options = {}) {
     };
   });
 
-  // STEP 4: Truncate ALL labels (including ones with #N suffix)
-  const result = withSuffix.map((item) => ({
-    ...item,
-    [labelKey]: truncateLabel(item[labelKey], maxLength),
-  }));
+  // NOTE: NO truncation here - WrappedTick component handles word wrapping automatically
+  // maxLength parameter is kept for backward compatibility but labels are passed through raw
+  
+  console.log("[DEBUG ensureUniqueChartLabels] OUTPUT:", withSuffix.map(r => ({ [labelKey]: r[labelKey] })));
 
-  console.log("[DEBUG ensureUniqueChartLabels] OUTPUT:", result.map(r => ({ [labelKey]: r[labelKey] })));
-
-  return result;
+  return withSuffix;
 }
