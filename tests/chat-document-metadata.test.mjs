@@ -119,6 +119,35 @@ test("hides saved documents that were deleted, made private, or lost approval", 
   );
 });
 
+test("hides personal uploads after they are hidden or deleted", () => {
+  assert.equal(
+    isVisibleAiLibraryDocument({
+      accessType: "OWNED",
+      status: "HIDDEN",
+      visibility: "PUBLIC",
+      moderationStatus: "APPROVED",
+    }),
+    false,
+  );
+  assert.equal(
+    isVisibleAiLibraryDocument({
+      accessType: "OWNED",
+      status: "DELETED",
+      visibility: "PUBLIC",
+      unavailableReason: "DOCUMENT_INACTIVE",
+    }),
+    false,
+  );
+  assert.equal(
+    isVisibleAiLibraryDocument({
+      accessType: "OWNED",
+      status: "ACTIVE",
+      visibility: "PRIVATE",
+    }),
+    true,
+  );
+});
+
 test("keeps accessible saved documents visible while AI extraction is pending", () => {
   assert.equal(
     isVisibleAiLibraryDocument({

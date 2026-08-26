@@ -4,8 +4,7 @@ function normalizeId(value) {
   return normalized || null;
 }
 
-const HIDDEN_SAVED_DOCUMENT_REASONS = new Set([
-  "ACCESS_REVOKED",
+const HIDDEN_DOCUMENT_REASONS = new Set([
   "DOCUMENT_INACTIVE",
   "DOCUMENT_NOT_FOUND",
 ]);
@@ -74,12 +73,15 @@ export function isVisibleAiLibraryDocument(document) {
   const normalized = normalizeAiDocument(document);
   if (!normalized || typeof normalized !== "object") return false;
 
+  // A moderator-hidden or deleted personal upload is not part of the active AI
+  // library, even though the current user still owns the underlying record.
+  if (HIDDEN_DOCUMENT_REASONS.has(normalized.unavailableReason)) return false;
+  if (normalized.status && normalized.status !== "ACTIVE") return false;
+
   if (normalized.accessType === "OWNED") return true;
   if (normalized.accessType !== "SAVED") return false;
 
-  if (HIDDEN_SAVED_DOCUMENT_REASONS.has(normalized.unavailableReason)) {
-    return false;
-  }
+  if (normalized.unavailableReason === "ACCESS_REVOKED") return false;
   if (normalized.visibility && normalized.visibility !== "PUBLIC") {
     return false;
   }
