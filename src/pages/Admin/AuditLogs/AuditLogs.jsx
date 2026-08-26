@@ -1,5 +1,4 @@
 import { Box, Typography } from "@mui/material";
-import HistoryOutlined from "@mui/icons-material/HistoryOutlined";
 import AdminLayout from "../Layout/AdminLayout.jsx";
 import AuditLogFilters from "./components/AuditLogFilters.jsx";
 import AuditLogTable from "./components/AuditLogTable.jsx";

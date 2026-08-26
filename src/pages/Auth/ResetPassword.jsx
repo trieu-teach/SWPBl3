@@ -20,7 +20,7 @@ import {
   CheckCircle,
 } from "@mui/icons-material";
 import { useColorMode } from "../../App.jsx";
-import { resetPassword, verifyResetCode } from "../../api/auth.api";
+import { resetPassword } from "../../api/auth.api";
 import "./Login.css";
 
 /**

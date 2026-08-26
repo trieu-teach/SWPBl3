@@ -14,7 +14,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { getFileTypeColors, displayFileType, ensureUniqueChartLabels, formatChartLabel } from "../../utils/admin-formatters.js";
+import { getFileTypeColors, displayFileType, ensureUniqueChartLabels } from "../../utils/admin-formatters.js";
 import { WrappedTick } from "./ChartLabelComponents.jsx";
 
 const CustomTooltipContent = ({ active, payload, barColor, metricLabel = "lượt" }) => {

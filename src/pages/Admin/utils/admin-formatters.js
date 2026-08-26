@@ -460,14 +460,11 @@ export function getDateRangePresets() {
 // ─── CHART HELPERS ──────────────────────────────────────────────────────────
 
 function truncateLabel(text, maxLength) {
-  console.log("[DEBUG truncateLabel] input:", text, "maxLength:", maxLength);
   if (!text) return "Không tên";
   if (text.length <= maxLength) {
-    console.log("[DEBUG truncateLabel] output (no truncate):", text);
     return text;
   }
   const result = text.slice(0, maxLength - 3) + "...";
-  console.log("[DEBUG truncateLabel] output (truncated):", result);
   return result;
 }
 
@@ -480,12 +477,9 @@ export function ensureUniqueChartLabels(data, options = {}) {
     labelKey = "chartLabel",
     rawKey = "title",
     fallbackLabel = "Tài liệu không xác định",
-    maxLength = 35,
   } = options;
 
   if (!data || data.length === 0) return data;
-
-  console.log("[DEBUG ensureUniqueChartLabels] INPUT:", data.length, "items, labelKey:", labelKey, "maxLength:", maxLength);
 
   // STEP 1: Build raw labels (no truncation yet)
   const withRawLabels = data.map((item) => ({
@@ -500,15 +494,11 @@ export function ensureUniqueChartLabels(data, options = {}) {
     labelCounts[label] = (labelCounts[label] || 0) + 1;
   });
 
-  console.log("[DEBUG ensureUniqueChartLabels] labelCounts:", labelCounts);
-
   const duplicates = new Set(
     Object.entries(labelCounts)
       .filter(([, count]) => count > 1)
       .map(([label]) => label)
   );
-
-  console.log("[DEBUG ensureUniqueChartLabels] duplicates:", [...duplicates]);
 
   // STEP 3: Build final labels with #N suffix where needed
   const seenCounts = {};
@@ -521,7 +511,6 @@ export function ensureUniqueChartLabels(data, options = {}) {
     } else {
       finalLabel = rawLabel;
     }
-    console.log("[DEBUG ensureUniqueChartLabels] item:", rawLabel, "-> finalLabel:", finalLabel);
     return {
       ...item,
       [labelKey]: finalLabel,
@@ -529,9 +518,6 @@ export function ensureUniqueChartLabels(data, options = {}) {
   });
 
   // NOTE: NO truncation here - WrappedTick component handles word wrapping automatically
-  // maxLength parameter is kept for backward compatibility but labels are passed through raw
   
-  console.log("[DEBUG ensureUniqueChartLabels] OUTPUT:", withSuffix.map(r => ({ [labelKey]: r[labelKey] })));
-
   return withSuffix;
 }

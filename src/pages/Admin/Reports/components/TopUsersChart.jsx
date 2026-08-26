@@ -14,12 +14,12 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { formatFileSize, ensureUniqueChartLabels, formatChartLabel } from "../../utils/admin-formatters.js";
+import { formatFileSize, ensureUniqueChartLabels } from "../../utils/admin-formatters.js";
 import { WrappedTick } from "./ChartLabelComponents.jsx";
 
 const CustomTooltipContent = ({ active, payload, showStorage }) => {
   if (!active || !payload?.length) return null;
-  const { fullName, email, documentCount, storageUsedBytes, rank } = payload[0].payload;
+  const { fullName, email, documentCount, storageUsedBytes } = payload[0].payload;
 
   return (
     <Box
@@ -71,7 +71,6 @@ export default function TopUsersChart({
   data,
   loading,
   metricKey = "documentCount",
-  metricLabel = "tài liệu",
   barColor = "#6366f1",
   showStorage = false,
 }) {
@@ -110,13 +109,11 @@ export default function TopUsersChart({
     );
   }
 
-  const chartData = data.map((item, index) => ({
+  const chartData = data.map((item) => ({
     ...item,
     fullName: item.fullName || "Người dùng không tên",
     metricValue: Math.round(Number(item[metricKey] ?? 0)),
-    rank: index + 1,
   }));
-  console.log("[DEBUG TopUsersChart RAW data]:", JSON.stringify(chartData.map(d => ({ fullName: d.fullName, metricValue: d.metricValue, rank: d.rank }))));
 
   const chartDataWithLabels = ensureUniqueChartLabels(chartData, {
     labelKey: "shortName",
@@ -124,14 +121,10 @@ export default function TopUsersChart({
     fallbackLabel: "Người dùng không tên",
     maxLength: 30,
   });
-  console.log("[DEBUG TopUsersChart AFTER labels]:", JSON.stringify(chartDataWithLabels.map(d => ({ shortName: d.shortName, fullName: d.fullName, metricValue: d.metricValue }))));
-  console.log("[DEBUG TopUsersChart] total items passed to BarChart:", chartDataWithLabels.length);
-
   const totalValue = data.reduce((sum, item) => sum + Math.round(Number(item[metricKey] ?? 0)), 0);
   const totalStorage = showStorage
     ? data.reduce((sum, item) => sum + Number(item.storageUsedBytes ?? 0), 0)
     : 0;
-  console.log("[DEBUG TopUsersChart] BEFORE return - data.length:", data.length, "chartDataWithLabels.length:", chartDataWithLabels.length);
   const maxValue = Math.max(...chartDataWithLabels.map((d) => d.metricValue));
 
   return (

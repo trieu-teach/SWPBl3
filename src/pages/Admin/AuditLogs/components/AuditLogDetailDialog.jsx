@@ -29,16 +29,6 @@ import {
 import { useState } from "react";
 import { formatDate } from "../../utils/admin-formatters.js";
 
-const ACTION_GROUP_COLORS = {
-  AUTH: { bg: "#e0f2fe", color: "#0891b2", label: "Xác thực" },
-  DOCUMENT: { bg: "#ede9fe", color: "#4f46e5", label: "Tài liệu" },
-  MODERATION: { bg: "#fef3c7", color: "#b45309", label: "Kiểm duyệt" },
-  ADMIN: { bg: "#fce7f3", color: "#7c3aed", label: "Quản trị" },
-  BILLING: { bg: "#ffedd5", color: "#c2410c", label: "Thanh toán" },
-  PROFILE: { bg: "#fce7f3", color: "#7c3aed", label: "Hồ sơ" },
-  OTHER: { bg: "#f3f4f6", color: "#475569", label: "Khác" },
-};
-
 const USER_ROLE_COLORS = {
   ADMIN: { bg: "#fee2e2", color: "#dc2626" },
   MODERATOR: { bg: "#fef3c7", color: "#d97706" },
@@ -71,10 +61,6 @@ const RESULT_COLORS_MAP = {
   "Công khai": { bg: "#d1fae5", color: "#059669" },
   "Riêng tư": { bg: "#f3f4f6", color: "#6b7280" },
 };
-
-function getActionGroupConfig(actionGroup) {
-  return ACTION_GROUP_COLORS[actionGroup?.toUpperCase()] || ACTION_GROUP_COLORS.OTHER;
-}
 
 function getUserRoleConfig(role) {
   return USER_ROLE_COLORS[role?.toUpperCase()] || USER_ROLE_COLORS.USER;
@@ -131,7 +117,6 @@ export default function AuditLogDetailDialog({ log, onClose }) {
   const open = Boolean(log);
   const [expandedTech, setExpandedTech] = useState(false);
 
-  const actionGroupConfig = log?.actionGroup ? getActionGroupConfig(log.actionGroup) : null;
   const userRoleConfig = log?.userRole ? getUserRoleConfig(log.userRole) : null;
   const resultLabel = log?.resultLabel || log?.result || "—";
   const resultConfig = RESULT_COLORS_MAP[resultLabel] || { bg: "#f3f4f6", color: "#6b7280" };

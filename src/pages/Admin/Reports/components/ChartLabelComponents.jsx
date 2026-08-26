@@ -8,8 +8,6 @@
  * - Proper vertical centering
  * - Consistent label-bar spacing
  */
-import { Text } from "recharts";
-
 /**
  * WrappedTick - Custom SVG tick for YAxis with automatic word wrapping
  * 
@@ -158,7 +156,6 @@ export function WrappedTick({
         // dominantBaseline="central" means y is the vertical CENTER
         // Line 0 at y - halfLineHeight (above center)
         // Line 1 at y + halfLineHeight (below center)
-        const halfLineHeight = lineHeight / 2;
         const yOffset = (index - 0.5) * lineHeight;
         
         return (
@@ -187,7 +184,6 @@ export function WrappedTick({
 export function createYAxisConfig(theme, options = {}) {
   const {
     width = 200,
-    fontSize = 11,
     tickMargin = 12,
   } = options;
   

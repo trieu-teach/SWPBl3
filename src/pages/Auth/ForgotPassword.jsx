@@ -9,11 +9,7 @@ import {
   Alert,
   CircularProgress,
 } from "@mui/material";
-import {
-  ArrowBack,
-  Email,
-  VerifiedUser,
-} from "@mui/icons-material";
+import { Email, VerifiedUser } from "@mui/icons-material";
 import { forgotPassword } from "../../api/auth.api";
 import "./Login.css";
 

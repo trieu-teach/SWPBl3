@@ -2,16 +2,6 @@ import { sendPasswordResetEmail, confirmPasswordReset, verifyPasswordResetCode }
 import { apiRequest } from "../lib/http";
 import { auth } from "../lib/firebase";
 
-export async function register(payload) {
-  return apiRequest("/auth/register", {
-    method: "POST",
-    body: {
-      fullName: payload.fullName,
-      acceptedTerms: payload.acceptedTerms,
-    },
-  });
-}
-
 export async function registerWithFirebase({ idToken, fullName, acceptedTerms }) {
   return apiRequest("/auth/register", {
     method: "POST",
@@ -29,10 +19,6 @@ export async function loginWithFirebaseToken(payload) {
 
 export async function getCurrentUser() {
   return apiRequest("/auth/me");
-}
-
-export async function getProfile() {
-  return apiRequest("/users/profile");
 }
 
 export async function updateProfile(payload) {

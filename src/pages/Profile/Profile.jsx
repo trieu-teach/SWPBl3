@@ -33,7 +33,7 @@ import {
 } from "@mui/icons-material";
 import UserLayout from "../User/Layout/UserLayout.jsx";
 import { useAuth } from "../../features/auth/AuthProvider.jsx";
-import { getProfile, updateProfile } from "../../api/auth.api";
+import { updateProfile } from "../../api/auth.api";
 import { changePassword, firebaseErrorMessage } from "../../lib/authService";
 
 function formatDate(dateString) {

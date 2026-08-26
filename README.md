@@ -3,8 +3,8 @@
 Tài liệu học tập AI có trích dẫn nguồn.
 
 ## Tech stack
-- **React 19** + **Vite 7**
-- **Ant Design** + **Material UI (MUI)** + **Emotion**
+- **React 19** + **Vite 5**
+- **Material UI (MUI)** + **Emotion**
 - **React Router DOM** (routing)
 - **Axios** (HTTP client gọi API backend)
 

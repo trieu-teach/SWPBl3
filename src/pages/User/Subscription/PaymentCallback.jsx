@@ -94,7 +94,7 @@ function clearPendingPayment() {
 
 /**
  * Trang PaymentCallback - xử lý kết quả thanh toán từ SePay
- * URL: /payment-callback?payment=success&invoice=xxx
+ * URL: /goi-dich-vu?payment=success&invoice=xxx
  * 
  * Luồng:
  * 1. Lấy invoiceNumber từ URL hoặc sessionStorage

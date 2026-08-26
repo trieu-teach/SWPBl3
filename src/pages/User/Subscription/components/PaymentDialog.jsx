@@ -78,7 +78,7 @@ function PaymentRow({ label, value, copyValue, emphasize = false, onCopy }) {
   );
 }
 
-function TerminalStatusView({ status, payment, onDismiss, onCreateNew }) {
+function TerminalStatusView({ status, payment, onCreateNew }) {
   const statusConfig = {
     PAID: {
       severity: "success",
@@ -323,7 +323,6 @@ export default function PaymentDialog({
           <TerminalStatusView
             status={payment.status}
             payment={payment}
-            onDismiss={onDismiss}
             onCreateNew={onCreateNew}
           />
         ) : /* PENDING STATE - QR Code + Countdown */

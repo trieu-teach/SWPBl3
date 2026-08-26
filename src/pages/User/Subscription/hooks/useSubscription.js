@@ -126,7 +126,7 @@ export default function useSubscription() {
         const done = await finishPayment(payment);
         if (done) return;
 
-      } catch (err) {
+      } catch {
       }
 
       if (!stopped) {

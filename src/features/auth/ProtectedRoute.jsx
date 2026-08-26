@@ -68,12 +68,3 @@ export function RequireAuth({ children, allowedRoles }) {
 
   return children;
 }
-
-/**
- * RequireAdmin — chỉ cho phép ADMIN truy cập
- */
-export function RequireAdmin({ children }) {
-  return (
-    <RequireAuth allowedRoles={["ADMIN"]}>{children}</RequireAuth>
-  );
-}

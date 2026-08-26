@@ -14,7 +14,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { getFileTypeColors, displayFileType, formatFileSize, ensureUniqueChartLabels, formatChartLabel } from "../../utils/admin-formatters.js";
+import { getFileTypeColors, displayFileType, formatFileSize, ensureUniqueChartLabels } from "../../utils/admin-formatters.js";
 import { WrappedTick } from "./ChartLabelComponents.jsx";
 
 const CustomTooltipContent = ({ active, payload, barColor }) => {
@@ -99,14 +99,6 @@ const CustomTooltipContent = ({ active, payload, barColor }) => {
     </Box>
   );
 };
-
-function formatXAxisTick(value) {
-  const num = Number(value);
-  if (num >= 1073741824) return (num / 1073741824).toFixed(1) + " GB";
-  if (num >= 1048576) return (num / 1048576).toFixed(1) + " MB";
-  if (num >= 1024) return (num / 1024).toFixed(1) + " KB";
-  return num + " B";
-}
 
 export default function HeaviestDocumentsChart({
   data,

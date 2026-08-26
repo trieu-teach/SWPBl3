@@ -3,7 +3,7 @@
    Auth screens (Login / Register) and Homepage now carry their own
    per-theme rules. This file only contains fallbacks for elements that
    don't have className-specific overrides (MUI typography defaults,
-   AntD components, raw inputs, drawers...).
+   raw inputs, drawers...).
    ========================================================================= */
 
 body[data-theme="dark"] {
