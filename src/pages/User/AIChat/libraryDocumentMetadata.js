@@ -4,6 +4,12 @@ function normalizeId(value) {
   return normalized || null;
 }
 
+const HIDDEN_SAVED_DOCUMENT_REASONS = new Set([
+  "ACCESS_REVOKED",
+  "DOCUMENT_INACTIVE",
+  "DOCUMENT_NOT_FOUND",
+]);
+
 function normalizeLookup(document, field) {
   const lookup = document?.[field];
   const explicitId = normalizeId(document?.[`${field}Id`]);
@@ -54,6 +60,43 @@ export function normalizeAiDocument(document) {
   if (category.name) normalized.category = category.name;
 
   return normalized;
+}
+
+/**
+ * The AI picker is intentionally limited to the user's own uploads and the
+ * community documents that are still present in Saved Documents.
+ *
+ * Saved documents whose source was removed, made private or lost moderation
+ * approval must not remain visible in the picker. Other AI-readiness failures
+ * (for example extraction still processing) remain visible with their status.
+ */
+export function isVisibleAiLibraryDocument(document) {
+  const normalized = normalizeAiDocument(document);
+  if (!normalized || typeof normalized !== "object") return false;
+
+  if (normalized.accessType === "OWNED") return true;
+  if (normalized.accessType !== "SAVED") return false;
+
+  if (HIDDEN_SAVED_DOCUMENT_REASONS.has(normalized.unavailableReason)) {
+    return false;
+  }
+  if (normalized.visibility && normalized.visibility !== "PUBLIC") {
+    return false;
+  }
+  if (
+    normalized.moderationStatus &&
+    normalized.moderationStatus !== "APPROVED"
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+export function filterVisibleAiLibraryDocuments(documents) {
+  return (Array.isArray(documents) ? documents : []).filter(
+    isVisibleAiLibraryDocument,
+  );
 }
 
 export function mergeAiDocumentMetadata(summary, detail) {

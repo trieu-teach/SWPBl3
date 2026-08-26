@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getAiChatDocuments } from "../../../../api/chat.api.js";
 import { getDocument, getSubjects } from "../../../../api/documents.api.js";
 import {
+  filterVisibleAiLibraryDocuments,
   mergeAiDocumentMetadata,
   normalizeAiDocument,
 } from "../libraryDocumentMetadata.js";
@@ -89,7 +90,9 @@ function useDocumentSource(source, search) {
         const result = Array.isArray(response)
           ? { items: response, meta: {} }
           : { items: response?.items ?? [], meta: response?.meta ?? {} };
-        result.items = await hydrateMissingDocumentMetadata(result.items);
+        result.items = await hydrateMissingDocumentMetadata(
+          filterVisibleAiLibraryDocuments(result.items),
+        );
         if (!isCurrentRequest()) return false;
 
         setDocuments((current) =>
